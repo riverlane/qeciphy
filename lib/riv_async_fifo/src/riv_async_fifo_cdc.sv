@@ -131,7 +131,7 @@ module riv_async_fifo_cdc #(
       end
    end
 
-   // Detect positive edge of wr_fsm_req_ack_rd
+   // Detect positive edge of wr_fsm_req_ack_wr
    assign raddr_sample_wr = rd_fsm_req_ack_wr && ~rd_fsm_recv_ack_wr;
 
    // RADDR is sampled in WCLK domain.

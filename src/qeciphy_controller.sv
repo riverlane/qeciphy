@@ -151,8 +151,6 @@ module qeciphy_controller (
    assign o_ecode   = err;
    assign o_pd_ack  = i_remote_pd_req;
 
-   // Temporary fix. 
-   // FAULT_FATAL state can be handled differently so that it doesn't require a reset.
    always_ff @(posedge axis_clk or negedge axis_rst_n) begin
       if (~axis_rst_n) begin
          o_rst_n <= 1'b0;
