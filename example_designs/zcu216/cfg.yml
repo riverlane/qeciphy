@@ -1,0 +1,12 @@
+syn:
+  tops:
+    qeciphy_syn_wrapper
+  xdc:
+    ../../example_designs/zcu216/syn/constraints.xdc
+part:
+  board:
+    xilinx.com:zcu216:part0:2.0
+  chip:
+    xczu49dr-ffvf1760-2-e
+  board_id:
+    zcu216

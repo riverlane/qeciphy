@@ -1,0 +1,8 @@
+syn:
+  tops:
+    qeciphy_syn_wrapper
+  xdc:
+    ../../example_designs/kasliSoC/syn/constraints.xdc
+part:
+  chip:
+    xc7z030ffg676-3
