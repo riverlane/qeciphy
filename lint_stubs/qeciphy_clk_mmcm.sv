@@ -11,11 +11,11 @@
 // -----------------------------------------------------------------------------
 
 module qeciphy_clk_mmcm (
-    output        clk_out_2x,
-    output        clk_out,
-    input         reset,
-    output        input_clk_stopped,
-    input         clk_in
+    output clk_out_2x,
+    output clk_out,
+    input  reset,
+    output input_clk_stopped,
+    input  clk_in
 );
 
 endmodule

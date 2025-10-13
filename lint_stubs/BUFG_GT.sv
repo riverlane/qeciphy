@@ -10,14 +10,14 @@
 // The module names and ports are reproduced solely for build compatibility.
 // -----------------------------------------------------------------------------
 
-module BUFG_GT(
-    input  CE,
-    input  CEMASK,
-    input  CLR,
-    input  CLRMASK,
-    input  [2:0] DIV,
-    input  I,
+module BUFG_GT (
+    input CE,
+    input CEMASK,
+    input CLR,
+    input CLRMASK,
+    input [2:0] DIV,
+    input I,
     output O
-    );
-    
+);
+
 endmodule
