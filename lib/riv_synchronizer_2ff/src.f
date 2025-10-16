@@ -1,1 +1,1 @@
-../../lib/riv_synchronizer_2ff/src/riv_synchronizer_2ff.sv
+lib/riv_synchronizer_2ff/src/riv_synchronizer_2ff.sv
