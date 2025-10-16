@@ -1,0 +1,66 @@
+{
+  "profiles": {
+    "zcu216": {
+      "device": {
+        "part": "xczu49dr-ffvf1760-2-e",
+        "vendor": "xilinx"
+      },
+      "board": "xilinx.com:zcu216:part0:2.0",
+      "variant": "GTY",
+      "synth": {
+        "top": "qeciphy_syn_wrapper",
+        "filelists": [
+          "example_designs/zcu216/src.f"
+        ],
+        "constraints": [
+          "example_designs/zcu216/syn/constraints.xdc"
+        ],
+        "pre_setup_hooks": [
+          "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
+          "example_designs/vendors/xilinx/qeciphy_vio.tcl"
+        ]
+      }
+    },
+    "zcu106": {
+      "device": {
+        "part": "xczu7ev-ffvc1156-2-e",
+        "vendor": "xilinx"
+      },
+      "board": "xilinx.com:zcu106:part0:2.6",
+      "variant": "GTH",
+      "synth": {
+        "top": "qeciphy_syn_wrapper",
+        "filelists": [
+          "example_designs/zcu106/src.f"
+        ],
+        "constraints": [
+          "example_designs/zcu106/syn/constraints.xdc"
+        ],
+        "pre_setup_hooks": [
+          "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
+          "example_designs/vendors/xilinx/qeciphy_vio.tcl"
+        ]
+      }
+    },
+    "kasliSoC": {
+      "device": {
+        "part": "xc7z030ffg676-3",
+        "vendor": "xilinx"
+      },
+      "variant": "GTX",
+      "synth": {
+        "top": "qeciphy_syn_wrapper",
+        "filelists": [
+          "example_designs/kasliSoC/src.f"
+        ],
+        "constraints": [
+          "example_designs/kasliSoC/syn/constraints.xdc"
+        ],
+        "pre_setup_hooks": [
+          "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
+          "example_designs/vendors/xilinx/qeciphy_vio.tcl"
+        ]
+      }
+    }
+  }
+}
