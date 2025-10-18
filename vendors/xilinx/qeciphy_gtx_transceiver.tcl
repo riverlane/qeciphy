@@ -84,7 +84,7 @@ set_property -dict [list \
   CONFIG.gt0_val_decoding {8B/10B} \
   CONFIG.gt0_val_dfe_mode {LPM-Auto} \
   CONFIG.gt0_val_drp {true} \
-  CONFIG.gt0_val_drp_clock [format "%.0f" $FCLK_FREQ] \
+  CONFIG.gt0_val_drp_clock [format "%.3f" $FCLK_FREQ] \
   CONFIG.gt0_val_encoding {8B/10B} \
   CONFIG.gt0_val_max_cb_level {7} \
   CONFIG.gt0_val_no_rx {false} \
@@ -175,7 +175,7 @@ set_property -dict [list \
   CONFIG.gt3_val_rx_refclk $RX_RCLK_SRC \
   CONFIG.gt3_val_tx_refclk $TX_RCLK_SRC \
   CONFIG.gt_val_drp {false} \
-  CONFIG.gt_val_drp_clock [format "%.0f" $FCLK_FREQ] \
+  CONFIG.gt_val_drp_clock [format "%.3f" $FCLK_FREQ] \
   CONFIG.gt_val_rx_pll {QPLL} \
   CONFIG.gt_val_tx_pll {QPLL} \
   CONFIG.identical_protocol_file {Start_from_scratch} \
