@@ -8,14 +8,14 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # Parse arguments
 if { !([info exists ::argv] && [llength $::argv] >= 7) } {
-  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gtx_transceiver.tcl -tclargs <part_number> <output_dir> <gt_loc> <rclk_freq> <fclk_freq> <rx_rclk_src> <tx_rclk_src>"
+  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gtx_transceiver.tcl -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC>"
   return 1
 }
 set part_number [lindex $::argv 0]
 set output_dir [lindex $::argv 1]
 set GT_LOC [lindex $::argv 2]
-set RCLK_FREQ [lindex $::argv 3]
-set FCLK_FREQ [lindex $::argv 4]
+set FCLK_FREQ [lindex $::argv 3]
+set RCLK_FREQ [lindex $::argv 4]
 set RX_RCLK_SRC [lindex $::argv 5]
 set TX_RCLK_SRC [lindex $::argv 6]
 puts "INFO: Using part number: $part_number"
