@@ -7,14 +7,24 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 }
 
 # Parse arguments
-if { !([info exists ::argv] && [llength $::argv] >= 2) } {
-  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gtx_transceiver.tcl -tclargs <part_number> <output_dir>"
+if { !([info exists ::argv] && [llength $::argv] >= 7) } {
+  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gtx_transceiver.tcl -tclargs <part_number> <output_dir> <gt_loc> <rclk_freq> <fclk_freq> <rx_rclk_src> <tx_rclk_src>"
   return 1
 }
 set part_number [lindex $::argv 0]
 set output_dir [lindex $::argv 1]
+set GT_LOC [lindex $::argv 2]
+set RCLK_FREQ [lindex $::argv 3]
+set FCLK_FREQ [lindex $::argv 4]
+set RX_RCLK_SRC [lindex $::argv 5]
+set TX_RCLK_SRC [lindex $::argv 6]
 puts "INFO: Using part number: $part_number"
 puts "INFO: Output directory: $output_dir"
+puts "INFO: GT Location: $GT_LOC"
+puts "INFO: Reference clock frequency: $RCLK_FREQ MHz"
+puts "INFO: Free-running clock frequency: $FCLK_FREQ MHz"
+puts "INFO: RX reference clock source: $RX_RCLK_SRC"
+puts "INFO: TX reference clock source: $TX_RCLK_SRC"
 
 # Create project in output directory
 if { [file exists $output_dir] } {
@@ -74,7 +84,7 @@ set_property -dict [list \
   CONFIG.gt0_val_decoding {8B/10B} \
   CONFIG.gt0_val_dfe_mode {LPM-Auto} \
   CONFIG.gt0_val_drp {true} \
-  CONFIG.gt0_val_drp_clock {125} \
+  CONFIG.gt0_val_drp_clock [format "%.0f" $FCLK_FREQ] \
   CONFIG.gt0_val_encoding {8B/10B} \
   CONFIG.gt0_val_max_cb_level {7} \
   CONFIG.gt0_val_no_rx {false} \
@@ -133,8 +143,8 @@ set_property -dict [list \
   CONFIG.gt0_val_rx_data_width {32} \
   CONFIG.gt0_val_rx_int_datawidth {40} \
   CONFIG.gt0_val_rx_line_rate {12.5} \
-  CONFIG.gt0_val_rx_refclk {REFCLK1_Q0} \
-  CONFIG.gt0_val_rx_reference_clock {125.000} \
+  CONFIG.gt0_val_rx_refclk $RX_RCLK_SRC \
+  CONFIG.gt0_val_rx_reference_clock [format "%.3f" $RCLK_FREQ] \
   CONFIG.gt0_val_rx_termination_voltage {Programmable} \
   CONFIG.gt0_val_rxbuf_en {true} \
   CONFIG.gt0_val_rxcomma_deten {true} \
@@ -147,8 +157,8 @@ set_property -dict [list \
   CONFIG.gt0_val_tx_data_width {32} \
   CONFIG.gt0_val_tx_int_datawidth {40} \
   CONFIG.gt0_val_tx_line_rate {12.5} \
-  CONFIG.gt0_val_tx_refclk {REFCLK1_Q0} \
-  CONFIG.gt0_val_tx_reference_clock {125.000} \
+  CONFIG.gt0_val_tx_refclk $TX_RCLK_SRC \
+  CONFIG.gt0_val_tx_reference_clock [format "%.3f" $RCLK_FREQ] \
   CONFIG.gt0_val_txbuf_en {true} \
   CONFIG.gt0_val_txdiffctrl {false} \
   CONFIG.gt0_val_txmaincursor {false} \
@@ -156,40 +166,28 @@ set_property -dict [list \
   CONFIG.gt0_val_txprecursor {false} \
   CONFIG.gt0_val_txusrclk {TXOUTCLK} \
   CONFIG.gt1_val {false} \
-  CONFIG.gt1_val_rx_refclk {REFCLK1_Q0} \
-  CONFIG.gt1_val_tx_refclk {REFCLK1_Q0} \
+  CONFIG.gt1_val_rx_refclk $RX_RCLK_SRC \
+  CONFIG.gt1_val_tx_refclk $TX_RCLK_SRC \
   CONFIG.gt2_val {false} \
-  CONFIG.gt2_val_rx_refclk {REFCLK1_Q0} \
-  CONFIG.gt2_val_tx_refclk {REFCLK1_Q0} \
+  CONFIG.gt2_val_rx_refclk $RX_RCLK_SRC \
+  CONFIG.gt2_val_tx_refclk $TX_RCLK_SRC \
   CONFIG.gt3_val {false} \
-  CONFIG.gt3_val_rx_refclk {REFCLK1_Q0} \
-  CONFIG.gt3_val_tx_refclk {REFCLK1_Q0} \
+  CONFIG.gt3_val_rx_refclk $RX_RCLK_SRC \
+  CONFIG.gt3_val_tx_refclk $TX_RCLK_SRC \
   CONFIG.gt_val_drp {false} \
-  CONFIG.gt_val_drp_clock {60} \
+  CONFIG.gt_val_drp_clock [format "%.0f" $FCLK_FREQ] \
   CONFIG.gt_val_rx_pll {QPLL} \
   CONFIG.gt_val_tx_pll {QPLL} \
   CONFIG.identical_protocol_file {Start_from_scratch} \
   CONFIG.identical_val_no_rx {false} \
   CONFIG.identical_val_no_tx {false} \
   CONFIG.identical_val_rx_line_rate {12.5} \
-  CONFIG.identical_val_rx_reference_clock {125.000} \
+  CONFIG.identical_val_rx_reference_clock [format "%.3f" $RCLK_FREQ] \
   CONFIG.identical_val_tx_line_rate {12.5} \
-  CONFIG.identical_val_tx_reference_clock {125.000} \
+  CONFIG.identical_val_tx_reference_clock [format "%.3f" $RCLK_FREQ] \
 ] [get_ips $ip_name]
 
-# The .xci file is created automatically; find and copy it
-set xci_path "[get_property IP_FILE [get_ips $ip_name]]"
-set xci_filename [file tail $xci_path]
-file copy -force $xci_path $output_dir/$xci_filename
-
-# Cleanup: Remove all files in output_dir except .xci
-foreach f [glob -nocomplain -directory $output_dir *] {
-  if { [file extension $f] ne ".xci" } {
-    file delete -force $f
-  }
-}
-
-puts "INFO: IP core '$ip_name' .xci generated at $output_dir/$xci_filename"
+puts "INFO: IP core '$ip_name' generated successfully"
 
 close_project
 exit

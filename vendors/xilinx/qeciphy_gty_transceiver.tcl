@@ -7,14 +7,25 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 }
 
 # Parse arguments
-if { !([info exists ::argv] && [llength $::argv] >= 2) } {
-  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gty_transceiver.tcl -tclargs <part_number> <output_dir>"
+if { !([info exists ::argv] && [llength $::argv] >= 7) } {
+  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gty_transceiver.tcl -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC>"
   return 1
 }
 set part_number [lindex $::argv 0]
 set output_dir [lindex $::argv 1]
+set GT_LOC [lindex $::argv 2]
+set FCLK_FREQ [lindex $::argv 3]
+set RCLK_FREQ [lindex $::argv 4]
+set RX_RCLK_SRC [lindex $::argv 5]
+set TX_RCLK_SRC [lindex $::argv 6]
+
 puts "INFO: Using part number: $part_number"
 puts "INFO: Output directory: $output_dir"
+puts "INFO: GT Location: $GT_LOC"
+puts "INFO: Free-run clock frequency: $FCLK_FREQ"
+puts "INFO: Reference clock frequency: $RCLK_FREQ"
+puts "INFO: RX reference clock source: $RX_RCLK_SRC"
+puts "INFO: TX reference clock source: $TX_RCLK_SRC"
 
 # Create project in output directory
 if { [file exists $output_dir] } {
@@ -43,11 +54,11 @@ foreach ip_vlnv $required_ips {
 set ip_name qeciphy_gty_transceiver
 set ip_obj [create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name $ip_name]
 
-# Set IP parameters (customize as needed)
+# Set IP parameters
 set_property -dict [list \
-  CONFIG.CHANNEL_ENABLE {X0Y8} \
+  CONFIG.CHANNEL_ENABLE $GT_LOC \
   CONFIG.ENABLE_OPTIONAL_PORTS {qpll0lock_out rxsliderdy_out} \
-  CONFIG.FREERUN_FREQUENCY {156.25} \
+  CONFIG.FREERUN_FREQUENCY $FCLK_FREQ \
   CONFIG.LOCATE_RX_USER_CLOCKING {EXAMPLE_DESIGN} \
   CONFIG.LOCATE_TX_USER_CLOCKING {EXAMPLE_DESIGN} \
   CONFIG.RX_BUFFER_MODE {1} \
@@ -62,10 +73,10 @@ set_property -dict [list \
   CONFIG.RX_INT_DATA_WIDTH {40} \
   CONFIG.RX_JTOL_FC {7.4985003} \
   CONFIG.RX_LINE_RATE {12.5} \
-  CONFIG.RX_MASTER_CHANNEL {X0Y8} \
+  CONFIG.RX_MASTER_CHANNEL $GT_LOC \
   CONFIG.RX_OUTCLK_SOURCE {RXOUTCLKPMA} \
-  CONFIG.RX_REFCLK_FREQUENCY {156.25} \
-  CONFIG.RX_REFCLK_SOURCE {X0Y8 clk1+2} \
+  CONFIG.RX_REFCLK_FREQUENCY $RCLK_FREQ \
+  CONFIG.RX_REFCLK_SOURCE $RX_RCLK_SRC \
   CONFIG.RX_SLIDE_MODE {PMA} \
   CONFIG.RX_USER_DATA_WIDTH {32} \
   CONFIG.TXPROGDIV_FREQ_VAL {312.5} \
@@ -73,26 +84,14 @@ set_property -dict [list \
   CONFIG.TX_DATA_ENCODING {8B10B} \
   CONFIG.TX_INT_DATA_WIDTH {40} \
   CONFIG.TX_LINE_RATE {12.5} \
-  CONFIG.TX_MASTER_CHANNEL {X0Y8} \
+  CONFIG.TX_MASTER_CHANNEL $GT_LOC \
   CONFIG.TX_OUTCLK_SOURCE {TXOUTCLKPMA} \
-  CONFIG.TX_REFCLK_FREQUENCY {156.25} \
-  CONFIG.TX_REFCLK_SOURCE {X0Y8 clk1+2} \
+  CONFIG.TX_REFCLK_FREQUENCY $RCLK_FREQ \
+  CONFIG.TX_REFCLK_SOURCE $TX_RCLK_SRC \
   CONFIG.TX_USER_DATA_WIDTH {32} \
 ] [get_ips $ip_name]
 
-# The .xci file is created automatically; find and copy it
-set xci_path "[get_property IP_FILE [get_ips $ip_name]]"
-set xci_filename [file tail $xci_path]
-file copy -force $xci_path $output_dir/$xci_filename
-
-# Cleanup: Remove all files in output_dir except .xci
-foreach f [glob -nocomplain -directory $output_dir *] {
-  if { [file extension $f] ne ".xci" } {
-    file delete -force $f
-  }
-}
-
-puts "INFO: IP core '$ip_name' .xci generated at $output_dir/$xci_filename"
+puts "INFO: IP core '$ip_name' generated successfully"
 
 close_project
 exit
