@@ -37,7 +37,7 @@ This means you only need to send valid data packets from one FPGA and receive va
 - Python 3.8+: for build scripts
 - Make: for build automation
 
-**For development:**
+**Additional tools needed for development:**
 - Verilator v5.020: for linting
 - Verible v0.0-3430: for formatting
 - Git: for version control
@@ -135,7 +135,7 @@ If you want to contribute to QECIPHY development, see [CONTRIBUTING.md](CONTRIBU
 
 ## Documentation
 
-- **[Integration Guide](docs/integration.md)** - How to use QECIPHY in your design
+- **[Integration Guide](INTEGRATION.md)** - How to use QECIPHY in your design
 - **[QECi Specification](https://www.riverlane.com/get-qec-ready/qeci)** - Physical layer specification
 - **[Contributing Guide](CONTRIBUTING.md)** - Development and contribution guidelines
 
