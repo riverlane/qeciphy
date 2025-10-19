@@ -2,10 +2,10 @@
 # Copyright (c) 2025 Riverlane Ltd.
 
 # Vivado synthesis script
-# Usage: vivado -mode batch -source vivado_synth.tcl -tclargs <SYN_TOP> <XDC> <PART> <BOARD> <HOOKS> <SYN_FILES>
+# Usage: vivado -mode batch -source vivado_synth.tcl -tclargs <SYN_TOP> <XDC> <PART> <BOARD> <HOOKS> <SYN_FILES> -- <XCI_FILES>
 
 if { !([info exists ::argv] && [llength $::argv] >= 5) } {
-    puts "ERROR: Usage: vivado -mode batch -source vivado_synth.tcl -tclargs <SYN_TOP> <XDC> <PART> <BOARD?> <HOOKS?> <SYN_FILES>"
+    puts "ERROR: Usage: vivado -mode batch -source vivado_synth.tcl -tclargs <SYN_TOP> <XDC> <PART> <BOARD?> <HOOKS?> <SYN_FILES> -- <XCI_FILES>"
     exit 1
 }
 
@@ -14,7 +14,23 @@ set xdc_file     [lindex $::argv 1]
 set part_number  [lindex $::argv 2]
 set board        [lindex $::argv 3]
 set hooks_raw    [lindex $::argv 4]
-set syn_files    [lrange $::argv 5 end]
+
+# Parse file arguments (separated by "--")
+set separator_index -1
+for {set i 0} {$i < [llength $::argv]} {incr i} {
+    if {[lindex $::argv $i] eq "--"} {
+        set separator_index $i
+        break
+    }
+}
+
+if {$separator_index == -1} {
+    set syn_files [lrange $::argv 5 end]
+    set xci_files {}
+} else {
+    set syn_files [lrange $::argv 5 [expr {$separator_index - 1}]]
+    set xci_files [lrange $::argv [expr {$separator_index + 1}] end]
+}
 
 puts "INFO: Synthesis top: $syn_top"
 puts "INFO: Constraints file: $xdc_file"
@@ -23,12 +39,14 @@ if { $board ne "" } {
     puts "INFO: Board: $board"
 }
 puts "INFO: Hooks: $hooks_raw"
+puts "INFO: Synthesis files: $syn_files"
+puts "INFO: XCI files: $xci_files"
 
 # Parse hooks (space-separated script paths)
 set hooks [split $hooks_raw]
-puts "DEBUG: Total hooks: [llength $hooks]"
+puts "Total hooks: [llength $hooks]"
 foreach hook $hooks {
-    puts "DEBUG: Hook script: $hook"
+    puts "Hook script: $hook"
 }
 
 # Run pre-setup hooks
@@ -64,10 +82,10 @@ foreach f $syn_files {
     add_files -fileset sources_1 $f
 }
 
-# Add IP cores from xci/
-if { [file exists "xci"] } {
-    foreach xci_file [glob -nocomplain xci/*.xci] {
-        import_ip $xci_file
+# Add IP cores from XCI files
+foreach f $xci_files {
+    if {$f ne ""} {
+        import_ip $f
     }
 }
 

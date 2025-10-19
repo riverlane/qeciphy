@@ -45,12 +45,14 @@ TX_RCLK_SRC      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROF
 SIM_FILELIST := sim.f
 LINT_FILELIST := lint.f
 SRC_FILELIST := src.f
+XCI_FILELIST := xci.f
 
 # Extracted file lists
 LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(LINT_FILELIST))
 SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST))
 SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
+XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sources.py $(XCI_FILELIST); fi)
 
 # Tool paths and directories
 XCI_DIR := xci
@@ -198,8 +200,8 @@ vivado_generate_xci:
 
 vivado_sim:
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES)
+	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(XCI_FILES)
 
 vivado_synth:
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) $(BOARD) '$(HOOKS)' $(SYN_FILES)
+	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) $(BOARD) '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)

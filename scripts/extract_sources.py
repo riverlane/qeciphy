@@ -26,7 +26,7 @@ def process_f_file(filepath, root, visited):
                         sub_sources, sub_incdirs = process_f_file(subfile_path, root, visited)
                         sources.extend(sub_sources)
                         incdirs.extend(sub_incdirs)
-                elif line.endswith(".sv") or line.endswith(".v"):
+                elif line.endswith(".sv") or line.endswith(".v") or line.endswith(".xci"):
                     sources.append(line)
     except Exception as e:
         sys.stderr.write(f"Error reading file {filepath}: {e}\n")
