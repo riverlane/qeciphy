@@ -32,16 +32,27 @@ BOARD     := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).bo
 VARIANT   := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).variant)
 HOOKS     := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).synth.pre_setup_hooks)
 
+# Clock frequencies 
+FCLK_FREQ        := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).fclk_freq 2>/dev/null || echo "")
+RCLK_FREQ        := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).rclk_freq 2>/dev/null || echo "")
+
+# Transceiver configuration variables
+GT_LOC           := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.gt_loc 2>/dev/null || echo "")
+RX_RCLK_SRC      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.rx_rclk_src 2>/dev/null || echo "")
+TX_RCLK_SRC      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.tx_rclk_src 2>/dev/null || echo "")
+
 # Static file lists
 SIM_FILELIST := sim.f
 LINT_FILELIST := lint.f
 SRC_FILELIST := src.f
+XCI_FILELIST := xci.f
 
 # Extracted file lists
 LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(LINT_FILELIST))
 SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST))
 SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
+XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sources.py $(XCI_FILELIST); fi)
 
 # Tool paths and directories
 XCI_DIR := xci
@@ -143,7 +154,7 @@ synth:
 
 clean:
 	@echo "INFO: Cleaning build artifacts"
-	@rm -rf .Xil/ vivado* xci/ run/
+	@rm -rf .Xil/ vivado* xci/ run/ xci.f
 
 # -------------------------------------------------------------
 # Tool implementations
@@ -164,26 +175,33 @@ vivado_generate_xci:
 	@mkdir -p $(XCI_DIR)
 	@mkdir -p $(RUN_DIR)
 	@if [ "$(VARIANT)" = "GTH" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gth) -tclargs $(PART) $(RUN_DIR); \
-		cp $(RUN_DIR)/*.xci $(XCI_DIR); \
+		vivado -mode batch -source $(GEN_XCI_TCL_gth) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)"; \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
+		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	elif [ "$(VARIANT)" = "GTX" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gtx) -tclargs $(PART) $(RUN_DIR); \
-		cp $(RUN_DIR)/*.xci $(XCI_DIR); \
+		vivado -mode batch -source $(GEN_XCI_TCL_gtx) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)"; \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
 		vivado -mode batch -source $(GEN_XCI_TCL_gtx_mmcm) -tclargs $(PART) $(RUN_DIR); \
-		cp $(RUN_DIR)/*.xci $(XCI_DIR); \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
+		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	elif [ "$(VARIANT)" = "GTY" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gty) -tclargs $(PART) $(RUN_DIR); \
-		cp $(RUN_DIR)/*.xci $(XCI_DIR); \
+		vivado -mode batch -source $(GEN_XCI_TCL_gty) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)"; \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
+		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	else \
 		echo "ERROR: Unsupported variant $(VARIANT). Must be one of GTH, GTX, GTY."; \
 		exit 1; \
 	fi
+	@echo "INFO: Generating XCI filelist"
+	@find $(XCI_DIR) -name "*.xci" | sort > xci.f
+	@echo "INFO: Created xci.f with $$(wc -l < xci.f) XCI files"
+	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
 
 vivado_sim:
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES)
+	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(XCI_FILES)
 
 vivado_synth:
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) $(BOARD) '$(HOOKS)' $(SYN_FILES)
+	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) $(BOARD) '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)

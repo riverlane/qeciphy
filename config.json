@@ -7,6 +7,13 @@
       },
       "board": "xilinx.com:zcu216:part0:2.0",
       "variant": "GTY",
+      "fclk_freq": "156.25",
+      "rclk_freq": "156.25",
+      "transceiver": {
+        "gt_loc": "X0Y8",
+        "rx_rclk_src": "X0Y8 clk1+2",
+        "tx_rclk_src": "X0Y8 clk1+2"
+      },
       "synth": {
         "top": "qeciphy_syn_wrapper",
         "filelists": [
@@ -28,6 +35,13 @@
       },
       "board": "xilinx.com:zcu106:part0:2.6",
       "variant": "GTH",
+      "fclk_freq": "156.25",
+      "rclk_freq": "156.25",
+      "transceiver": {
+        "gt_loc": "X0Y10",
+        "rx_rclk_src": "X0Y10 clk1+1",
+        "tx_rclk_src": "X0Y10 clk1+1"
+      },
       "synth": {
         "top": "qeciphy_syn_wrapper",
         "filelists": [
@@ -48,6 +62,13 @@
         "vendor": "xilinx"
       },
       "variant": "GTX",
+      "fclk_freq": "125",
+      "rclk_freq": "125",
+      "transceiver": {
+        "gt_loc": "X0Y0",
+        "rx_rclk_src": "REFCLK1_Q0",
+        "tx_rclk_src": "REFCLK1_Q0"
+      },
       "synth": {
         "top": "qeciphy_syn_wrapper",
         "filelists": [

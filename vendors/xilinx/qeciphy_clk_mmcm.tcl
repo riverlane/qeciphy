@@ -69,19 +69,7 @@ set_property -dict [list \
   CONFIG.USE_LOCKED {false} \
 ] [get_ips $ip_name]
 
-# The .xci file is created automatically; find and copy it
-set xci_path "[get_property IP_FILE [get_ips $ip_name]]"
-set xci_filename [file tail $xci_path]
-file copy -force $xci_path $output_dir/$xci_filename
-
-# Cleanup: Remove all files in output_dir except .xci
-foreach f [glob -nocomplain -directory $output_dir *] {
-  if { [file extension $f] ne ".xci" } {
-    file delete -force $f
-  }
-}
-
-puts "INFO: IP core '$ip_name' .xci generated at $output_dir/$xci_filename"
+puts "INFO: IP core '$ip_name' generated successfully"
 
 close_project
 exit

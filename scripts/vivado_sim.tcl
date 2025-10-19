@@ -2,10 +2,10 @@
 # Copyright (c) 2025 Riverlane Ltd.
 
 # Vivado simulation script
-# Usage: vivado -mode batch -source vivado_sim.tcl -tclargs <SIM_TOP> <PART> <VARIANT> <SRC_FILES> -- <SIM_FILES>
+# Usage: vivado -mode batch -source vivado_sim.tcl -tclargs <SIM_TOP> <PART> <VARIANT> <SRC_FILES> -- <SIM_FILES> -- <XCI_FILES>
 
 if { !([info exists ::argv] && [llength $::argv] >= 3) } {
-    puts "ERROR: Usage: vivado -mode batch -source vivado_sim.tcl -tclargs <SIM_TOP> <PART> <VARIANT> <SRC_FILES> -- <SIM_FILES>"
+    puts "ERROR: Usage: vivado -mode batch -source vivado_sim.tcl -tclargs <SIM_TOP> <PART> <VARIANT> <SRC_FILES> -- <SIM_FILES> -- <XCI_FILES>"
     exit 1
 }
 
@@ -14,20 +14,28 @@ set part_number [lindex $::argv 1]
 set variant     [lindex $::argv 2]
 
 # Parse file arguments (separated by "--")
-set separator_index -1
+set separator_indices {}
 for {set i 0} {$i < [llength $::argv]} {incr i} {
     if {[lindex $::argv $i] eq "--"} {
-        set separator_index $i
-        break
+        lappend separator_indices $i
     }
 }
 
-if {$separator_index == -1} {
+if {[llength $separator_indices] == 0} {
     set src_files [lrange $::argv 3 end]
     set sim_files {}
+    set xci_files {}
+} elseif {[llength $separator_indices] == 1} {
+    set sep1 [lindex $separator_indices 0]
+    set src_files [lrange $::argv 3 [expr {$sep1 - 1}]]
+    set sim_files [lrange $::argv [expr {$sep1 + 1}] end]
+    set xci_files {}
 } else {
-    set src_files [lrange $::argv 3 [expr {$separator_index - 1}]]
-    set sim_files [lrange $::argv [expr {$separator_index + 1}] end]
+    set sep1 [lindex $separator_indices 0]
+    set sep2 [lindex $separator_indices 1]
+    set src_files [lrange $::argv 3 [expr {$sep1 - 1}]]
+    set sim_files [lrange $::argv [expr {$sep1 + 1}] [expr {$sep2 - 1}]]
+    set xci_files [lrange $::argv [expr {$sep2 + 1}] end]
 }
 
 puts "INFO: Simulation top: $sim_top"
@@ -35,6 +43,7 @@ puts "INFO: Using part number: $part_number"
 puts "INFO: Using variant: $variant"
 puts "INFO: Source files: $src_files"
 puts "INFO: Simulation files: $sim_files"
+puts "INFO: XCI files: $xci_files"
 
 # Create simulation project
 set output_dir "./run/sim_qeciphy"
@@ -56,10 +65,10 @@ foreach f $sim_files {
     }
 }
 
-# Add IP cores from xci/
-if { [file exists "xci"] } {
-    foreach xci_file [glob -nocomplain xci/*.xci] {
-        import_ip $xci_file
+# Add IP cores from XCI files
+foreach f $xci_files {
+    if {$f ne ""} {
+        import_ip $f
     }
 }
 
