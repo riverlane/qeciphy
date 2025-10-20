@@ -455,10 +455,6 @@ QECIPHY uses standard AXI4-Stream protocol with 64-bit data width:
 
 Optional P-channel interface for power state control:
 
-### Power Management Interface
-
-Optional P-channel interface for power state control:
-
 - **PSTATE**: Requested power state (1=active, 0=low power)
 - **PREQ**: Power state change request signal (active HIGH). Assert to request transition to the power state specified by PSTATE
 - **PACCEPT**: Power state acknowledgment signal (active HIGH). Indicates acceptance of the requested power state transition
