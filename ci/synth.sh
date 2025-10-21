@@ -1,8 +1,8 @@
 #!/bin/bash
-set -e 
+set -e
 set -o pipefail
 
-echo "=== QECIPHY Multi-Platform Simulation ==="
+echo "=== QECIPHY Multi-Platform Synthesis ==="
 
 echo "Purging modules..."
 module purge
@@ -15,7 +15,7 @@ PROFILES=("zcu216" "zcu106" "kasliSoC")
 
 for profile in "${PROFILES[@]}"; do
     echo ""
-    echo "--- Testing profile: $profile ---"
+    echo "--- Synthesizing profile: $profile ---"
 
     echo "Cleaning previous builds..."
     make clean
@@ -23,11 +23,11 @@ for profile in "${PROFILES[@]}"; do
     echo "Generating XCI cores for $profile..."
     make generate-xci OPT_PROFILE=$profile
     
-    echo "Running simulation for $profile..."
-    make sim OPT_PROFILE=$profile
+    echo "Running synthesis for $profile..."
+    make synth OPT_PROFILE=$profile
     
-    echo "$profile simulation completed successfully!"
+    echo "$profile synthesis completed successfully!"
 done
 
 echo ""
-echo "All platform simulations completed successfully!"
+echo "All platform synthesis completed successfully!"

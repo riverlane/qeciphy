@@ -4,18 +4,31 @@ on:
     branches: [main]
 
 jobs:
-  fpga:
+  # Static analysis jobs that must pass before expensive FPGA jobs
+  static-checks:
     runs-on: sanity-builder
     environment: ci
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Lint FPGA
+      - name: Check code formatting
+        run: |
+          bash ci/format.sh
+      - name: Lint FPGA code
         run: |
           bash ci/lint.sh
-      - name: Build FPGA
-        run: |
-          bash ci/fpga.sh
-      - name: Run sim
+
+  # FPGA jobs that only run if static checks pass
+  fpga-tests:
+    needs: static-checks
+    runs-on: sanity-builder
+    environment: ci
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Run simulations
         run: |
           bash ci/sim.sh
+      - name: Run synthesis
+        run: |
+          bash ci/synth.sh
