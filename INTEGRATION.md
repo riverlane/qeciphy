@@ -39,7 +39,6 @@ QECIPHY provides a simple AXI4-Stream interface that abstracts away all physical
 ### Design Requirements
 
 Your design must include:
-- AXI4-Stream protocol
 - Reset synchronization logic
 - Status monitoring and error handling logic
 
@@ -361,7 +360,7 @@ always_ff @(posedge axi_clk) begin
     if (!aresetn) begin
         m_axis_tx_tvalid <= 1'b0;
         m_axis_tx_tdata  <= 64'h0;
-    end else if (data_available) begin
+    end else if (data_available && !m_axis_tx_tvalid) begin
         m_axis_tx_tvalid <= 1'b1;
         m_axis_tx_tdata  <= application_data;
     end else if (m_axis_tx_tready) begin
@@ -426,6 +425,8 @@ end
 - **FCLK**: Free-running clock (e.g., 100 MHz)
 - **ACLK**: AXI4-Stream clock for TX/RX interfaces
 - **ARSTn**: Active LOW asynchronous reset input, synchronized internally
+
+**Note:** RCLK, FCLK and ACLK can all be asynchronous to each other.
 
 ### AXI4-Stream Protocol
 
