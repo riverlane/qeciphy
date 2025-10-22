@@ -204,4 +204,4 @@ vivado_sim:
 
 vivado_synth:
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) $(BOARD) '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)
+	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)
