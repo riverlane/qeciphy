@@ -19,7 +19,7 @@ jobs:
           bash ci/lint.sh
 
   # FPGA jobs that only run if static checks pass
-  fpga-tests:
+  fpga-simulation:
     needs: static-checks
     runs-on: sanity-builder
     environment: ci
@@ -29,6 +29,14 @@ jobs:
       - name: Run simulations
         run: |
           bash ci/sim.sh
+
+  fpga-synthesis:
+    needs: static-checks
+    runs-on: sanity-builder
+    environment: ci
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Run synthesis
         run: |
           bash ci/synth.sh
