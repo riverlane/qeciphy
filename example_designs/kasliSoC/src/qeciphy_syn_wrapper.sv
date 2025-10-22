@@ -7,7 +7,7 @@ module qeciphy_syn_wrapper (
     input  logic       gt_refclk_in_n,
     input  logic       clk_freerun_p,
     input  logic       clk_freerun_n,
-    output logic [2:0] led
+    output logic [1:0] led
 );
 
    // Signal declarations
@@ -103,7 +103,6 @@ module qeciphy_syn_wrapper (
    // For debugging
    assign led[0] = (STATUS == 4'b0100) ? 1'b1 : 1'b0;
    assign led[1] = (ECODE == 4'b0000) ? 1'b1 : 1'b0;
-   assign led[2] = ~RXDATA_error;
 
    // Drive the transmitter QECI-PHY TX data pins
    always_ff @(posedge FCLK or negedge ARSTn) begin

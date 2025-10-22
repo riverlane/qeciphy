@@ -34,8 +34,6 @@ set_property LOC GTXE2_CHANNEL_X0Y0 [get_cells -hierarchical -filter {lib_cell =
 
 set_property IOSTANDARD LVCMOS25 [get_ports led[0]];
 set_property IOSTANDARD LVCMOS25 [get_ports led[1]];
-set_property IOSTANDARD LVCMOS25 [get_ports led[2]];
 
 set_property PACKAGE_PIN AF19    [get_ports led[0]];
 set_property PACKAGE_PIN AF23    [get_ports led[1]];
-set_property PACKAGE_PIN AA18    [get_ports led[2]];
