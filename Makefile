@@ -6,6 +6,7 @@
 # -------------------------------------------------------------
 OPT_MODE?=batch
 OPT_PROFILE?=
+OPT_SIM_FILES?=false
 
 # -------------------------------------------------------------
 # Utils
@@ -92,6 +93,8 @@ help:
 	@echo "  generate-xci"
 	@echo "    - Generate Xilinx IP core files (.xci) for the target profile"
 	@echo "    - Required variables: OPT_PROFILE"
+	@echo "    - Optional variables: OPT_SIM_FILES=(true|false) [default: false]"
+	@echo "    - When OPT_SIM_FILES=true, also generates simulation files for external simulators"
 	@echo ""
 	@echo "  format"
 	@echo "    - Format SystemVerilog source code using Verible"
@@ -103,6 +106,7 @@ help:
 	@echo "--------"
 	@echo "  make clean"
 	@echo "  make generate-xci OPT_PROFILE=zcu216"
+	@echo "  make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true"
 	@echo "  make synth OPT_PROFILE=zcu216"
 	@echo "  make sim OPT_PROFILE=zcu216"
 	@echo "  make lint"
@@ -141,6 +145,14 @@ generate-xci:
 	@$(MAKE) check_profile
 	@echo "INFO: Generating XCI files for profile $(OPT_PROFILE)"
 	@$(MAKE) vivado_generate_xci
+	@if [ "$(OPT_SIM_FILES)" = "true" ]; then \
+		echo "INFO: Generating simulation files for XCI cores (profile $(OPT_PROFILE))"; \
+		if [ ! -f $(XCI_FILELIST) ]; then \
+			echo "ERROR: XCI filelist not found after generation"; \
+			exit 1; \
+		fi; \
+		$(MAKE) vivado_generate_xci_sim; \
+	fi
 
 sim:
 	@$(MAKE) check_profile
@@ -154,7 +166,7 @@ synth:
 
 clean:
 	@echo "INFO: Cleaning build artifacts"
-	@rm -rf .Xil/ vivado* xci/ run/ xci.f
+	@rm -rf .Xil/ vivado* xci/ run/ xci.f tb/sim_files/
 
 # -------------------------------------------------------------
 # Tool implementations
@@ -195,6 +207,15 @@ vivado_generate_xci:
 	@echo "INFO: Generating XCI filelist"
 	@find $(XCI_DIR) -name "*.xci" | sort > xci.f
 	@echo "INFO: Created xci.f with $$(wc -l < xci.f) XCI files"
+	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
+	@rm -rf $(RUN_DIR)
+
+vivado_generate_xci_sim:
+	@mkdir -p tb/sim_files
+	@mkdir -p $(RUN_DIR)
+	@echo "INFO: Generating simulation files for XCI cores"
+	@vivado -mode batch -source scripts/vivado_generate_xci_sim_files.tcl -tclargs $(PART) $(XCI_FILES)
+	@echo "INFO: Simulation files generated in tb/sim_files/"
 	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
 
