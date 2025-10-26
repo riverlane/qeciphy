@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2025 Riverlane Ltd.
-// Original authors: aniketEng
+// Original authors: Aniket Datta
 
 `ifndef RIV_ASYNC_FIFO_CDC_SV
 `define RIV_ASYNC_FIFO_CDC_SV

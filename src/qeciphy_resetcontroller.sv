@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2024-2025 Riverlane Ltd.
-// Original authors: aniketEng
+// Original authors: Aniket Datta
 
 // Reset sequencing:
 // 1. Assert all resets asynchronously when axis_rst_n is asserted.  

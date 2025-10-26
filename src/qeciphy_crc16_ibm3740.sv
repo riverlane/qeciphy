@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2024-2025 Riverlane Ltd.
-// Original authors: aniketEng
+// Original authors: Aniket Datta
 
 module qeciphy_crc16_ibm3740 (
     input  logic        clk,

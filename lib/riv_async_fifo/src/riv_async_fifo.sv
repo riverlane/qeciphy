@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2024-2025 Riverlane Ltd.
-// Original authors: aniketEng
+// Original authors: Aniket Datta
 
 // This module implements an asynchronous FIFO using LUTRAM.  
 // The architecture itself does not impose constraints on the frequency range of WCLK and RCLK.

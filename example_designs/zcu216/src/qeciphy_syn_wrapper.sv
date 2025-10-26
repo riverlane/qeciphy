@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2025 Riverlane Ltd.
-// Original authors: aniketEng, Gargi-Sunil-RL
+// Original authors: Aniket Datta, Gargi Sunil
 
 module qeciphy_syn_wrapper (
     input  logic       gt_refclk_in_p,

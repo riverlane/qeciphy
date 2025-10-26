@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2024-2025 Riverlane Ltd.
-// Original authors: aniketEng, Dogancan Davutoglu, Gargi-Sunil-RL
+// Original authors: Aniket Datta, Dogancan Davutoglu, Gargi Sunil
 
 module qeciphy_tb;
 

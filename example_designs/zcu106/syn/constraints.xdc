@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: None
 # Copyright (c) 2025 Riverlane Ltd.
-# Original authors: Dogancan Davutoglu, aniketEng, Gargi-Sunil-RL
+# Original authors: Dogancan Davutoglu, Aniket Datta, Gargi Sunil
 
 create_clock -period 6.4 -name gt_refclk [get_ports gt_refclk_in_p]
 set_property PACKAGE_PIN U10 [get_ports gt_refclk_in_p]

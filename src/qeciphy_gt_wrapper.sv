@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2024-2025 Riverlane Ltd.
-// Original authors: Dogancan Davutoglu, aniketEng
+// Original authors: Dogancan Davutoglu, Aniket Datta
 
 module qeciphy_gt_wrapper #(
     parameter GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH"

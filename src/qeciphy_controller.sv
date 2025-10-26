@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: None
 // Copyright (c) 2024-2025 Riverlane Ltd.
-// Original authors: aniketEng, Gargi-Sunil-RL
+// Original authors: Aniket Datta, Gargi Sunil
 
 module qeciphy_controller (
     input  logic       axis_clk,
