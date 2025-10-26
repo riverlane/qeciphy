@@ -1,0 +1,6 @@
+.Xil/
+run/
+xci/
+xci.f
+vivado*.jou
+*.log
