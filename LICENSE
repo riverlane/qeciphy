@@ -1,11 +1,26 @@
-Copyright (c) 2024-2025 Riverlane Ltd.
+Copyright (c) 2025 Riverlane Ltd.
 All rights reserved.
 
-This repository is being prepared for open-source release under the
-BSD 3-Clause License.
+The license below extends only to this work and does not grant a license to any other material, including but not limited to the QECi Specification (of which this work is an implementation) which is licensed under its own separate terms at www.riverlane.com/qeci.
 
-Until the repository is officially published and the full license text
-is added, no rights are granted to use, copy, modify, or distribute
-any part of this code.
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
-A complete BSD-3-Clause license will be included prior to public release.
+(1) Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+(2) Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS WORK IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED 
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY 
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF 
+USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+WORK, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+You are under no obligation to provide any bug fixes, patches, or upgrades to the features, functionality or performance of the source code for this work ("Enhancements"). However, if you choose to make your Enhancements available either publicly, or directly to Riverlane Ltd, without imposing a separate written license agreement for such Enhancements, then you hereby grant the following license: a non-exclusive, royalty-free perpetual irrevocable worldwide license, with the right to sublicense these rights, to install, use, modify, prepare derivative works, incorporate into other works and distribute such enhancements or derivative works, in binary and source code form, and to incorporate the foregoing into hardware and distribute and use such hardware.
