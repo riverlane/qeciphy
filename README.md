@@ -4,7 +4,7 @@
 
 QECIPHY is a physical layer implementation according to the QECi (Quantum Error Correction interface) open standard designed for FPGA-to-FPGA communication. Originally designed for quantum error correction systems, QECIPHY is a lightweight IP that exposes a simple AXI4-Stream based interface, significantly simplifying high-speed FPGA-to-FPGA communication for any application.
 
-[![License](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)
 [![Vivado](https://img.shields.io/badge/Vivado-2024%2B-orange.svg)]()
 [![SystemVerilog](https://img.shields.io/badge/HDL-SystemVerilog-green.svg)]()
 
@@ -101,7 +101,7 @@ module QECIPHY #(
 qeciphy/
 ├── src/                         # Core QECIPHY SystemVerilog sources
 ├── tb/                          # Testbench files
-├── lib/                         # self-contained, reusable RTL building blocks
+├── lib/                         # Self-contained, reusable RTL building blocks
 ├── example_designs/             # Platform-specific integration examples
 ├── vendors/                     # Vendor-specific IP generation scripts
 ├── scripts/                     # Build and utility scripts
@@ -137,7 +137,7 @@ make synth OPT_PROFILE=<profile> OPT_MODE=gui   # Run synthesis (GUI mode)
 | **LUT** | 1372 | 1230 | 1230 |
 | **FF** | 1229 | 1156 | 1156 |
 
-*Performance varies by platform and configuration*
+*Performance varies by platform and configuration.*
 
 ## Important Links
 
