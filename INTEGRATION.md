@@ -102,10 +102,12 @@ If your platform is not listed, create a new profile in `config.json`:
 - `variant`: Transceiver type (GTX/GTH/GTY)
 - `fclk_freq`: Transceiver DRP clock frequency in MHz
 - `rclk_freq`: Transceiver reference clock frequency in MHz
-- `transceiver.gt_loc`: Transceiver location (e.g., "X0Y8")
+- `transceiver.gt_loc`: Transceiver location (e.g., "X0Y8") 
 - `transceiver.rx_rclk_src`: RX reference clock source
 - `transceiver.tx_rclk_src`: TX reference clock source
 - `synth`: Synthesis configuration (optional, for standalone testing)
+
+**Important:** Refer to your FPGA documentation for correct GT site assignments and available reference clock sources for your specific device and board.
 
 ### Step 3: Generate Platform-Specific IP
 
@@ -227,7 +229,7 @@ QECIPHY #(
 
 You must add the following timing constraints to your project for proper operation.
 
-We recommend instantiating the IP with the name i_QECIPHY or u_QECIPHY. The following constraints can then be applied based on the type of transceiver being used. These constraints handle the clock relationships within the QECIPHY.
+We recommend instantiating the IP with the name `i_QECIPHY` or `u_QECIPHY`. The following constraints can then be applied based on the type of transceiver being used. These constraints handle the clock relationships within the QECIPHY.
 
 ### GTY Transceiver Constraints
 
@@ -399,24 +401,22 @@ typedef enum logic [3:0] {
 } qeciphy_status_t;
 
 // Monitor link status
+assign busy = (m_axis_tx_tvalid & !m_axis_tx_tready);
+
 always_ff @(posedge axi_clk) begin
-    case (qeciphy_status)
-        STATUS_LINK_READY: begin
-            // Link is ready for data transfer
-            link_ready <= 1'b1;
-        end
-        STATUS_FAULT_FATAL: begin
-            // Handle error condition
-            link_ready <= 1'b0;
-            // Check ECODE for specific error type
-        end
-        default: begin
-            // Link not ready yet
-            link_ready <= 1'b0;
-        end
-    endcase
+    if (!aresetn) begin
+        m_axis_tx_tvalid <= 1'b0;
+        m_axis_tx_tdata  <= 64'h0;
+    end else if (data_available && !busy) begin
+        m_axis_tx_tvalid <= 1'b1;
+        m_axis_tx_tdata  <= application_data;
+    end else if (m_axis_tx_tready) begin
+        m_axis_tx_tvalid <= 1'b0;
+    end
 end
 ```
+
+Note: If the QECIPHY enters FAULT-FATAL state, please reset the IP to get out of the fault condition.
 
 ## Interface Details
 
@@ -442,7 +442,7 @@ QECIPHY uses standard AXI4-Stream protocol with 64-bit data width:
 - **RX_TVALID**: Source indicates valid data
 - **RX_TREADY**: Destination can accept data
 
-**Important Note**: The PHY does not need to support backpressure. User logic should always be able to consume RX data. Design your receive path accordingly.
+**Important Note**: The QECIPHY does not need to support backpressure. User logic should always be able to consume RX data. Design your receive path accordingly.
 
 ### Status and Error Codes
 
@@ -463,7 +463,7 @@ QECIPHY uses standard AXI4-Stream protocol with 64-bit data width:
 
 ### Power Management Interface
 
-Optional P-channel interface for power state control:
+QECIPHY provides an optional P-channel interface for power state control, implementing the AMBA Low Power Interface Specification (P Channel Interface, Issue C):
 
 - **PSTATE**: Requested power state (1=active, 0=low power)
 - **PREQ**: Power state change request signal (active HIGH). Assert to request transition to the power state specified by PSTATE
