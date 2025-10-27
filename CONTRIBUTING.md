@@ -74,7 +74,7 @@ Include in your issue report:
 ### Example Module Template:
 
 ```systemverilog
-// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: LicenseRef-LICENSE
 
 module qeciphy_example #(
     parameter int DATA_WIDTH = 64,
@@ -112,7 +112,7 @@ Update documentation when contributing:
 
 ## License
 
-By contributing to QECIPHY, you agree that your contributions will be licensed under the project's license (BSD-3-Clause upon public release).
+By contributing to QECIPHY, you agree that your contributions will be licensed under the project's license (see [LICENSE](LICENSE) file).
 
 ## Getting Help
 
