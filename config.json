@@ -1,5 +1,33 @@
 {
   "profiles": {
+      "deltaflow": {
+      "device": {
+        "part": "xcvu13p-figd2104-2-e",
+        "vendor": "xilinx"
+      },
+      "board": "xilinx.com:zcu216:part0:2.0",
+      "variant": "GTY",
+      "fclk_freq": "156.25",
+      "rclk_freq": "156.25",
+      "transceiver": {
+        "gt_loc": "X0Y8",
+        "rx_rclk_src": "X0Y8 clk1+2",
+        "tx_rclk_src": "X0Y8 clk1+2"
+      },
+      "synth": {
+        "top": "qeciphy_syn_wrapper",
+        "filelists": [
+          "example_designs/deltaflow/src.f"
+        ],
+        "constraints": [
+          "example_designs/deltaflow/syn/constraints.xdc"
+        ],
+        "pre_setup_hooks": [
+          "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
+          "example_designs/vendors/xilinx/qeciphy_vio.tcl"
+        ]
+      }
+    },
     "zcu216": {
       "device": {
         "part": "xczu49dr-ffvf1760-2-e",
