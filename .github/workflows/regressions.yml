@@ -2,6 +2,8 @@ name: CI Pipeline
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   # Detect which files have changed to determine which jobs to run

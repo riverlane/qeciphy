@@ -8,6 +8,10 @@ QECIPHY is a physical layer implementation according to the QECi (Quantum Error 
 [![Vivado](https://img.shields.io/badge/Vivado-2024%2B-orange.svg)]()
 [![SystemVerilog](https://img.shields.io/badge/HDL-SystemVerilog-green.svg)]()
 
+[![Lint](https://img.shields.io/github/actions/workflow/status/riverlane/qeciphy/regressions.yml?label=Lint&branch=main)](https://github.com/riverlane/qeciphy/actions/workflows/regressions.yml)
+[![Simulation](https://img.shields.io/github/actions/workflow/status/riverlane/qeciphy/regressions.yml?label=Simulation&branch=main)](https://github.com/riverlane/qeciphy/actions/workflows/regressions.yml)
+[![Synthesis](https://img.shields.io/github/actions/workflow/status/riverlane/qeciphy/regressions.yml?label=Synthesis&branch=main)](https://github.com/riverlane/qeciphy/actions/workflows/regressions.yml)
+
 ## Key Features
 
 - **Simple Interface**: AXI4-Stream interface hides all physical layer complexity
