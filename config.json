@@ -5,7 +5,6 @@
         "part": "xcvu13p-figd2104-2-e",
         "vendor": "xilinx"
       },
-      "board": "xilinx.com:zcu216:part0:2.0",
       "variant": "GTY",
       "fclk_freq": "156.25",
       "rclk_freq": "156.25",
