@@ -2,220 +2,309 @@
 // Copyright (c) 2024-2025 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-// Reset sequencing:
-// 1. Assert all resets asynchronously when axis_rst_n is asserted.  
-// 2. Wait for gt_power_good.  
-// 3. Deassert o_gt_rst_n synchronously to the fclk domain after 1250 fclk cycles.  
-// 4. Wait for gt_tx_reset_done and gt_rx_reset_done.  
-// 5. Deassert o_axis_tx_rst_n and o_axis_rx_rst_n synchronously to the axis_clk domain after an additional 32 axis_clk cycles.  
-// 6. Deassert o_tx_rst_n along with o_axis_tx_rst_n but synchronized to the tx_clk domain.  
-//    Similarly, deassert o_rx_rst_n along with o_axis_rx_rst_n but synchronized to the rx_clk domain.  
-
+//------------------------------------------------------------------------------
+// QECIPHY Reset Controller
+//------------------------------------------------------------------------------
+// This module implements a comprehensive reset sequencing controller for the
+// QECIPHY. It manages the proper startup and reset sequence
+// for Xilinx GT transceivers and associated logic across multiple clock domains.
+//
+// The reset controller ensures proper timing relationships between:
+// - GT power good signals
+// - GT reset assertion/deassertion  
+// - AXI4-Stream interface resets
+// - User logic resets
+//
+// Reset Sequence:
+// 1. Assert all resets asynchronously when axis_rst_n is asserted
+// 2. Wait for gt_power_good to be asserted
+// 3. Deassert o_gt_rst_n after 1250 fclk cycles (GT reset timing requirement)
+// 4. Wait for gt_tx_reset_done and gt_rx_reset_done 
+// 5. Deassert o_axis_tx_rst_n and o_axis_rx_rst_n after 32 axis_clk cycles
+// 6. Synchronously deassert o_tx_rst_n and o_rx_rst_n to their respective domains
+// 7. Assert o_reset_done to indicate complete reset sequence
+//
+// Clock Domains:
+// - axis_clk: Main AXI4-Stream clock domain (state machine, counters)
+// - fclk: Free-running reference clock (GT reset timing)
+// - tx_clk: GT transmitter recovered clock
+// - rx_clk: GT receiver recovered clock
+//
+//------------------------------------------------------------------------------
 
 module qeciphy_resetcontroller (
-    input  logic axis_clk,
-    input  logic axis_rst_n,
-    input  logic i_gt_power_good,
-    input  logic i_gt_tx_reset_done,
-    input  logic i_gt_rx_reset_done,
-    output logic o_axis_rx_rst_n,
-    output logic o_axis_tx_rst_n,
-    output logic o_reset_done,
+    // Main clock domain (AXI4-Stream)
+    input logic axis_clk,   // AXI4-Stream clock
+    input logic axis_rst_n, // Active-low reset (master reset)
 
-    input  logic tx_clk,
-    output logic o_tx_rst_n,
+    // GT status inputs
+    input logic i_gt_power_good,     // GT power good indicator
+    input logic i_gt_tx_reset_done,  // GT TX reset complete
+    input logic i_gt_rx_reset_done,  // GT RX reset complete
 
-    input  logic rx_clk,
-    output logic o_rx_rst_n,
+    // AXI4-Stream reset outputs
+    output logic o_axis_rx_rst_n,  // AXI4-Stream RX reset (axis_clk domain)
+    output logic o_axis_tx_rst_n,  // AXI4-Stream TX reset (axis_clk domain)
+    output logic o_reset_done,     // Reset sequence complete indicator
 
-    input  logic fclk,
-    output logic o_gt_rst_n
+    // GT transmitter clock domain
+    input  logic tx_clk,     // GT TX recovered clock
+    output logic o_tx_rst_n, // TX logic reset (tx_clk domain)
+
+    // GT receiver clock domain  
+    input  logic rx_clk,     // GT RX recovered clock
+    output logic o_rx_rst_n, // RX logic reset (rx_clk domain)
+
+    // GT reference clock domain
+    input  logic fclk,       // Free-running reference clock
+    output logic o_gt_rst_n  // GT reset (fclk domain)
 );
 
-   // -------------------------------------------------------------
-   // Type definition
-   // -------------------------------------------------------------
+   //--------------------------------------------------------------------------
+   // State Machine Type Definition
+   //--------------------------------------------------------------------------
 
    typedef enum bit [2:0] {
-      INIT = 0,
-      WAIT_FOR_GT_PGOOD = 1,
-      GT_RESET = 2,
-      WAIT_FOR_RESETDONE = 3,
-      TX_RX_RESET = 4,
-      DONE = 5,
-      UNKNOWN_6 = 6,
-      UNKNOWN_7 = 7
+      INIT          = 0,  // Initial state: all resets asserted, counters loaded
+      WAIT_GT_POWER = 1,  // Waiting for GT power good signal
+      GT_RESET      = 2,  // GT reset delay: counting 1250 fclk cycles
+      WAIT_GT_READY = 3,  // Waiting for GT TX/RX reset done signals
+      TX_RX_RESET   = 4,  // TX/RX reset delay: counting 32 axis_clk cycles  
+      DONE          = 5,  // Reset sequence complete: all resets released
+      RESERVED_6    = 6,  // Reserved for future use
+      RESERVED_7    = 7   // Reserved for future use
    } fsm_t;
 
-   // -------------------------------------------------------------
-   // Local declaration
-   // -------------------------------------------------------------
+   //--------------------------------------------------------------------------
+   // Internal Signal Declarations
+   //--------------------------------------------------------------------------
 
-   fsm_t fsm, fsm_nxt;
+   // State machine signals
+   fsm_t fsm, fsm_nxt;  // Current and next state
 
-   logic [10:0] fclk_counter;
-   logic [10:0] fclk_counter_nxt;
+   // Counter completion signals
    logic fclk_counter_done;
-   logic fclk_counter_done_nxt;
    logic fclk_counter_done_axis;
-
-   logic [4:0] axis_clk_counter;
-   logic [4:0] axis_clk_counter_nxt;
    logic axis_clk_counter_done;
-   logic axis_clk_counter_done_nxt;
 
-   logic [3:0] rst_stretch_counter;
-   logic [3:0] rst_stretch_counter_nxt;
-   logic axis_rst_n_int;
-   logic axis_rst_n_int_nxt;
+   // State machine status signals for cross-domain use
+   logic fsm_init;
+   logic fsm_gt_reset;
+   logic fsm_tx_rx_reset;
+   logic fsm_gt_reset_fclk;
+   logic fsm_init_fclk;
 
-   // -------------------------------------------------------------
-   // Stretch axis_rst_n
-   // -------------------------------------------------------------
-   // Reset asynchronously using axis_rst_n.
-   // Once the reset is deasserted, it counts for 16 axis_clk cycles before asserting axis_rst_n_int..
+   // Reset domain crossing outputs
+   logic fclk_rst_n;
+   logic rx_clk_rst_n;
+   logic tx_clk_rst_n;
 
-   assign rst_stretch_counter_nxt = axis_rst_n_int ? rst_stretch_counter : rst_stretch_counter + 4'h1;
+   //--------------------------------------------------------------------------
+   // Reset Domain Crossing Synchronizers
+   //--------------------------------------------------------------------------
+   // Generate reset release signals synchronized to each clock domain.
+   // These ensure proper reset deassertion timing in each domain.
 
-   always_ff @(posedge axis_clk or negedge axis_rst_n) begin
-      if (~axis_rst_n) begin
-         rst_stretch_counter <= 4'h0;
-      end else begin
-         rst_stretch_counter <= rst_stretch_counter_nxt;
-      end
-   end
-
-   assign axis_rst_n_int_nxt = (rst_stretch_counter == 4'hF) ? 1'b1 : axis_rst_n_int;
-
-   always_ff @(posedge axis_clk or negedge axis_rst_n) begin
-      if (~axis_rst_n) begin
-         axis_rst_n_int <= 1'b0;
-      end else begin
-         axis_rst_n_int <= axis_rst_n_int_nxt;
-      end
-   end
-
-   // -------------------------------------------------------------
-   // FCLK counter
-   // -------------------------------------------------------------
-   // Reset asynchronously using axis_rst_n_int.
-   // Once the reset is deasserted, it counts for 1250 fclk cycles before asserting counter_done.
-
-   assign fclk_counter_nxt = fclk_counter_done ? fclk_counter : fclk_counter + 11'h1;
-
-   always_ff @(posedge fclk or negedge axis_rst_n_int) begin
-      if (~axis_rst_n_int) begin
-         fclk_counter <= 11'h0;
-      end else begin
-         fclk_counter <= fclk_counter_nxt;
-      end
-   end
-
-   assign fclk_counter_done_nxt = (fclk_counter == 11'd1250) ? 1'b1 : fclk_counter_done;
-
-   always_ff @(posedge fclk or negedge axis_rst_n_int) begin
-      if (~axis_rst_n_int) begin
-         fclk_counter_done <= 1'b0;
-      end else begin
-         fclk_counter_done <= fclk_counter_done_nxt;
-      end
-   end
-
-   // Take the counter done signal from fclk domain to axis_clk domain to notify the state machine.
-   riv_synchronizer_2ff i_drp_counter_done_cdc (
-       .src_in(fclk_counter_done),
-       .dst_clk(axis_clk),
-       .dst_rst_n(axis_rst_n_int),
-       .dst_out(fclk_counter_done_axis)
+   // Synchronize reset deassertion to fclk domain
+   riv_synchronizer_2ff i_fclk_rst_cdc (
+       .src_in   (1'b1),
+       .dst_clk  (fclk),
+       .dst_rst_n(axis_rst_n),
+       .dst_out  (fclk_rst_n)
    );
 
-   // -------------------------------------------------------------
-   // AXIS clock counter
-   // -------------------------------------------------------------
-   // Reset asynchronously using axis_rst_n_int.
-   // The counter runs in TX_RX_RESET state. It counts for 32 axis_clk cycles before asserting counter_done.
+   // Synchronize reset deassertion to rx_clk domain
+   riv_synchronizer_2ff i_rx_clk_rst_cdc (
+       .src_in   (1'b1),
+       .dst_clk  (rx_clk),
+       .dst_rst_n(axis_rst_n),
+       .dst_out  (rx_clk_rst_n)
+   );
 
-   assign axis_clk_counter_nxt = (fsm == TX_RX_RESET) ? axis_clk_counter + 5'h1 : axis_clk_counter;
+   // Synchronize reset deassertion to tx_clk domain  
+   riv_synchronizer_2ff i_tx_clk_rst_cdc (
+       .src_in   (1'b1),
+       .dst_clk  (tx_clk),
+       .dst_rst_n(axis_rst_n),
+       .dst_out  (tx_clk_rst_n)
+   );
 
-   always_ff @(posedge axis_clk or negedge axis_rst_n_int) begin
-      if (~axis_rst_n_int) begin
-         axis_clk_counter <= 5'h0;
+   //--------------------------------------------------------------------------
+   // FCLK Domain Counter (GT Reset Timing)
+   //--------------------------------------------------------------------------
+   // Implements the required 1250 fclk cycle delay before deasserting GT reset.
+   // This timing requirement ensures proper GT initialization per Xilinx specs.
+   //
+   // The counter:
+   // - Loads with 1250 when FSM enters INIT state
+   // - Counts down when FSM is in GT_RESET state  
+   // - Completion signal crosses back to axis_clk for state machine
+
+   assign fsm_init     = (fsm == INIT);
+   assign fsm_gt_reset = (fsm == GT_RESET);
+
+   // Synchronize state machine status to fclk domain
+   riv_synchronizer_2ff i_fsm_init_cdc (
+       .src_in   (fsm_init),
+       .dst_clk  (fclk),
+       .dst_rst_n(fclk_rst_n),
+       .dst_out  (fsm_init_fclk)
+   );
+
+   riv_synchronizer_2ff i_fsm_gt_reset_cdc (
+       .src_in   (fsm_gt_reset),
+       .dst_clk  (fclk),
+       .dst_rst_n(fclk_rst_n),
+       .dst_out  (fsm_gt_reset_fclk)
+   );
+
+   // GT reset timing counter (1250 fclk cycles)
+   riv_counter #(
+       .WIDTH(11)
+   ) i_fclk_counter (
+       .clk   (fclk),
+       .rst_n (fclk_rst_n),
+       .value (11'd1250),
+       .load  (fsm_init_fclk),
+       .enable(~fclk_counter_done && fsm_gt_reset_fclk),
+       .done  (fclk_counter_done)
+   );
+
+   // Cross counter completion signal back to axis_clk domain for state machine
+   riv_synchronizer_2ff i_drp_counter_done_cdc (
+       .src_in   (fclk_counter_done),
+       .dst_clk  (axis_clk),
+       .dst_rst_n(axis_rst_n),
+       .dst_out  (fclk_counter_done_axis)
+   );
+
+   //--------------------------------------------------------------------------
+   // AXIS Clock Domain Counter (TX/RX Reset Timing)  
+   //--------------------------------------------------------------------------
+   // Implements the required 32 axis_clk cycle delay before deasserting
+   // AXI4-Stream TX/RX resets.
+   //
+   // The counter:
+   // - Loads with 31 when FSM enters INIT state
+   // - Counts down when FSM is in TX_RX_RESET state
+   // - Completion enables deassertion of AXI4-Stream resets
+
+   // Register the TX_RX_RESET state for counter enable
+   always_ff @(posedge axis_clk) begin
+      if (~axis_rst_n) begin
+         fsm_tx_rx_reset <= 1'b0;
       end else begin
-         axis_clk_counter <= axis_clk_counter_nxt;
+         fsm_tx_rx_reset <= (fsm == TX_RX_RESET);
       end
    end
 
-   assign axis_clk_counter_done_nxt = (axis_clk_counter == 5'h1F) ? 1'b1 : axis_clk_counter_done;
+   // AXI4-Stream reset timing counter (32 axis_clk cycles)
+   riv_counter #(
+       .WIDTH(5)
+   ) i_axis_clk_counter (
+       .clk   (axis_clk),
+       .rst_n (axis_rst_n),
+       .value (5'd31),
+       .load  (fsm_init),
+       .enable(~axis_clk_counter_done && fsm_tx_rx_reset),
+       .done  (axis_clk_counter_done)
+   );
 
-   always_ff @(posedge axis_clk or negedge axis_rst_n_int) begin
-      if (~axis_rst_n_int) begin
-         axis_clk_counter_done <= 1'b0;
-      end else begin
-         axis_clk_counter_done <= axis_clk_counter_done_nxt;
-      end
-   end
 
+   //--------------------------------------------------------------------------
+   // Reset Sequencing State Machine
+   //--------------------------------------------------------------------------
+   // Controls the overall reset sequence timing and coordination.
+   // Operates synchronously in the axis_clk domain and coordinates with
+   // counters and status signals from other clock domains.
 
-   // -------------------------------------------------------------
-   // State machine
-   // -------------------------------------------------------------
-
-   always_ff @(posedge axis_clk or negedge axis_rst_n_int) begin
-      if (~axis_rst_n_int) begin
+   // State machine register (synchronous reset)
+   always_ff @(posedge axis_clk) begin
+      if (~axis_rst_n) begin
          fsm <= INIT;
       end else begin
          fsm <= fsm_nxt;
       end
    end
 
+   // State machine next-state logic
    always_comb begin
       unique case (fsm)
-         INIT: fsm_nxt = WAIT_FOR_GT_PGOOD;
-         WAIT_FOR_GT_PGOOD: fsm_nxt = i_gt_power_good ? GT_RESET : WAIT_FOR_GT_PGOOD;
-         GT_RESET: fsm_nxt = fclk_counter_done_axis ? WAIT_FOR_RESETDONE : GT_RESET;
-         WAIT_FOR_RESETDONE: fsm_nxt = i_gt_tx_reset_done && i_gt_rx_reset_done ? TX_RX_RESET : WAIT_FOR_RESETDONE;
-         TX_RX_RESET: fsm_nxt = axis_clk_counter_done ? DONE : TX_RX_RESET;
-         DONE: fsm_nxt = DONE;
-         default: fsm_nxt = INIT;
+         // INIT: Wait for both counters to be loaded
+         INIT: begin
+            fsm_nxt = (~fclk_counter_done_axis && ~axis_clk_counter_done) ? WAIT_GT_POWER : INIT;
+         end
+
+         // WAIT_GT_POWER: Wait for GT power good signal
+         WAIT_GT_POWER: begin
+            fsm_nxt = i_gt_power_good ? GT_RESET : WAIT_GT_POWER;
+         end
+
+         // GT_RESET: Wait for fclk counter to complete (1250 cycles)
+         GT_RESET: begin
+            fsm_nxt = fclk_counter_done_axis ? WAIT_GT_READY : GT_RESET;
+         end
+
+         // WAIT_GT_READY: Wait for both GT TX and RX to complete reset
+         WAIT_GT_READY: begin
+            fsm_nxt = (i_gt_tx_reset_done && i_gt_rx_reset_done) ? TX_RX_RESET : WAIT_GT_READY;
+         end
+
+         // TX_RX_RESET: Wait for axis_clk counter to complete (32 cycles)
+         TX_RX_RESET: begin
+            fsm_nxt = axis_clk_counter_done ? DONE : TX_RX_RESET;
+         end
+
+         // DONE: Reset sequence complete, stay in this state
+         DONE: begin
+            fsm_nxt = DONE;
+         end
+
+         // Default: Return to INIT on unexpected states
+         default: begin
+            fsm_nxt = INIT;
+         end
       endcase
    end
 
-   // -------------------------------------------------------------
-   // Output generation
-   // -------------------------------------------------------------
+   //--------------------------------------------------------------------------
+   // Reset Output Generation
+   //--------------------------------------------------------------------------
+   // Generates all reset outputs with proper timing and domain synchronization.
+   // All resets are asserted asynchronously when axis_rst_n is asserted,
+   // but deasserted synchronously according to the reset sequence.
 
-   // Asserted asynchronously with axis_rst_n_int.Deasserted once the fclk counter completes.
+   // GT Reset (fclk domain)
    assign o_gt_rst_n = fclk_counter_done;
 
-   // Asserted asynchronously with axis_rst_n_int.Deasserted once the axis_clk counter completes.  
+   // AXI4-Stream RX Reset (axis_clk domain)  
    assign o_axis_rx_rst_n = axis_clk_counter_done;
 
-   // This is an overlapping reset with the above.
-   // Asserted asynchronously with axis_rst_n_int.
-   // De-assertion is synchronous to the rx_clk domain.
+   // RX Logic Reset (rx_clk domain)
+   // Synchronized version of AXI4-Stream RX reset for rx_clk domain logic
    riv_synchronizer_2ff i_rx_reset_cdc (
-       .src_in(axis_clk_counter_done),
-       .dst_clk(rx_clk),
-       .dst_rst_n(axis_rst_n_int),
-       .dst_out(o_rx_rst_n)
+       .src_in   (axis_clk_counter_done),
+       .dst_clk  (rx_clk),
+       .dst_rst_n(axis_rst_n),
+       .dst_out  (o_rx_rst_n)
    );
 
-   // Asserted asynchronously with axis_rst_n_int.Deasserted once the axis_clk counter completes.
+   // AXI4-Stream TX Reset (axis_clk domain)
    assign o_axis_tx_rst_n = axis_clk_counter_done;
 
-   // This is an overlapping reset with the above.
-   // Asserted asynchronously with axis_rst_n_int.
-   // De-assertion is synchronous to the tx_clk domain.
+   // TX Logic Reset (tx_clk domain)
+   // Synchronized version of AXI4-Stream TX reset for tx_clk domain logic
    riv_synchronizer_2ff i_tx_reset_cdc (
-       .src_in(axis_clk_counter_done),
-       .dst_clk(tx_clk),
-       .dst_rst_n(axis_rst_n_int),
-       .dst_out(o_tx_rst_n)
+       .src_in   (axis_clk_counter_done),
+       .dst_clk  (tx_clk),
+       .dst_rst_n(axis_rst_n),
+       .dst_out  (o_tx_rst_n)
    );
 
-   // Reset done
-   always_ff @(posedge axis_clk or negedge axis_rst_n_int) begin
-      if (~axis_rst_n_int) begin
+   // Reset Done Indicator
+   // Asserted when the complete reset sequence is finished
+   always_ff @(posedge axis_clk or negedge axis_rst_n) begin
+      if (~axis_rst_n) begin
          o_reset_done <= 1'b0;
       end else begin
          o_reset_done <= (fsm == DONE);
