@@ -50,7 +50,7 @@ module riv_counter_prim (
       end else if (done && enable) begin
          done <= 1'b0;  // Clear done when rolling over
       end else if (enable) begin
-         done <= ~|count[3:1] && count[0];  
+         done <= ~|count[3:1] && count[0];
       end
    end
 
