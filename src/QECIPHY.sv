@@ -202,12 +202,12 @@ module QECIPHY #(
    // -------------------------------------------------------------
 
    qeciphy_tx i_qeciphy_tx (
-       .axis_clk            (ACLK),
-       .axis_rst_n          (axis_tx_rst_n),
-       .i_data              (TX_TDATA),
-       .o_ready             (TX_TREADY),
-       .i_valid             (TX_TVALID),
-       .i_allow_user_tx     (allow_user_tx),
+       .axis_clk       (ACLK),
+       .axis_rst_n     (axis_tx_rst_n),
+       .i_data         (TX_TDATA),
+       .o_ready        (TX_TREADY),
+       .i_valid        (TX_TVALID),
+       .i_allow_user_tx(allow_user_tx),
 
        .tx_clk         (tx_clk),
        .tx_rst_n       (tx_rst_n),
