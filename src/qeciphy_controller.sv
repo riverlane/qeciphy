@@ -21,6 +21,7 @@ module qeciphy_controller (
     input  logic       i_remote_pd_req,
     output logic       o_pd_req,
     output logic       o_pd_ack,
+    output logic       o_allow_user_tx,
     output logic       o_rst_n
 );
 
@@ -39,6 +40,8 @@ module qeciphy_controller (
    logic pu_req_nxt;
    logic paccept_nxt;
    logic pactive_nxt;
+   logic usr_pd_req_latched;
+   logic remote_pd_req_latched;
 
    // -------------------------------------------------------------
    // Type definition
@@ -101,6 +104,26 @@ module qeciphy_controller (
       else o_pactive <= pactive_nxt;
    end
 
+   always_ff @(posedge axis_clk) begin
+      if (~axis_rst_n) begin
+         usr_pd_req_latched <= 1'b0;
+      end else if (state_link_training) begin
+         usr_pd_req_latched <= 1'b0;
+      end else if (~i_pstate && i_preq && state_ready) begin
+         usr_pd_req_latched <= 1'b1;
+      end
+   end
+
+   always_ff @(posedge axis_clk) begin
+      if (~axis_rst_n) begin
+         remote_pd_req_latched <= 1'b0;
+      end else if (state_link_training) begin
+         remote_pd_req_latched <= 1'b0;
+      end else if (i_remote_pd_req && state_ready) begin
+         remote_pd_req_latched <= 1'b1;
+      end
+   end
+
    // -------------------------------------------------------------
    // FSM
    // -------------------------------------------------------------
@@ -156,6 +179,16 @@ module qeciphy_controller (
          o_rst_n <= 1'b0;
       end else begin
          o_rst_n <= ~(state == SLEEP) && ~(state == RESET) && ~(state == FAULT_FATAL);
+      end
+   end
+
+   always_ff @(posedge axis_clk) begin
+      if (~axis_rst_n) begin
+         o_allow_user_tx <= 1'b0;
+      end else if (usr_pd_req_latched | remote_pd_req_latched) begin
+         o_allow_user_tx <= 1'b0;
+      end else if (state == LINK_READY) begin
+         o_allow_user_tx <= 1'b1;
       end
    end
 

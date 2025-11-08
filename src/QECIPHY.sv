@@ -44,6 +44,7 @@ module QECIPHY #(
    logic gt_power_good_axis;
    logic gt_rx_reset_done_axis;
    logic gt_tx_reset_done_axis;
+   logic allow_user_tx;
 
    logic tx_clk;
    logic tx_rst_n;
@@ -192,6 +193,7 @@ module QECIPHY #(
        .i_remote_pd_req(remote_pd_req_axis),
        .o_pd_ack       (pd_ack_axis),
        .o_pd_req       (pd_req_axis),
+       .o_allow_user_tx(allow_user_tx),
        .o_rst_n        (contr_rst_n)
    );
 
@@ -205,9 +207,7 @@ module QECIPHY #(
        .i_data              (TX_TDATA),
        .o_ready             (TX_TREADY),
        .i_valid             (TX_TVALID),
-       .i_remote_rx_rdy_axis(remote_rx_rdy_axis),
-       .i_pd_req_axis       (pd_req_axis),
-       .i_pd_ack_axis       (pd_ack_axis),
+       .i_allow_user_tx     (allow_user_tx),
 
        .tx_clk         (tx_clk),
        .tx_rst_n       (tx_rst_n),

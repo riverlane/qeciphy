@@ -8,9 +8,7 @@ module qeciphy_tx (
     input  logic [63:0] i_data,
     input  logic        i_valid,
     output logic        o_ready,
-    input  logic        i_remote_rx_rdy_axis,
-    input  logic        i_pd_req_axis,
-    input  logic        i_pd_ack_axis,
+    output logic        i_allow_user_tx,
 
     input logic tx_clk,
     input logic tx_rst_n,
@@ -38,7 +36,7 @@ module qeciphy_tx (
    // General
    // -------------------------------------------------------------
 
-   assign o_ready  = ~fifo_full && i_remote_rx_rdy_axis && ~i_pd_req_axis && ~i_pd_ack_axis && axis_rst_n;
+   assign o_ready  = ~fifo_full && i_allow_user_tx;
    assign fifo_wen = i_valid && o_ready;
    assign fifo_ren = ~fifo_empty && ch_enc_rdy;
 
