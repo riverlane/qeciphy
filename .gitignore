@@ -3,6 +3,7 @@ scripts/__pycache__/
 run/
 xci/
 tb/generated_sim_files/
+tb/compiled_simlib/
 xci.f
 generated_sim.f
 vivado*.jou
