@@ -1,6 +1,9 @@
 .Xil/
+scripts/__pycache__/
 run/
 xci/
+tb/generated_sim_files/
 xci.f
+generated_sim.f
 vivado*.jou
 *.log
