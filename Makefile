@@ -72,7 +72,7 @@ COMPILE_SIMLIB_TCL := scripts/compile_simlib.tcl
 # -------------------------------------------------------------
 # Targets
 # -------------------------------------------------------------
-.PHONY: help check_profile lint synth sim generate-xci compile-simlib format clean
+.PHONY: help check_profile lint synth sim generate-xci compile-simlib format clean distclean
 
 .DEFAULT_GOAL := help
 
@@ -111,9 +111,13 @@ help:
 	@echo "  clean"
 	@echo "    - Clean up build artifacts and temporary files"
 	@echo ""
+	@echo "  distclean"
+	@echo "    - Perform deep clean (includes clean + removes all generated files)"
+	@echo ""
 	@echo "Examples:"
 	@echo "--------"
 	@echo "  make clean"
+	@echo "  make distclean"
 	@echo "  make generate-xci OPT_PROFILE=zcu216"
 	@echo "  make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true"
 	@echo "  make compile-simlib OPT_SIMULATOR=xsim"
@@ -186,7 +190,11 @@ synth:
 
 clean:
 	@echo "INFO: Cleaning build artifacts"
-	@rm -rf .Xil/ vivado* *.log xci/ run/ scripts/__pycache__/ xci.f tb/generated_sim_files generated_sim.f
+	@rm -rf .Xil/ vivado* *.log run/ scripts/__pycache__/
+
+distclean: clean
+	@echo "INFO: Performing distclean"
+	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f
 
 # -------------------------------------------------------------
 # Tool implementations
