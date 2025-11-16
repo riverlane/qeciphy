@@ -7,6 +7,7 @@
 OPT_MODE?=batch
 OPT_PROFILE?=
 OPT_SIM_FILES  ?= false
+OPT_SIMULATOR  ?= xsim
 
 # -------------------------------------------------------------
 # Utils
@@ -58,6 +59,7 @@ XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sourc
 # Tool paths and directories
 XCI_DIR := xci
 RUN_DIR := run
+SIM_LIB_DIR := $(CURRENT_DIR)/tb/compiled_simlib
 GEN_XCI_TCL_gth := vendors/xilinx/qeciphy_gth_transceiver.tcl
 GEN_XCI_TCL_gtx := vendors/xilinx/qeciphy_gtx_transceiver.tcl
 GEN_XCI_TCL_gtx_mmcm := vendors/xilinx/qeciphy_clk_mmcm.tcl
@@ -65,11 +67,12 @@ GEN_XCI_TCL_gty := vendors/xilinx/qeciphy_gty_transceiver.tcl
 XSIM_TCL := scripts/vivado_sim.tcl
 VIVADO_SYNTH_TCL := scripts/vivado_synth.tcl
 VIVADO_SIM_EXPORT_TCL := scripts/vivado_sim_export.tcl
+COMPILE_SIMLIB_TCL := scripts/compile_simlib.tcl
 
 # -------------------------------------------------------------
 # Targets
 # -------------------------------------------------------------
-.PHONY: help check_profile lint synth sim generate-xci format clean
+.PHONY: help check_profile lint synth sim generate-xci compile-simlib format clean
 
 .DEFAULT_GOAL := help
 
@@ -97,6 +100,11 @@ help:
 	@echo "    - Optional variables: OPT_SIM_FILES=(true|false) [default: false]"
 	@echo "      When OPT_SIM_FILES=true, also exports simulation files to tb/generated_sim_files/"
 	@echo ""
+	@echo "  compile-simlib"
+	@echo "    - Compile Xilinx simulation libraries for the specified simulator"
+	@echo "    - Optional variables: OPT_SIMULATOR=(xsim|vcs) [default: xsim]"
+	@echo "    - Libraries are compiled to tb/compiled_simlib/"
+	@echo ""
 	@echo "  format"
 	@echo "    - Format SystemVerilog source code using Verible"
 	@echo ""
@@ -108,6 +116,7 @@ help:
 	@echo "  make clean"
 	@echo "  make generate-xci OPT_PROFILE=zcu216"
 	@echo "  make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true"
+	@echo "  make compile-simlib OPT_SIMULATOR=xsim"
 	@echo "  make synth OPT_PROFILE=zcu216"
 	@echo "  make sim OPT_PROFILE=zcu216"
 	@echo "  make lint"
@@ -132,6 +141,15 @@ endif
 	}
 
 # -------------------------------------------------------------
+# Simulator validation
+# -------------------------------------------------------------
+check_simulator:
+	@if [ "$(OPT_SIMULATOR)" != "xsim" ] && [ "$(OPT_SIMULATOR)" != "vcs" ]; then \
+		echo "ERROR: Unsupported simulator '$(OPT_SIMULATOR)'. Supported: xsim, vcs"; \
+		exit 1; \
+	fi
+
+# -------------------------------------------------------------
 # Main targets
 # -------------------------------------------------------------
 format:
@@ -146,6 +164,15 @@ generate-xci:
 	@$(MAKE) check_profile
 	@echo "INFO: Generating XCI files for profile $(OPT_PROFILE)"
 	@$(MAKE) vivado_generate_xci
+
+compile-simlib:
+	@$(MAKE) check_simulator
+	@echo "INFO: Compiling simulation libraries for $(OPT_SIMULATOR)"
+	@if [ "$(OPT_SIMULATOR)" = "xsim" ]; then \
+		echo "INFO: XSim uses built-in simulation libraries - nothing to compile"; \
+	else \
+		$(MAKE) vivado_compile_simlib; \
+	fi
 
 sim:
 	@$(MAKE) check_profile
@@ -206,6 +233,16 @@ ifeq ($(OPT_SIM_FILES),true)
 endif
 	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
+
+$(SIM_LIB_DIR)/.done:
+	@rm -rf $(SIM_LIB_DIR)
+	@mkdir -p $(SIM_LIB_DIR)
+	@mkdir -p $(RUN_DIR)/compile_simlib
+	@cd $(RUN_DIR)/compile_simlib && vivado -mode batch -source ../../$(COMPILE_SIMLIB_TCL) -tclargs $(OPT_SIMULATOR) $(SIM_LIB_DIR)
+	@touch $(SIM_LIB_DIR)/.done
+	@rm -rf $(RUN_DIR)/compile_simlib
+
+vivado_compile_simlib: $(SIM_LIB_DIR)/.done
 
 vivado_sim:
 	@mkdir -p $(RUN_DIR)
