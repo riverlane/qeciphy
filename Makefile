@@ -6,6 +6,7 @@
 # -------------------------------------------------------------
 OPT_MODE?=batch
 OPT_PROFILE?=
+OPT_SIM_FILES  ?= false
 
 # -------------------------------------------------------------
 # Utils
@@ -63,6 +64,7 @@ GEN_XCI_TCL_gtx_mmcm := vendors/xilinx/qeciphy_clk_mmcm.tcl
 GEN_XCI_TCL_gty := vendors/xilinx/qeciphy_gty_transceiver.tcl
 XSIM_TCL := scripts/vivado_sim.tcl
 VIVADO_SYNTH_TCL := scripts/vivado_synth.tcl
+VIVADO_SIM_EXPORT_TCL := scripts/vivado_sim_export.tcl
 
 # -------------------------------------------------------------
 # Targets
@@ -92,6 +94,8 @@ help:
 	@echo "  generate-xci"
 	@echo "    - Generate Xilinx IP core files (.xci) for the target profile"
 	@echo "    - Required variables: OPT_PROFILE"
+	@echo "    - Optional variables: OPT_SIM_FILES=(true|false) [default: false]"
+	@echo "      When OPT_SIM_FILES=true, also exports simulation files to tb/generated_sim_files/"
 	@echo ""
 	@echo "  format"
 	@echo "    - Format SystemVerilog source code using Verible"
@@ -103,6 +107,7 @@ help:
 	@echo "--------"
 	@echo "  make clean"
 	@echo "  make generate-xci OPT_PROFILE=zcu216"
+	@echo "  make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true"
 	@echo "  make synth OPT_PROFILE=zcu216"
 	@echo "  make sim OPT_PROFILE=zcu216"
 	@echo "  make lint"
@@ -154,7 +159,7 @@ synth:
 
 clean:
 	@echo "INFO: Cleaning build artifacts"
-	@rm -rf .Xil/ vivado* xci/ run/ xci.f
+	@rm -rf .Xil/ vivado* *.log xci/ run/ scripts/__pycache__/ xci.f tb/generated_sim_files generated_sim.f
 
 # -------------------------------------------------------------
 # Tool implementations
@@ -195,6 +200,10 @@ vivado_generate_xci:
 	@echo "INFO: Generating XCI filelist"
 	@find $(XCI_DIR) -name "*.xci" | sort > xci.f
 	@echo "INFO: Created xci.f with $$(wc -l < xci.f) XCI files"
+ifeq ($(OPT_SIM_FILES),true)
+	@echo "INFO: Generating IP simulation files"
+	@$(PY) scripts/generate_sim_files.py --part $(PART) --simulator vcs
+endif
 	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
 
