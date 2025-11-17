@@ -193,7 +193,7 @@ synth:
 
 clean:
 	@echo "INFO: Cleaning build artifacts"
-	@rm -rf .Xil/ vivado* *.log run/ scripts/__pycache__/
+	@rm -rf .Xil/ vivado* *.log run/ scripts/__pycache__/ simv synopsys_sim.setup simv.daidir/ csrc/ ucli.key
 
 distclean: clean
 	@echo "INFO: Performing distclean"

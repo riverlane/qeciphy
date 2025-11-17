@@ -8,3 +8,8 @@ xci.f
 generated_sim.f
 vivado*.jou
 *.log
+ucli.key
+csrc/
+simv.daidir/
+synopsys_sim.setup
+simv
