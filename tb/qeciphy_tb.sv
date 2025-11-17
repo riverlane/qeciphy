@@ -10,6 +10,8 @@ module qeciphy_tb;
    `define GT_TYPE "GTY" // default value
 `endif
 
+  glbl glbl();
+
    // ---------------------------------------
    // Local parameters
    //----------------------------------------
