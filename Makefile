@@ -59,7 +59,6 @@ XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sourc
 # Tool paths and directories
 XCI_DIR := xci
 RUN_DIR := run
-SIM_LIB_DIR := $(CURRENT_DIR)/tb/compiled_simlib
 GEN_XCI_TCL_gth := vendors/xilinx/qeciphy_gth_transceiver.tcl
 GEN_XCI_TCL_gtx := vendors/xilinx/qeciphy_gtx_transceiver.tcl
 GEN_XCI_TCL_gtx_mmcm := vendors/xilinx/qeciphy_clk_mmcm.tcl
@@ -67,12 +66,11 @@ GEN_XCI_TCL_gty := vendors/xilinx/qeciphy_gty_transceiver.tcl
 XSIM_TCL := scripts/vivado_sim.tcl
 VIVADO_SYNTH_TCL := scripts/vivado_synth.tcl
 VIVADO_SIM_EXPORT_TCL := scripts/vivado_sim_export.tcl
-COMPILE_SIMLIB_TCL := scripts/compile_simlib.tcl
 
 # -------------------------------------------------------------
 # Targets
 # -------------------------------------------------------------
-.PHONY: help check_profile lint synth sim generate-xci compile-simlib format clean distclean
+.PHONY: help check_profile lint synth sim generate-xci vcs_sim format clean distclean
 
 .DEFAULT_GOAL := help
 
@@ -180,8 +178,13 @@ compile-simlib:
 
 sim:
 	@$(MAKE) check_profile
-	@echo "INFO: Running simulation for profile $(OPT_PROFILE)"
-	@$(MAKE) vivado_sim
+	@$(MAKE) check_simulator
+	@echo "INFO: Running simulation for profile $(OPT_PROFILE) using $(OPT_SIMULATOR)"
+	@if [ "$(OPT_SIMULATOR)" = "vcs" ]; then \
+		$(MAKE) vcs_sim; \
+	else \
+		$(MAKE) vivado_sim; \
+	fi
 
 synth: 
 	@$(MAKE) check_profile
@@ -242,19 +245,36 @@ endif
 	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
 
-$(SIM_LIB_DIR)/.done:
-	@rm -rf $(SIM_LIB_DIR)
-	@mkdir -p $(SIM_LIB_DIR)
-	@mkdir -p $(RUN_DIR)/compile_simlib
-	@cd $(RUN_DIR)/compile_simlib && vivado -mode batch -source ../../$(COMPILE_SIMLIB_TCL) -tclargs $(OPT_SIMULATOR) $(SIM_LIB_DIR)
-	@touch $(SIM_LIB_DIR)/.done
-	@rm -rf $(RUN_DIR)/compile_simlib
-
-vivado_compile_simlib: $(SIM_LIB_DIR)/.done
-
 vivado_sim:
 	@mkdir -p $(RUN_DIR)
 	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(XCI_FILES)
+
+vcs_sim:
+	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
+	echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
+	echo "INFO: Compiling design + IP + Xilinx GT/clock primitives + SecureIP into VCS" && \
+	vcs -full64 -sverilog -timescale=1ns/1ps \
+		+v2k +define+VCS +libext+.v+.sv+.vp \
+		-work work \
+		+incdir+src \
+		$$XILINX_VIVADO/data/verilog/src/unisims/GTYE4_CHANNEL.v \
+		$$XILINX_VIVADO/data/verilog/src/unisims/GTYE4_COMMON.v \
+		$$XILINX_VIVADO/data/verilog/src/unisims/IBUFDS_GTE4.v \
+		$$XILINX_VIVADO/data/verilog/src/unisims/BUFG_GT.v \
+		-f $$XILINX_VIVADO/data/secureip/secureip_cell.list.f \
+		$$XILINX_VIVADO/data/verilog/src/glbl.v \
+		-file generated_sim.f \
+		$(SRC_FILES) \
+		$(SIM_FILES) \
+		-top qeciphy_tb \
+		+nospecify +notimingchecks \
+		-o simv && \
+	echo "INFO: Running VCS simulation in $(OPT_MODE) mode" && \
+	if [ "$(OPT_MODE)" = "gui" ]; then \
+		./simv -gui; \
+	else \
+		./simv; \
+	fi
 
 vivado_synth:
 	@mkdir -p $(RUN_DIR)
