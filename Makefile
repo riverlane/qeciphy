@@ -253,7 +253,8 @@ vcs_sim:
 	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
 	echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
 	echo "INFO: Compiling design + IP + Xilinx GT/clock primitives + SecureIP into VCS" && \
-	vcs -full64 -sverilog -timescale=1ns/1ps \
+	vcs -full64 -sverilog -timescale=1ps/1ps +define+WAVES_FSDB +define+WAVES=\"fsdb\"  \
+	+plusarg_save -debug_access+r -debug_region=cell+encrypt -kdb \
 		+v2k +define+VCS +libext+.v+.sv+.vp \
 		-work work \
 		+incdir+src \
