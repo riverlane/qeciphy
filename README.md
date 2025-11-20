@@ -147,6 +147,7 @@ make synth OPT_PROFILE=<profile> OPT_MODE=gui   # Run synthesis (GUI mode)
 
 - **[QECi Specification](https://www.riverlane.com/get-qec-ready/qeci)** - Physical layer specification
 - **[Integration Guide](INTEGRATION.md)** - How to use QECIPHY in your design
+- **[Multi-Platform Simulation](docs/multi_platform_simulation.md)** - VCS and XSim simulation support
 - **[Contribution Guide](CONTRIBUTING.md)** - Development and contribution guidelines
 
 ## License
