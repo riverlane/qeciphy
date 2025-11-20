@@ -152,6 +152,15 @@ check_simulator:
 	fi
 
 # -------------------------------------------------------------
+# GT type detection function
+# -------------------------------------------------------------
+get_gt_type = $(shell \
+	if [ "$(OPT_PROFILE)" = "kasliSoC" ]; then echo "GTX"; \
+	elif [ "$(OPT_PROFILE)" = "zcu106" ]; then echo "GTH"; \
+	elif [ "$(OPT_PROFILE)" = "zcu216" ]; then echo "GTY"; \
+	else echo "GTY"; fi)
+
+# -------------------------------------------------------------
 # Main targets
 # -------------------------------------------------------------
 format:
@@ -252,24 +261,27 @@ vivado_sim:
 vcs_sim:
 	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
 	echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
+	echo "INFO: Filtering out VHDL files from generated simulation files" && \
+	grep -v "\.vhd$$" generated_sim.f > generated_sim_verilog_only.f && \
+	GT_TYPE_DEF="$(get_gt_type)" && \
+	echo "INFO: Using GT_TYPE=$$GT_TYPE_DEF for profile $(OPT_PROFILE)" && \
 	echo "INFO: Compiling design + IP + Xilinx GT/clock primitives + SecureIP into VCS" && \
 	vcs -full64 -sverilog -timescale=1ps/1ps +define+WAVES_FSDB +define+WAVES=\"fsdb\"  \
 	+plusarg_save -debug_access+r -debug_region=cell+encrypt -kdb \
-		+v2k +define+VCS +libext+.v+.sv+.vp \
+		+v2k +define+VCS +define+GT_TYPE=\"$$GT_TYPE_DEF\" +libext+.v+.sv+.vp \
 		-work work \
 		+incdir+src \
-		$$XILINX_VIVADO/data/verilog/src/unisims/GTYE4_CHANNEL.v \
-		$$XILINX_VIVADO/data/verilog/src/unisims/GTYE4_COMMON.v \
-		$$XILINX_VIVADO/data/verilog/src/unisims/IBUFDS_GTE4.v \
-		$$XILINX_VIVADO/data/verilog/src/unisims/BUFG_GT.v \
+		-y $$XILINX_VIVADO/data/verilog/src/unisims \
+		-y $$XILINX_VIVADO/data/verilog/src/retarget \
 		-f $$XILINX_VIVADO/data/secureip/secureip_cell.list.f \
 		$$XILINX_VIVADO/data/verilog/src/glbl.v \
-		-file generated_sim.f \
+		-file generated_sim_verilog_only.f \
 		$(SRC_FILES) \
 		$(SIM_FILES) \
 		-top qeciphy_tb \
 		+nospecify +notimingchecks \
 		-o simv && \
+		rm generated_sim_verilog_only.f && \
 	echo "INFO: Running VCS simulation in $(OPT_MODE) mode" && \
 	if [ "$(OPT_MODE)" = "gui" ]; then \
 		./simv -gui; \
