@@ -8,7 +8,7 @@ module qeciphy_tx (
     input  logic [63:0] i_data,
     input  logic        i_valid,
     output logic        o_ready,
-    output logic        i_allow_user_tx,
+    input  logic        i_allow_user_tx,
 
     input logic tx_clk,
     input logic tx_rst_n,
