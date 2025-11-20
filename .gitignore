@@ -9,6 +9,7 @@ generated_sim.f
 vivado*.jou
 *.log
 ucli.key
+verdi_config_file
 csrc/
 simv.daidir/
 synopsys_sim.setup
