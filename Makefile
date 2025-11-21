@@ -70,7 +70,7 @@ VIVADO_SIM_EXPORT_TCL := scripts/vivado_sim_export.tcl
 # -------------------------------------------------------------
 # Targets
 # -------------------------------------------------------------
-.PHONY: help check_profile lint synth sim generate-xci vcs_sim format clean distclean
+.PHONY: help lint synth sim generate-xci format clean distclean
 
 .DEFAULT_GOAL := help
 
@@ -158,6 +158,35 @@ get_gt_type = $(shell \
 	else echo "GTY"; fi)
 
 # -------------------------------------------------------------
+# Tool availability checks
+# -------------------------------------------------------------
+check_vivado:
+	@if ! command -v vivado >/dev/null 2>&1; then \
+		echo "ERROR: Vivado not found in PATH. Please ensure Vivado is installed and available."; \
+		exit 1; \
+	fi
+
+check_vcs:
+	@if ! command -v vcs >/dev/null 2>&1; then \
+		echo "ERROR: VCS not found in PATH. Please ensure VCS is installed and available."; \
+		exit 1; \
+	fi
+
+check_verilator:
+	@if ! command -v verilator >/dev/null 2>&1; then \
+		echo "ERROR: Verilator not found in PATH. Please install Verilator for linting."; \
+		echo "       See: https://verilator.org/guide/latest/install.html"; \
+		exit 1; \
+	fi
+
+check_verible:
+	@if ! command -v verible-verilog-format >/dev/null 2>&1; then \
+		echo "ERROR: Verible not found in PATH. Please install Verible for formatting."; \
+		echo "       See: https://github.com/chipsalliance/verible"; \
+		exit 1; \
+	fi
+
+# -------------------------------------------------------------
 # Main targets
 # -------------------------------------------------------------
 format:
@@ -172,15 +201,6 @@ generate-xci:
 	@$(MAKE) check_profile
 	@echo "INFO: Generating XCI files for profile $(OPT_PROFILE)"
 	@$(MAKE) vivado_generate_xci
-
-compile-simlib:
-	@$(MAKE) check_simulator
-	@echo "INFO: Compiling simulation libraries for $(OPT_SIMULATOR)"
-	@if [ "$(OPT_SIMULATOR)" = "xsim" ]; then \
-		echo "INFO: XSim uses built-in simulation libraries - nothing to compile"; \
-	else \
-		$(MAKE) vivado_compile_simlib; \
-	fi
 
 sim:
 	@$(MAKE) check_profile
@@ -210,9 +230,11 @@ distclean: clean
 # -------------------------------------------------------------
 
 verilator_lint:
+	@$(MAKE) check_verilator
 	@verilator --lint-only -sv -Isrc $(LINT_FILES) lint_waivers.vlt --top QECIPHY
 	
 verible_format:
+	@$(MAKE) check_verible
 	@files=$$(find . -type f \( -name "*.sv" -o -name "*.v" \)); \
 	if [ -n "$$files" ]; then \
 		verible-verilog-format --inplace --column_limit 200 --indentation_spaces 3 $$files; \
@@ -221,6 +243,7 @@ verible_format:
 	fi
 
 vivado_generate_xci:
+	@$(MAKE) check_vivado
 	@mkdir -p $(XCI_DIR)
 	@mkdir -p $(RUN_DIR)
 	@if [ "$(VARIANT)" = "GTH" ]; then \
@@ -252,10 +275,12 @@ endif
 	@rm -rf $(RUN_DIR)
 
 vivado_sim:
+	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
 	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(XCI_FILES)
 
 vcs_sim:
+	@$(MAKE) check_vcs
 	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
 	echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
 	echo "INFO: Filtering out VHDL files from generated simulation files" && \
@@ -287,5 +312,6 @@ vcs_sim:
 	fi
 
 vivado_synth:
+	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
 	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)
