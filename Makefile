@@ -6,6 +6,8 @@
 # -------------------------------------------------------------
 OPT_MODE?=batch
 OPT_PROFILE?=
+OPT_SIM_FILES  ?= false
+OPT_SIMULATOR  ?= xsim
 
 # -------------------------------------------------------------
 # Utils
@@ -63,11 +65,12 @@ GEN_XCI_TCL_gtx_mmcm := vendors/xilinx/qeciphy_clk_mmcm.tcl
 GEN_XCI_TCL_gty := vendors/xilinx/qeciphy_gty_transceiver.tcl
 XSIM_TCL := scripts/vivado_sim.tcl
 VIVADO_SYNTH_TCL := scripts/vivado_synth.tcl
+VIVADO_SIM_EXPORT_TCL := scripts/vivado_sim_export.tcl
 
 # -------------------------------------------------------------
 # Targets
 # -------------------------------------------------------------
-.PHONY: help check_profile lint synth sim generate-xci format clean
+.PHONY: help lint synth sim generate-xci format clean distclean
 
 .DEFAULT_GOAL := help
 
@@ -85,13 +88,16 @@ help:
 	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
 	@echo ""
 	@echo "  sim"
-	@echo "    - Run simulation using Vivado XSim"
+	@echo "    - Run simulation using XSim (default) or VCS"
 	@echo "    - Required variables: OPT_PROFILE"
 	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
+	@echo "    - Optional variables: OPT_SIMULATOR=(xsim|vcs) [default: xsim]"
 	@echo ""
 	@echo "  generate-xci"
 	@echo "    - Generate Xilinx IP core files (.xci) for the target profile"
 	@echo "    - Required variables: OPT_PROFILE"
+	@echo "    - Optional variables: OPT_SIM_FILES=(true|false) [default: false]"
+	@echo "      When OPT_SIM_FILES=true, also exports simulation files to tb/generated_sim_files/"
 	@echo ""
 	@echo "  format"
 	@echo "    - Format SystemVerilog source code using Verible"
@@ -99,12 +105,19 @@ help:
 	@echo "  clean"
 	@echo "    - Clean up build artifacts and temporary files"
 	@echo ""
+	@echo "  distclean"
+	@echo "    - Perform deep clean (includes clean + removes all generated files)"
+	@echo ""
 	@echo "Examples:"
 	@echo "--------"
 	@echo "  make clean"
+	@echo "  make distclean"
 	@echo "  make generate-xci OPT_PROFILE=zcu216"
+	@echo "  make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true"
 	@echo "  make synth OPT_PROFILE=zcu216"
 	@echo "  make sim OPT_PROFILE=zcu216"
+	@echo "  make sim OPT_PROFILE=zcu216 OPT_SIMULATOR=vcs"
+	@echo "  make sim OPT_PROFILE=zcu216 OPT_MODE=gui OPT_SIMULATOR=vcs"
 	@echo "  make lint"
 	@echo "  make format"
 
@@ -127,6 +140,53 @@ endif
 	}
 
 # -------------------------------------------------------------
+# Simulator validation
+# -------------------------------------------------------------
+check_simulator:
+	@if [ "$(OPT_SIMULATOR)" != "xsim" ] && [ "$(OPT_SIMULATOR)" != "vcs" ]; then \
+		echo "ERROR: Unsupported simulator '$(OPT_SIMULATOR)'. Supported: xsim, vcs"; \
+		exit 1; \
+	fi
+
+# -------------------------------------------------------------
+# GT type detection function
+# -------------------------------------------------------------
+get_gt_type = $(shell \
+	if [ "$(OPT_PROFILE)" = "kasliSoC" ]; then echo "GTX"; \
+	elif [ "$(OPT_PROFILE)" = "zcu106" ]; then echo "GTH"; \
+	elif [ "$(OPT_PROFILE)" = "zcu216" ]; then echo "GTY"; \
+	else echo "GTY"; fi)
+
+# -------------------------------------------------------------
+# Tool availability checks
+# -------------------------------------------------------------
+check_vivado:
+	@if ! command -v vivado >/dev/null 2>&1; then \
+		echo "ERROR: Vivado not found in PATH. Please ensure Vivado is installed and available."; \
+		exit 1; \
+	fi
+
+check_vcs:
+	@if ! command -v vcs >/dev/null 2>&1; then \
+		echo "ERROR: VCS not found in PATH. Please ensure VCS is installed and available."; \
+		exit 1; \
+	fi
+
+check_verilator:
+	@if ! command -v verilator >/dev/null 2>&1; then \
+		echo "ERROR: Verilator not found in PATH. Please install Verilator for linting."; \
+		echo "       See: https://verilator.org/guide/latest/install.html"; \
+		exit 1; \
+	fi
+
+check_verible:
+	@if ! command -v verible-verilog-format >/dev/null 2>&1; then \
+		echo "ERROR: Verible not found in PATH. Please install Verible for formatting."; \
+		echo "       See: https://github.com/chipsalliance/verible"; \
+		exit 1; \
+	fi
+
+# -------------------------------------------------------------
 # Main targets
 # -------------------------------------------------------------
 format:
@@ -144,8 +204,13 @@ generate-xci:
 
 sim:
 	@$(MAKE) check_profile
-	@echo "INFO: Running simulation for profile $(OPT_PROFILE)"
-	@$(MAKE) vivado_sim
+	@$(MAKE) check_simulator
+	@echo "INFO: Running simulation for profile $(OPT_PROFILE) using $(OPT_SIMULATOR)"
+	@if [ "$(OPT_SIMULATOR)" = "vcs" ]; then \
+		$(MAKE) vcs_sim; \
+	else \
+		$(MAKE) vivado_sim; \
+	fi
 
 synth: 
 	@$(MAKE) check_profile
@@ -154,16 +219,22 @@ synth:
 
 clean:
 	@echo "INFO: Cleaning build artifacts"
-	@rm -rf .Xil/ vivado* xci/ run/ xci.f
+	@rm -rf .Xil/ vivado* *.log run/ scripts/__pycache__/ simv synopsys_sim.setup simv.daidir/ csrc/ ucli.key verdi_config_file
+
+distclean: clean
+	@echo "INFO: Performing distclean"
+	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f
 
 # -------------------------------------------------------------
 # Tool implementations
 # -------------------------------------------------------------
 
 verilator_lint:
+	@$(MAKE) check_verilator
 	@verilator --lint-only -sv -Isrc $(LINT_FILES) lint_waivers.vlt --top QECIPHY
 	
 verible_format:
+	@$(MAKE) check_verible
 	@files=$$(find . -type f \( -name "*.sv" -o -name "*.v" \)); \
 	if [ -n "$$files" ]; then \
 		verible-verilog-format --inplace --column_limit 200 --indentation_spaces 3 $$files; \
@@ -172,6 +243,7 @@ verible_format:
 	fi
 
 vivado_generate_xci:
+	@$(MAKE) check_vivado
 	@mkdir -p $(XCI_DIR)
 	@mkdir -p $(RUN_DIR)
 	@if [ "$(VARIANT)" = "GTH" ]; then \
@@ -195,13 +267,51 @@ vivado_generate_xci:
 	@echo "INFO: Generating XCI filelist"
 	@find $(XCI_DIR) -name "*.xci" | sort > xci.f
 	@echo "INFO: Created xci.f with $$(wc -l < xci.f) XCI files"
+ifeq ($(OPT_SIM_FILES),true)
+	@echo "INFO: Generating IP simulation files"
+	@$(PY) scripts/generate_sim_files.py --part $(PART) --simulator vcs
+endif
 	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
 
 vivado_sim:
+	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
 	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(XCI_FILES)
 
+vcs_sim:
+	@$(MAKE) check_vcs
+	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
+	echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
+	echo "INFO: Filtering out VHDL files from generated simulation files" && \
+	grep -v "\.vhd$$" generated_sim.f > generated_sim_verilog_only.f && \
+	GT_TYPE_DEF="$(get_gt_type)" && \
+	echo "INFO: Using GT_TYPE=$$GT_TYPE_DEF for profile $(OPT_PROFILE)" && \
+	echo "INFO: Compiling design + IP + Xilinx GT/clock primitives + SecureIP into VCS" && \
+	vcs -full64 -sverilog -timescale=1ps/1ps +define+WAVES_FSDB +define+WAVES=\"fsdb\"  \
+	+plusarg_save -debug_access+r -debug_region=cell+encrypt -kdb \
+		+v2k +define+VCS +define+GT_TYPE=\"$$GT_TYPE_DEF\" +libext+.v+.sv+.vp \
+		-work work \
+		+incdir+src \
+		-y $$XILINX_VIVADO/data/verilog/src/unisims \
+		-y $$XILINX_VIVADO/data/verilog/src/retarget \
+		-f $$XILINX_VIVADO/data/secureip/secureip_cell.list.f \
+		$$XILINX_VIVADO/data/verilog/src/glbl.v \
+		-file generated_sim_verilog_only.f \
+		$(SRC_FILES) \
+		$(SIM_FILES) \
+		-top qeciphy_tb \
+		+nospecify +notimingchecks \
+		-o simv && \
+		rm generated_sim_verilog_only.f && \
+	echo "INFO: Running VCS simulation in $(OPT_MODE) mode" && \
+	if [ "$(OPT_MODE)" = "gui" ]; then \
+		./simv -gui; \
+	else \
+		./simv; \
+	fi
+
 vivado_synth:
+	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
 	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)

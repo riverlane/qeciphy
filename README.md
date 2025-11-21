@@ -121,12 +121,16 @@ qeciphy/
 ## Complete List of Make Targets
 
 ```bash
-make clean                                      # Clean build artifacts
+make clean                                      # Clean tool specific artifacts
+make distclean                                  # Deep clean: includes clean + removes generated IP and simulation files
 make lint                                       # Run Verilator linting
 make format                                     # Format SystemVerilog files
 make generate-xci OPT_PROFILE=<profile>         # Generate vendor IP
-make sim OPT_PROFILE=<profile>                  # Run simulation (batch mode)
-make sim OPT_PROFILE=<profile> OPT_MODE=gui     # Run simulation (GUI mode)
+make generate-xci OPT_PROFILE=<profile> OPT_SIM_FILES=true  # Generate vendor IP and corresponding simulation files
+make sim OPT_PROFILE=<profile>                  # Run simulation with XSim (batch mode)
+make sim OPT_PROFILE=<profile> OPT_MODE=gui     # Run simulation with XSim (GUI mode)
+make sim OPT_PROFILE=<profile> OPT_SIMULATOR=vcs # Run VCS simulation (batch mode)
+make sim OPT_PROFILE=<profile> OPT_SIMULATOR=vcs OPT_MODE=gui # Run VCS simulation (GUI mode)
 make synth OPT_PROFILE=<profile>                # Run synthesis (batch mode)
 make synth OPT_PROFILE=<profile> OPT_MODE=gui   # Run synthesis (GUI mode)
 ```
@@ -147,6 +151,7 @@ make synth OPT_PROFILE=<profile> OPT_MODE=gui   # Run synthesis (GUI mode)
 
 - **[QECi Specification](https://www.riverlane.com/get-qec-ready/qeci)** - Physical layer specification
 - **[Integration Guide](INTEGRATION.md)** - How to use QECIPHY in your design
+- **[Multi-Platform Simulation](docs/multi_platform_simulation.md)** - VCS and XSim simulation support
 - **[Contribution Guide](CONTRIBUTING.md)** - Development and contribution guidelines
 
 ## License

@@ -18,7 +18,7 @@ for profile in "${PROFILES[@]}"; do
     echo "--- Synthesizing profile: $profile ---"
 
     echo "Cleaning previous builds..."
-    make clean
+    make distclean
     
     echo "Generating XCI cores for $profile..."
     make generate-xci OPT_PROFILE=$profile
