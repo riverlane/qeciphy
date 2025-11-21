@@ -20,17 +20,17 @@ make generate-xci OPT_PROFILE=zcu216
 
 # Run simulation
 make sim OPT_PROFILE=zcu216 # Non-GUI mode
-make sim OPT_PROFILE=zcu216 OPT_MODE=gui # GUI mode
+# make sim OPT_PROFILE=zcu216 OPT_MODE=gui # GUI mode
 ```
 
 ### VCS
 ```bash
-# Generate IP cores with simulation files
+# Generate IP cores with corresponding simulation files
 make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true
 
 # Run VCS simulation
 make sim OPT_PROFILE=zcu216 OPT_SIMULATOR=vcs # Non-GUI mode
-make sim OPT_PROFILE=zcu216 OPT_SIMULATOR=vcs OPT_MODE=gui # GUI mode
+# make sim OPT_PROFILE=zcu216 OPT_SIMULATOR=vcs OPT_MODE=gui # GUI mode
 ```
 
 ## IP Generation and Simulation Files
@@ -44,41 +44,32 @@ QECIPHY uses several Xilinx IP cores that require generation:
 | `qeciphy_gtx_transceiver` | GTX transceiver wrapper | GTX (7-series) |
 | `qeciphy_gth_transceiver` | GTH transceiver wrapper | GTH (UltraScale) |
 | `qeciphy_gty_transceiver` | GTY transceiver wrapper | GTY (UltraScale+) |
-| `qeciphy_clk_mmcm` | Clock generation (GTX only) | GTX (7-series) |
+| `qeciphy_clk_mmcm` | Clock generation | GTX (7-series) |
 
 ### Simulation File Generation
 
 When `OPT_SIM_FILES=true` is specified, the build system:
 
-1. Generates IP cores (.xci files)
+1. Generates vendor IP cores (.xci files)
 2. Exports simulation models to `tb/generated_sim_files/`
 3. Creates `generated_sim.f` file list for simulator consumption
 
 ```bash
 # Generate IP with simulation files
-make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true
+make generate-xci OPT_PROFILE=<profile> OPT_SIM_FILES=true
 
-# Generated files structure for zcu216
+# Generated files structure
 tb/generated_sim_files/
-└── qeciphy_gty_transceiver/     # GTY transceiver
-    ├── *.v                     
-    └── *.vhd                   
-generated_sim.f                 # File list for simulator
-
-# Generated files structure for zcu106
-tb/generated_sim_files/
-└── qeciphy_gth_transceiver/     # GTH transceiver
-    ├── *.v                     
-    └── *.vhd                   
-generated_sim.f                 # File list for simulator
-
-# Generated files structure for kasliSoC
-tb/generated_sim_files/
-├── qeciphy_clk_mmcm/           # Clock MMCM (GTX only)
+├── <ip_core_name>/             # One or more IP cores (e.g., qeciphy_gty_transceiver)
 │   ├── *.v                     
-│   └── *.vhd                   
-└── qeciphy_gtx_transceiver/    # GTX transceiver
-    ├── *.v                     
-    └── *.vhd                   
-generated_sim.f                 # File list for simulator
+│   ├── *.sv                    
+│   ├── *.vhd, *.vhdl           
+│   └── includes/               # Include files for this IP
+│       └── *.vh, *.svh         
+└── generated_sim.f             # File list for simulator
+
+# Profile-specific IP cores generated:
+# - kasliSoC: qeciphy_clk_mmcm + qeciphy_gtx_transceiver
+# - zcu106:   qeciphy_gth_transceiver  
+# - zcu216:   qeciphy_gty_transceiver
 ```
