@@ -49,9 +49,9 @@ module qeciphy_tb;
 
    typedef enum bit [3:0] {
       RESET,
-      DATAPATH_RESET,
       WAIT_FOR_RESET,
       LINK_TRAINING,
+      RX_LOCKED,
       LINK_READY,
       FAULT_FATAL,
       SLEEP,
