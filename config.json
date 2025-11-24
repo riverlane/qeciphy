@@ -9,9 +9,9 @@
       "fclk_freq": "156.25",
       "rclk_freq": "156.25",
       "transceiver": {
-        "gt_loc": "X0Y8",
-        "rx_rclk_src": "X0Y8 clk1+2",
-        "tx_rclk_src": "X0Y8 clk1+2"
+        "gt_loc": "X0Y0",
+        "rx_rclk_src": "X0Y0",
+        "tx_rclk_src": "X0Y0"
       },
       "synth": {
         "top": "qeciphy_syn_wrapper",
