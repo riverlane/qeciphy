@@ -101,6 +101,19 @@ jobs:
       - name: Run simulations using VCS
         run: |
           bash ci/vcs_sim.sh
+  uvm-simulation:
+    needs: [changes, static-checks]
+    if: |
+      always() && 
+      needs.changes.outputs.simulation == 'true' && 
+      (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped')
+    runs-on: sanity-builder
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Run simulations using VCS
+        run: |
+          bash ci/uvm_sim.sh
 
   fpga-synthesis:
     needs: [changes, static-checks]
