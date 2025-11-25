@@ -8,6 +8,9 @@ OPT_MODE?=batch
 OPT_PROFILE?=
 OPT_SIM_FILES  ?= false
 OPT_SIMULATOR  ?= xsim
+OPT_TEST?=
+OPT_ARGS?=0
+OPT_SEED?=0
 
 # -------------------------------------------------------------
 # Utils
@@ -48,6 +51,7 @@ SIM_FILELIST := sim.f
 LINT_FILELIST := lint.f
 SRC_FILELIST := src.f
 XCI_FILELIST := xci.f
+UVM_FILELIST := uvm.f
 
 # Extracted file lists
 LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(LINT_FILELIST))
@@ -92,6 +96,16 @@ help:
 	@echo "    - Required variables: OPT_PROFILE"
 	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
 	@echo "    - Optional variables: OPT_SIMULATOR=(xsim|vcs) [default: xsim]"
+	@echo ""
+	@echo "  uvm-sim"
+	@echo "    - Run UVM-based simulation."
+	@echo "    - Required variables:"
+	@echo "        OPT_TOP"
+	@echo "        OPT_TEST"
+	@echo "    - Optional variables:"
+	@echo "        OPT_MODE=(gui|batch|cov)     (default: batch)"
+	@echo "        OPT_SEED=(integer)       	(for randomization)"
+	@echo "        OPT_ARGS=(string)       	    (additional simulator arguments)"
 	@echo ""
 	@echo "  generate-xci"
 	@echo "    - Generate Xilinx IP core files (.xci) for the target profile"
@@ -223,7 +237,11 @@ clean:
 
 distclean: clean
 	@echo "INFO: Performing distclean"
-	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f
+	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f 
+	@rm -rf simv* csrc* ${ROOT}/libs *.log ucli.key vhdlanLog verdiLog novas.fsdb
+	@rm -rf novas.rc novas.conf profileReport* simprofile_dir vdCovLog vc_hdrs.h
+	@rm -rf verdi_config_file .vlogansetup.args inter.fsdb build_*
+
 
 # -------------------------------------------------------------
 # Tool implementations
@@ -310,6 +328,47 @@ vcs_sim:
 	else \
 		./simv; \
 	fi
+uvm_compile_sim:
+	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
+    echo "INFO: Running uvm simulation" \
+    echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
+    echo "INFO: Filtering out VHDL files from generated simulation files" && \
+    grep -v "\.vhd$$" generated_sim.f > generated_sim_verilog_only.f && \
+    GT_TYPE_DEF="$(get_gt_type)" && \
+    echo "INFO: Using GT_TYPE=$$GT_TYPE_DEF for profile $(OPT_PROFILE)" && \
+    echo "INFO: Compiling design + IP + Xilinx GT/clock primitives + SecureIP into VCS" && \
+   vcs -full64 -ntb_opts uvm -sverilog +systemverilogext+2017 -quiet -xlrm floating_pnt_constraint \
+	+define+SYNOPSYS_SV +define+UVM_DISABLE_AUTO_ITEM_RECORDING +lint=TFIPC-L -sv_net_ports -sverilog \
+	-timescale=1ps/1ps +define+WAVES_FSDB +define+WAVES=\"fsdb\" +plusarg_save -debug_access+r -debug_region=cell+encrypt \
+	-cm_libs yv+celldefine -cm line+cond+tgl+fsm+branch+assert -cm_dir coverage/$(OPT_TEST)_$(OPT_SEED)_cov.vdb \
+	+define+GT_TYPE=\"$$GT_TYPE_DEF\" -kdb -top WORK.${OPT_TOP} -top glbl \
+   	+v2k +define+VCS +libext+.v+.sv+.vp -ignore initializer_driver_checks \
+	-work work \
+   	+incdir+src \
+	-F $(UVM_FILELIST) \
+   	-y $$XILINX_VIVADO/data/verilog/src/unisims \
+   	-y $$XILINX_VIVADO/data/verilog/src/retarget \
+   	-f $$XILINX_VIVADO/data/secureip/secureip_cell.list.f \
+   	$$XILINX_VIVADO/data/verilog/src/glbl.v \
+   	-file generated_sim_verilog_only.f \
+   	$(SRC_FILES) \
+   	-top glbl
+
+uvm_sim:
+   ifeq ($(OPT_MODE), gui)
+	@$(MAKE) uvm_compile_sim
+   ./simv $(OPT_ARGS) -gui=verdi  +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l ${OPT_TEST}.log +ntb_random_seed=$(OPT_SEED)
+   rm generated_sim_verilog_only.f
+   else ifeq ($(OPT_MODE),cov)
+	@$(MAKE) uvm_compile_sim
+	./simv $(OPT_ARGS) +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l ${OPT_TEST}.log +ntb_random_seed=$(OPT_SEED) -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/$(OPT_TEST)_$(OPT_SEED)_cov.vdb
+	rm generated_sim_verilog_only.f
+   else
+	@$(MAKE) uvm_compile_sim	
+	./simv $(OPT_ARGS) +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l ${OPT_TEST}.log +ntb_random_seed=$(OPT_SEED) 
+	rm generated_sim_verilog_only.f
+   endif
+ 
 
 vivado_synth:
 	@$(MAKE) check_vivado
