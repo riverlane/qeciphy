@@ -10,7 +10,7 @@ module purge
 echo "Loading Vivado and VCS..."
 module load xilinx/vivado/2024.1
 module load synopsys/vcs
-module laod synopsys/verdi
+module load synopsys/verdi
 
 # Test all supported platforms
 PROFILES=("zcu216" "zcu106" "kasliSoC")
