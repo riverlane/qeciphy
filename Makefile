@@ -239,9 +239,6 @@ clean:
 distclean: clean
 	@echo "INFO: Performing distclean"
 	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f 
-	@rm -rf simv* csrc* ${ROOT}/libs *.log ucli.key vhdlanLog verdiLog novas.fsdb
-	@rm -rf novas.rc novas.conf profileReport* simprofile_dir vdCovLog vc_hdrs.h
-	@rm -rf verdi_config_file .vlogansetup.args inter.fsdb build_*
 
 
 # -------------------------------------------------------------
