@@ -12,7 +12,8 @@
       "transceiver": {
         "gt_loc": "X0Y8",
         "rx_rclk_src": "X0Y8 clk1+2",
-        "tx_rclk_src": "X0Y8 clk1+2"
+        "tx_rclk_src": "X0Y8 clk1+2",
+        "line_rate_gbps": "12.5"
       },
       "synth": {
         "top": "qeciphy_syn_wrapper",

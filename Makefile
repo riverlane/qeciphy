@@ -42,6 +42,7 @@ RCLK_FREQ        := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROF
 GT_LOC           := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.gt_loc 2>/dev/null || echo "")
 RX_RCLK_SRC      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.rx_rclk_src 2>/dev/null || echo "")
 TX_RCLK_SRC      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.tx_rclk_src 2>/dev/null || echo "")
+LINE_RATE_GBPS   := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.line_rate_gbps 2>/dev/null || echo "")
 
 # Static file lists
 SIM_FILELIST := sim.f
@@ -257,7 +258,7 @@ vivado_generate_xci:
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	elif [ "$(VARIANT)" = "GTY" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gty) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)"; \
+		vivado -mode batch -source $(GEN_XCI_TCL_gty) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	else \
