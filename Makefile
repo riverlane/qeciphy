@@ -248,7 +248,7 @@ vivado_generate_xci:
 	@mkdir -p $(XCI_DIR)
 	@mkdir -p $(RUN_DIR)
 	@if [ "$(VARIANT)" = "GTH" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gth) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)"; \
+		vivado -mode batch -source $(GEN_XCI_TCL_gth) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	elif [ "$(VARIANT)" = "GTX" ]; then \

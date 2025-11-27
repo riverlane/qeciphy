@@ -7,17 +7,26 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 }
 
 # Parse arguments
-if { !([info exists ::argv] && [llength $::argv] >= 7) } {
-  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gth_transceiver.tcl -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC>"
+if { !([info exists ::argv] && [llength $::argv] >= 8) } {
+  puts "ERROR: Usage:"
+  puts "  vivado -mode batch -source vendor/xilinx/qeciphy_gth_transceiver.tcl \\"
+  puts "         -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC> <LINE_RATE_GBPS>"
   return 1
 }
-set part_number [lindex $::argv 0]
-set output_dir [lindex $::argv 1]
-set GT_LOC [lindex $::argv 2]
-set FCLK_FREQ [lindex $::argv 3]
-set RCLK_FREQ [lindex $::argv 4]
-set RX_RCLK_SRC [lindex $::argv 5]
-set TX_RCLK_SRC [lindex $::argv 6]
+
+set part_number     [lindex $::argv 0]
+set output_dir      [lindex $::argv 1]
+set GT_LOC          [lindex $::argv 2]
+set FCLK_FREQ       [lindex $::argv 3]
+set RCLK_FREQ       [lindex $::argv 4]
+set RX_RCLK_SRC     [lindex $::argv 5]
+set TX_RCLK_SRC     [lindex $::argv 6]
+set LINE_RATE_GBPS  [lindex $::argv 7]
+
+# Derive TXPROGDIV frequency in MHz:
+#   F_progdiv = LineRate(Gbps) * 1000 / 40 (bits per internal clock @ 8b/10b, 32-bit user)
+set TXPROGDIV_FREQ_VAL [expr {double($LINE_RATE_GBPS) * 1000.0 / 40.0}]
+set TXPROGDIV_FREQ_VAL [format "%.3f" $TXPROGDIV_FREQ_VAL]
 
 puts "INFO: Using part number: $part_number"
 puts "INFO: Output directory: $output_dir"
@@ -26,6 +35,8 @@ puts "INFO: Free-run clock frequency: $FCLK_FREQ"
 puts "INFO: Reference clock frequency: $RCLK_FREQ"
 puts "INFO: RX reference clock source: $RX_RCLK_SRC"
 puts "INFO: TX reference clock source: $TX_RCLK_SRC"
+puts "INFO: Line rate: $LINE_RATE_GBPS Gbps"
+puts "INFO: TXPROGDIV frequency (derived): $TXPROGDIV_FREQ_VAL MHz"
 
 # Create project in output directory
 # Clean output_dir if exists (delete all files in output_dir)
@@ -57,22 +68,23 @@ set ip_obj [create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -
 
 # Set IP parameters
 set_property -dict [list \
-  CONFIG.CHANNEL_ENABLE           $GT_LOC \
-  CONFIG.ENABLE_OPTIONAL_PORTS    {qpll0lock_out rxsliderdy_out} \
-  CONFIG.FREERUN_FREQUENCY        $FCLK_FREQ \
-  CONFIG.RX_COMMA_ALIGN_WORD      {4} \
+  CONFIG.CHANNEL_ENABLE               $GT_LOC \
+  CONFIG.ENABLE_OPTIONAL_PORTS        {qpll0lock_out rxsliderdy_out} \
+  CONFIG.FREERUN_FREQUENCY            $FCLK_FREQ \
+  CONFIG.RX_COMMA_ALIGN_WORD          {4} \
   CONFIG.RX_COMMA_SHOW_REALIGN_ENABLE {false} \
-  CONFIG.RX_DATA_DECODING         {8B10B} \
-  CONFIG.RX_LINE_RATE             {12.5} \
-  CONFIG.RX_MASTER_CHANNEL        $GT_LOC \
-  CONFIG.RX_REFCLK_FREQUENCY      $RCLK_FREQ \
-  CONFIG.RX_REFCLK_SOURCE         $RX_RCLK_SRC \
-  CONFIG.RX_SLIDE_MODE            {PMA} \
-  CONFIG.TX_DATA_ENCODING         {8B10B} \
-  CONFIG.TX_LINE_RATE             {12.5} \
-  CONFIG.TX_MASTER_CHANNEL        $GT_LOC \
-  CONFIG.TX_REFCLK_FREQUENCY      $RCLK_FREQ \
-  CONFIG.TX_REFCLK_SOURCE         $TX_RCLK_SRC \
+  CONFIG.RX_DATA_DECODING             {8B10B} \
+  CONFIG.RX_LINE_RATE                 $LINE_RATE_GBPS \
+  CONFIG.RX_MASTER_CHANNEL            $GT_LOC \
+  CONFIG.RX_REFCLK_FREQUENCY          $RCLK_FREQ \
+  CONFIG.RX_REFCLK_SOURCE             $RX_RCLK_SRC \
+  CONFIG.RX_SLIDE_MODE                {PMA} \
+  CONFIG.TX_DATA_ENCODING             {8B10B} \
+  CONFIG.TX_LINE_RATE                 $LINE_RATE_GBPS \
+  CONFIG.TX_MASTER_CHANNEL            $GT_LOC \
+  CONFIG.TX_REFCLK_FREQUENCY          $RCLK_FREQ \
+  CONFIG.TX_REFCLK_SOURCE             $TX_RCLK_SRC \
+  CONFIG.TXPROGDIV_FREQ_VAL           $TXPROGDIV_FREQ_VAL \
 ] [get_ips $ip_name]
 
 puts "INFO: IP core '$ip_name' generated successfully"
