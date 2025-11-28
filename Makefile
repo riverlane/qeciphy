@@ -338,7 +338,7 @@ uvm_compile_sim:
    vcs -full64 -ntb_opts uvm -sverilog +systemverilogext+2017 -quiet -xlrm floating_pnt_constraint \
 	+define+SYNOPSYS_SV +define+UVM_DISABLE_AUTO_ITEM_RECORDING +lint=TFIPC-L -sv_net_ports -sverilog \
 	-timescale=1ps/1ps +define+WAVES_FSDB +define+WAVES=\"fsdb\" +plusarg_save -debug_access+r -debug_region=cell+encrypt \
-	-cm_libs yv+celldefine -cm line+cond+tgl+fsm+branch+assert -cm_dir coverage/$(OPT_TEST)_$(OPT_SEED)_cov.vdb \
+	-cm_libs yv+celldefine -cm line+cond+tgl+fsm+branch+assert  \
 	+define+GT_TYPE=\"$$GT_TYPE_DEF\" -kdb -top WORK.${OPT_TOP} -top glbl \
    	+v2k +define+VCS +libext+.v+.sv+.vp -ignore initializer_driver_checks \
 	-work work \
@@ -359,7 +359,7 @@ uvm_sim:
    rm generated_sim_verilog_only.f
    else ifeq ($(OPT_MODE),cov)
 	@$(MAKE) uvm_compile_sim
-	./simv $(OPT_ARGS) +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l ${OPT_TEST}.log +ntb_random_seed=$(OPT_SEED) -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/$(OPT_TEST)_$(OPT_SEED)_cov.vdb
+	./simv $(OPT_ARGS) +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l uvm_regression_logs/${OPT_TEST}_${OPT_SEED}_${OPT_PROFILE}.log +ntb_random_seed=$(OPT_SEED) -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/$(OPT_TEST)_$(OPT_SEED)__${OPT_PROFILE}_cov.vdb
 	rm generated_sim_verilog_only.f
    else
 	@$(MAKE) uvm_compile_sim	
