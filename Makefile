@@ -252,9 +252,9 @@ vivado_generate_xci:
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	elif [ "$(VARIANT)" = "GTX" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gtx) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)"; \
+		vivado -mode batch -source $(GEN_XCI_TCL_gtx) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
-		vivado -mode batch -source $(GEN_XCI_TCL_gtx_mmcm) -tclargs $(PART) $(RUN_DIR); \
+		vivado -mode batch -source $(GEN_XCI_TCL_gtx_mmcm) -tclargs $(PART) $(RUN_DIR) "$(LINE_RATE_GBPS)"; \
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
 	elif [ "$(VARIANT)" = "GTY" ]; then \

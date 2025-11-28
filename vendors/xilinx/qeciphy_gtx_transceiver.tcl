@@ -7,17 +7,21 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 }
 
 # Parse arguments
-if { !([info exists ::argv] && [llength $::argv] >= 7) } {
-  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gtx_transceiver.tcl -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC>"
+if { !([info exists ::argv] && [llength $::argv] >= 8) } {
+  puts "ERROR: Usage: vivado -mode batch -source vendor/xilinx/qeciphy_gtx_transceiver.tcl \\"
+  puts "                -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC> <LINE_RATE_GBPS>"
   return 1
 }
-set part_number [lindex $::argv 0]
-set output_dir [lindex $::argv 1]
-set GT_LOC [lindex $::argv 2]
-set FCLK_FREQ [lindex $::argv 3]
-set RCLK_FREQ [lindex $::argv 4]
-set RX_RCLK_SRC [lindex $::argv 5]
-set TX_RCLK_SRC [lindex $::argv 6]
+
+set part_number     [lindex $::argv 0]
+set output_dir      [lindex $::argv 1]
+set GT_LOC          [lindex $::argv 2]
+set FCLK_FREQ       [lindex $::argv 3]
+set RCLK_FREQ       [lindex $::argv 4]
+set RX_RCLK_SRC     [lindex $::argv 5]
+set TX_RCLK_SRC     [lindex $::argv 6]
+set LINE_RATE_GBPS  [lindex $::argv 7]
+
 puts "INFO: Using part number: $part_number"
 puts "INFO: Output directory: $output_dir"
 puts "INFO: GT Location: $GT_LOC"
@@ -25,6 +29,7 @@ puts "INFO: Reference clock frequency: $RCLK_FREQ MHz"
 puts "INFO: Free-running clock frequency: $FCLK_FREQ MHz"
 puts "INFO: RX reference clock source: $RX_RCLK_SRC"
 puts "INFO: TX reference clock source: $TX_RCLK_SRC"
+puts "INFO: Line rate: $LINE_RATE_GBPS Gbps"
 
 # Create project in output directory
 if { [file exists $output_dir] } {
@@ -142,7 +147,7 @@ set_property -dict [list \
   CONFIG.gt0_val_rx_cm_trim {800} \
   CONFIG.gt0_val_rx_data_width {32} \
   CONFIG.gt0_val_rx_int_datawidth {40} \
-  CONFIG.gt0_val_rx_line_rate {12.5} \
+  CONFIG.gt0_val_rx_line_rate $LINE_RATE_GBPS \
   CONFIG.gt0_val_rx_refclk $RX_RCLK_SRC \
   CONFIG.gt0_val_rx_reference_clock [format "%.3f" $RCLK_FREQ] \
   CONFIG.gt0_val_rx_termination_voltage {Programmable} \
@@ -156,7 +161,7 @@ set_property -dict [list \
   CONFIG.gt0_val_tx_buffer_bypass_mode {Auto} \
   CONFIG.gt0_val_tx_data_width {32} \
   CONFIG.gt0_val_tx_int_datawidth {40} \
-  CONFIG.gt0_val_tx_line_rate {12.5} \
+  CONFIG.gt0_val_tx_line_rate $LINE_RATE_GBPS \
   CONFIG.gt0_val_tx_refclk $TX_RCLK_SRC \
   CONFIG.gt0_val_tx_reference_clock [format "%.3f" $RCLK_FREQ] \
   CONFIG.gt0_val_txbuf_en {true} \
@@ -181,9 +186,9 @@ set_property -dict [list \
   CONFIG.identical_protocol_file {Start_from_scratch} \
   CONFIG.identical_val_no_rx {false} \
   CONFIG.identical_val_no_tx {false} \
-  CONFIG.identical_val_rx_line_rate {12.5} \
+  CONFIG.identical_val_rx_line_rate $LINE_RATE_GBPS \
   CONFIG.identical_val_rx_reference_clock [format "%.3f" $RCLK_FREQ] \
-  CONFIG.identical_val_tx_line_rate {12.5} \
+  CONFIG.identical_val_tx_line_rate $LINE_RATE_GBPS \
   CONFIG.identical_val_tx_reference_clock [format "%.3f" $RCLK_FREQ] \
 ] [get_ips $ip_name]
 
