@@ -36,6 +36,8 @@ The block diagram below shows the structure of the top-level of the UVM TB.
    It can also be accessed from scoreboards and coverage_collectors via the m_config.m_vifs field.
 
    # Run time arguments used in UVM Tests
+    Below is the description of the optional run time arguments used in the tests.  
+
    | OPT_ARGS | Description |
    |----------|-------------|
    | +DUT_XFERS | Specify number of words to sent to DUT Tx AXI-S Port (n = decimal integer > 0)|
@@ -60,34 +62,41 @@ The block diagram below shows the structure of the top-level of the UVM TB.
    | +MAX_STUTTER_CLKS=n | Maximum time (number of clks) between "stuttery" AXI-S data transfers (default = 40 clks).|
 
   # UVM Testbench simulation using Xilinx and Synopsys tools
+   ## Supported simulators
+| Simulator | Version | Status |
+|-----------|---------|--------|
+| **Xilinx XSim** | 2024.1+ | ✅ Default |
+| **Synopsys VCS** | U-2023.03+ | ✅ Supported |  
+
    To run the UVM testbench there are 2 steps to be followed:
-   1. Geenrate simulation files for the required transciever (GTY or GTX or GTX). This is done using the following commands 
-    * load xilinx vivado
-    * `make generate-xci OPT_PROFILE=<opt_profile> OPT_SIM_FILES=true`
-    * OPT_PROFILE can be chosen from the table below 
+1.  Geenrate simulation files for the required transciever (GTY, or GTH, or GTX). This is done using the following commands  
+*   load xilinx vivado  
+*   make generate-xci OPT_PROFILE=<opt_profile> OPT_SIM_FILES=true`  
+*   OPT_PROFILE can be chosen from the table below 
 
-      | OPT_PROFILE | Purpose | GT Types |
-      |---------|---------|--------------|
-      | `kasliSoC` | qeciphy_clk_mmcm + qeciphy_gtx_transceiver | GTX (7-series) |
-      | `zcu106` | GTH transceiver wrapper | GTH (UltraScale) |
-      | `zcu216` | GTY transceiver wrapper | GTY (UltraScale+) |
+  | OPT_PROFILE | Purpose | GT Types |
+  |---------|---------|--------------|
+  | `kasliSoC` | qeciphy_clk_mmcm + qeciphy_gtx_transceiver | GTX (7-series) |
+  | `zcu106` | GTH transceiver wrapper | GTH (UltraScale) |
+  | `zcu216` | GTY transceiver wrapper | GTY (UltraScale+) |
       
-   2. Run any test on the UVM testbench using synopsys-vcs and Verdi(gui) using the follwing commands 
-    * load the tool to run uvm testbench
-    * `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=<test_name> OPT_PROFILE=<profile>` 
-    * To run with GUI - `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=<test_name> OPT_PROFILE=<profile> OPT_MODE=gui OPT_ARGS=<args>(optional)`
+2.  Run any test on the UVM testbench using synopsys-vcs and Verdi(gui) using the follwing commands 
+*   Load the tool to run uvm testbench
+* `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=<test_name> OPT_PROFILE=<profile>`  
+* To run with GUI - `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=<test_name> OPT_PROFILE=<profile> OPT_MODE=gui OPT_ARGS=<args>(optional)`
+* Test logs are save as <test_name>.log
 
-
-   # Example run command on a new terminal
-   `make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true`  
-   Once this command is run,it can be observed that `generate_sim.f` and `generated_sim_verilog_only.f` files are generated 
-
-   `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=qeciphy_txrx_test OPT_PROFILE=zcu216 OPT_MODE=gui OPT_ARGS=+DUT_XFERS=20000 +TBPHY_XFERS=100` 
+# Example run command on a new terminal
+  `make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true`  
+  Once this command is run,it can be observed that `generate_sim.f` and `generated_sim_verilog_only.f` files are generated 
   
-  # UVM Regression
+  `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=qeciphy_txrx_test OPT_PROFILE=zcu216 OPT_MODE=gui OPT_ARGS=+DUT_XFERS=20000 +TBPHY_XFERS=100` 
+  
+ # UVM Regression
 
-  To run regressions for uvm tests  
-    * load tools xilinx-vivado and synopsys- VCS and Verdi  
-    * run `bash uvm/regression_run.sh`
+To run regressions for uvm tests  
+* load tools xilinx-vivado and synopsys- VCS and Verdi  
+* Run `bash uvm/regression_run.sh`
+* All test results are saved in uvm_regression_logs/<test_name>_<seed>_<profile>.log
 
-   Note* - Always use `make distclean` before generating files for a different transciever.  
+Note* - Always use `make distclean` before generating files for a different transciever.  

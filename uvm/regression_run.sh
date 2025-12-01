@@ -29,7 +29,6 @@ for profile in "${PROFILES[@]}"; do
                        OPT_ARGS=\"$OPT_ARGS_FORMATTED\"  
                        OPT_SEED=$SEED 
                        LOG = ${TEST_NAME}_${SEED}_$profile.log "
-        touch uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log
         # Execute the command
         ./simv -q OPT_ARGS=$OPT_ARGS_FORMATTED +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$TEST_NAME -l uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log +ntb_random_seed=${SEED} -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/${TEST_NAME}_${SEED}_$profile_cov.vdb
         # check the log for pass/fail
@@ -38,7 +37,7 @@ for profile in "${PROFILES[@]}"; do
             exit 1
          fi
 
-         if grep -q "uvm_test_top [uvm_test_top] ***FAILED***" "uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log"; then
+         if grep -q "***FAILED***" "uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log"; then
              echo "${TEST_NAME}_${SEED}_$profile failed"
              FAIL=$((FAIL+1))
          else
