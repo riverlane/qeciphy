@@ -251,7 +251,7 @@ verilator_lint:
 	
 verible_format:
 	@$(MAKE) check_verible
-	@files=$$(find . -type f \( -name "*.sv" -o -name "*.v" \)); \
+	@files=$$(find . -type f \( -name "*.sv" -o -name "*.v" \) -not -path "./uvm/*" -not -path "./verif_vip/*" -not -path "./run/*"); \
 	if [ -n "$$files" ]; then \
 		verible-verilog-format --inplace --column_limit 200 --indentation_spaces 3 $$files; \
 	else \
