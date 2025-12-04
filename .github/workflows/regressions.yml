@@ -15,6 +15,7 @@ jobs:
       format: ${{ steps.changes.outputs.format }}
       simulation: ${{ steps.changes.outputs.simulation }}
       synthesis: ${{ steps.changes.outputs.synthesis }}
+      verif: ${{ steps.changes.outputs.verif }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -56,6 +57,11 @@ jobs:
               - 'Makefile'
               - 'scripts/**'
               - 'config.json'
+            verif:
+              - 'src/**'
+              - 'uvm/**'
+              - 'verif_vip/**'
+              - 'uvm.f'
 
   # Static analysis jobs that must pass before expensive FPGA jobs
   static-checks:
@@ -105,7 +111,7 @@ jobs:
     needs: [changes, static-checks]
     if: |
       always() && 
-      needs.changes.outputs.simulation == 'true'
+      needs.changes.outputs.verif == 'true'
     runs-on: sanity-builder
     steps:
       - name: Checkout repo

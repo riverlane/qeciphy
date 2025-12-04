@@ -65,7 +65,7 @@ The block diagram below shows the structure of the top-level of the UVM TB.
    ## Supported simulators
 | Simulator | Version | Status |
 |-----------|---------|--------|
-| **Xilinx XSim** | 2024.1+ | ✅ Default |
+| **Xilinx** | 2024.1+ | ✅ Default |
 | **Synopsys VCS** | U-2023.03+ | ✅ Supported | 
 
 
