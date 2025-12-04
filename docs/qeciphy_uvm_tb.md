@@ -1,6 +1,6 @@
 # QECi Phy UVM top level tb structure
 The block diagram below shows the structure of the top-level of the UVM TB.
-| ![](./qeci_phy_uvmtb.jpg) |
+| ![](./assets/qeci_phy_uvmtb.jpg) |
 |:--:|
 | *Block Diagram of QECi Phy UVM TB* |
 
@@ -66,12 +66,13 @@ The block diagram below shows the structure of the top-level of the UVM TB.
 | Simulator | Version | Status |
 |-----------|---------|--------|
 | **Xilinx XSim** | 2024.1+ | ✅ Default |
-| **Synopsys VCS** | U-2023.03+ | ✅ Supported |  
+| **Synopsys VCS** | U-2023.03+ | ✅ Supported | 
 
-   To run the UVM testbench there are 2 steps to be followed:
-1.  Geenrate simulation files for the required transciever (GTY, or GTH, or GTX). This is done using the following commands  
-*   load xilinx vivado  
-*   make generate-xci OPT_PROFILE=<opt_profile> OPT_SIM_FILES=true`  
+
+To run the UVM testbench there are 2 steps to be followed:
+1. Generate simulation files for the required transciever (GTY, or GTH, or GTX). This is done using the following commands  
+*   Load xilinx vivado* 
+*   `make generate-xci OPT_PROFILE=<opt_profile> OPT_SIM_FILES=true`  
 *   OPT_PROFILE can be chosen from the table below 
 
   | OPT_PROFILE | Purpose | GT Types |
@@ -81,10 +82,12 @@ The block diagram below shows the structure of the top-level of the UVM TB.
   | `zcu216` | GTY transceiver wrapper | GTY (UltraScale+) |
       
 2.  Run any test on the UVM testbench using synopsys-vcs and Verdi(gui) using the follwing commands 
-*   Load the tool to run uvm testbench
+*  Load the tool to run uvm testbench
 * `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=<test_name> OPT_PROFILE=<profile>`  
 * To run with GUI - `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=<test_name> OPT_PROFILE=<profile> OPT_MODE=gui OPT_ARGS=<args>(optional)`
 * Test logs are save as <test_name>.log
+
+Note* - Make sure Xilinx is loaded in the environment. 
 
 # Example run command on a new terminal
   `make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true`  
