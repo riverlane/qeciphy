@@ -36,6 +36,7 @@ for profile in "${PROFILES[@]}"; do
     if grep -q "***FAILED***" "qeciphy_txrx_test.log"; then
         echo "qeciphy_txrx_test failed"
         FAIL=$((FAIL+1))
+        exit 1
     else
         echo "qeciphy_txrx_test passed"
         PASS=$((PASS+1))
@@ -44,5 +45,4 @@ for profile in "${PROFILES[@]}"; do
     echo "$profile UVM VCS simulation completed successfully!"
 done
 
-echo ""
 echo "All platform UVM VCS simulations completed successfully!"

@@ -105,13 +105,12 @@ jobs:
     needs: [changes, static-checks]
     if: |
       always() && 
-      needs.changes.outputs.simulation == 'true' && 
-      (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped')
+      needs.changes.outputs.simulation == 'true'
     runs-on: sanity-builder
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Run simulations using VCS
+      - name: Run UVM simulations using VCS
         run: |
           bash ci/uvm_sim.sh
 
