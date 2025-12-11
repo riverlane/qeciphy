@@ -2,7 +2,7 @@
 set -e 
 set -o pipefail
 
-echo "=== QECIPHY Multi-Platform VCS Simulation ==="
+echo "=== QECIPHY Multi-Platform UVM VCS Simulation ==="
 
 echo "Purging modules..."
 module purge
@@ -10,7 +10,6 @@ module purge
 echo "Loading Vivado and VCS..."
 module load xilinx/vivado/2024.1
 module load synopsys/vcs
-module load synopsys/verdi
 
 # Test all supported platforms
 PROFILES=("zcu216" "zcu106" "kasliSoC")
