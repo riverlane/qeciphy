@@ -15,7 +15,7 @@ jobs:
       format: ${{ steps.changes.outputs.format }}
       simulation: ${{ steps.changes.outputs.simulation }}
       synthesis: ${{ steps.changes.outputs.synthesis }}
-      verif: ${{ steps.changes.outputs.verif }}
+      uvm: ${{ steps.changes.outputs.uvm }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -57,9 +57,15 @@ jobs:
               - 'Makefile'
               - 'scripts/**'
               - 'config.json'
-            verif:
+            uvm:
               - 'src/**'
+              - 'lib/**'
+              - 'vendors/**'
+              - 'src.f'
               - 'uvm/**'
+              - 'Makefile'
+              - 'scripts/**'
+              - 'config.json'
               - 'verif_vip/**'
               - 'uvm.f'
 
@@ -111,7 +117,8 @@ jobs:
     needs: [changes, static-checks]
     if: |
       always() && 
-      needs.changes.outputs.verif == 'true'
+      needs.changes.outputs.uvm == 'true' &&
+      (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped')
     runs-on: sanity-builder
     steps:
       - name: Checkout repo
