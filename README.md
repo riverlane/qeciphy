@@ -16,7 +16,8 @@ QECIPHY is a physical layer implementation according to the QECi (Quantum Error 
 
 - **Simple Interface**: AXI4-Stream interface hides all physical layer complexity
 - **Universal Compatibility**: Supports any Xilinx FPGA with GTX, GTH, or GTY transceivers
-- **Performance**: 12.5 Gbps data rate with ~150-200ns latency
+- **Latency**: ~150-200ns latency at 12.5 Gbps line rate
+- **Programmable Line Rate**: Configurable transceiver line rates for different bandwidth requirements
 - **Open Standard**: Based on QECi Specification - an open standard
 - **Clock Recovery**: Recovers clock from incoming data stream automatically
 - **Frame Alignment**: Automatic byte and word boundary detection
@@ -145,7 +146,7 @@ make synth OPT_PROFILE=<profile> OPT_MODE=gui   # Run synthesis (GUI mode)
 | **LUT** | 1372 | 1230 | 1230 |
 | **FF** | 1229 | 1156 | 1156 |
 
-*Performance varies by platform and configuration.*
+*Measured at 12.5 Gbps line rate. Performance varies by platform and configuration.*
 
 ## Important Links
 
