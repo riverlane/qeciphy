@@ -80,7 +80,8 @@ If your platform is not listed, create a new profile in `config.json`:
       "transceiver": {
         "gt_loc": "X0Y8",
         "rx_rclk_src": "X0Y8 clk1+2",
-        "tx_rclk_src": "X0Y8 clk1+2"
+        "tx_rclk_src": "X0Y8 clk1+2",
+        "line_rate_gbps": "12.5"
       },
       "synth": {
         "top": "qeciphy_syn_wrapper",
@@ -105,6 +106,7 @@ If your platform is not listed, create a new profile in `config.json`:
 - `transceiver.gt_loc`: Transceiver location (e.g., "X0Y8") 
 - `transceiver.rx_rclk_src`: RX reference clock source
 - `transceiver.tx_rclk_src`: TX reference clock source
+- `transceiver.line_rate_gbps`: Transceiver line rate in Gbps (e.g., "12.5")
 - `synth`: Synthesis configuration (optional, for standalone testing)
 
 **Important:** Refer to your FPGA documentation for correct GT site assignments and available reference clock sources for your specific device and board.
@@ -323,8 +325,8 @@ You must also define your user clocks:
 # Your reference clock (adjust period based on your frequency)
 create_clock -period 6.400 -name RCLK [get_ports your_refclk_port]
 
-# Your free-running clock
-create_clock -period 10.000 -name FCLK [get_ports your_freerun_clk_port]
+# Your free-running clock (adjust period based on your frequency) 
+create_clock -period 6.400 -name FCLK [get_ports your_freerun_clk_port]
 
 # Your AXI stream clock
 create_clock -period 4.000 -name ACLK [get_ports your_axi_clk_port]
