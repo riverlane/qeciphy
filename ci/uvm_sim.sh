@@ -27,7 +27,7 @@ for profile in "${PROFILES[@]}"; do
     SEED=$RANDOM
 
     echo "Running UVM VCS simulation for $profile..."
-    make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=qeciphy_txrx_test OPT_PROFILE=$profile OPT_SEED=$SEED
+    make uvm-sim OPT_TOP=qeciphy_uvmtb OPT_TEST=qeciphy_txrx_test OPT_PROFILE=$profile OPT_SEED=$SEED
     if [[ ! -f "qeciphy_txrx_test.log" ]]; then
             echo "Log file not found! Test qeciphy_txrx_test may have failed to run."
             exit 1

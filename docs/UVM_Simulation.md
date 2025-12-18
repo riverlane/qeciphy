@@ -58,7 +58,7 @@ Below is the description of the optional run time arguments used in the tests.
 | +MAX_STUTTER_CLKS=n | Maximum time (number of clks) between "stuttery" AXI-S data transfers (default = 40 clks).|
 
 
-# UVM Testbench simulation using Xilinx and Synopsys tools
+# UVM Testbench simulation using Synopsys tools
 ## Supported simulators
 
 
@@ -68,14 +68,14 @@ Below is the description of the optional run time arguments used in the tests.
 
 
 To run the UVM testbench there are 2 steps to be followed:
-1. Generate simulation files for the required transciever (GTY, or GTH, or GTX). This is done using the following command  
+1. Generate simulation files for the required transceiver (GTY, or GTH, or GTX). This is done using the following command  
 *   `make generate-xci OPT_PROFILE=<opt_profile> OPT_SIM_FILES=true`  
 *   OPT_PROFILE must be chosen from the profiles avaliable in `config.json` 
-Note* - Make sure Vivado is loaded in the environment. This is neeeded to generate the simulation files. 
+Note* - Make sure Vivado is loaded in the environment. This is needed to generate the simulation files. 
       
-2.  Run any test on the UVM testbench using VCS and optionally Verdi(gui) using the follwing commands 
-* `make uvm_sim OPT_TOP=qeciphy_uvmtb OPT_TEST=<test_name> OPT_PROFILE=<profile> OPT_MODE=gui (optional)`  
-* Test logs are save as <test_name>.log
+2.  Run any test on the UVM testbench using VCS and optionally Verdi(gui) using the following commands 
+* `make uvm-sim OPT_TEST=<test_name> OPT_PROFILE=<profile> OPT_MODE=gui (optional)`  
+* The test logs are saved as <test_name>.log
 
 # UVM Regression
 
@@ -83,4 +83,4 @@ To run regressions for uvm tests
 * Run `bash uvm/regression_run.sh`
 * All test results are saved in uvm_regression_logs/<test_name>_<seed>_<profile>.log
 
-Note* - Always use `make distclean` before generating files for a different transciever.  
+Note* - Always use `make distclean` before generating files for a different transceiver.  
