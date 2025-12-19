@@ -163,7 +163,7 @@ make uvm-sim OPT_TEST=<test> OPT_PROFILE=<profile> OPT_ARGS=+DUT_XFERS=20000 # R
 - **[Integration Guide](INTEGRATION.md)** - How to use QECIPHY in your design
 - **[Multi-Platform Simulation](docs/multi_platform_simulation.md)** - VCS and XSim simulation support
 - **[Contribution Guide](CONTRIBUTING.md)** - Development and contribution guidelines
-- **[UVM Verification](docs/UVM_Simulation.md)** - UVM tesbench architeture and usage instructions
+- **[UVM Verification](docs/UVM_Simulation.md)** - UVM testbench architecture and usage instructions
 
 ## License
 
