@@ -7,7 +7,7 @@
 OPT_MODE?=batch
 OPT_PROFILE?=
 OPT_SIM_FILES  ?= false
-OPT_SIMULATOR  ?= xsim
+OPT_TOOL?=
 OPT_TEST?=
 OPT_ARGS?=0
 OPT_SEED?=0
@@ -95,8 +95,8 @@ help:
 	@echo "  sim"
 	@echo "    - Run simulation using XSim (default) or VCS"
 	@echo "    - Required variables: OPT_PROFILE"
+	@echo "    - Optional variables: OPT_TOOL=(xsim|vcs)"
 	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
-	@echo "    - Optional variables: OPT_SIMULATOR=(xsim|vcs) [default: xsim]"
 	@echo ""
 	@echo "  uvm-sim"
 	@echo "    - Run UVM-based simulation."
@@ -128,9 +128,8 @@ help:
 	@echo "  make generate-xci OPT_PROFILE=zcu216"
 	@echo "  make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true"
 	@echo "  make synth OPT_PROFILE=zcu216"
-	@echo "  make sim OPT_PROFILE=zcu216"
-	@echo "  make sim OPT_PROFILE=zcu216 OPT_SIMULATOR=vcs"
-	@echo "  make sim OPT_PROFILE=zcu216 OPT_MODE=gui OPT_SIMULATOR=vcs"
+	@echo "  make sim OPT_PROFILE=zcu216 OPT_TOOL=vcs"
+	@echo "  make sim OPT_PROFILE=zcu216 OPT_MODE=gui OPT_TOOL=vcs"
 	@echo "  make lint"
 	@echo "  make format"
 	@echo "  make uvm-sim OPT_TEST=qeciphy_txrx_test OPT_PROFILE=zcu216" 
@@ -159,8 +158,8 @@ endif
 # Simulator validation
 # -------------------------------------------------------------
 check_simulator:
-	@if [ "$(OPT_SIMULATOR)" != "xsim" ] && [ "$(OPT_SIMULATOR)" != "vcs" ]; then \
-		echo "ERROR: Unsupported simulator '$(OPT_SIMULATOR)'. Supported: xsim, vcs"; \
+	@if [ "$(OPT_TOOL)" != "xsim" ] && [ "$(OPT_TOOL)" != "vcs" ]; then \
+		echo "ERROR: Unsupported simulator '$(OPT_TOOL)'. Supported: xsim, vcs"; \
 		exit 1; \
 	fi
 
@@ -221,8 +220,8 @@ generate-xci:
 sim:
 	@$(MAKE) check_profile
 	@$(MAKE) check_simulator
-	@echo "INFO: Running simulation for profile $(OPT_PROFILE) using $(OPT_SIMULATOR)"
-	@if [ "$(OPT_SIMULATOR)" = "vcs" ]; then \
+	@echo "INFO: Running simulation for profile $(OPT_PROFILE) using $(OPT_TOOL)"
+	@if [ "$(OPT_TOOL)" = "vcs" ]; then \
 		$(MAKE) vcs_sim; \
 	else \
 		$(MAKE) vivado_sim; \
