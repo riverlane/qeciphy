@@ -25,7 +25,7 @@ for profile in "${PROFILES[@]}"; do
     make generate-xci OPT_PROFILE=$profile OPT_SIM_FILES=true
     
     echo "Running VCS simulation for $profile..."
-    make sim OPT_PROFILE=$profile OPT_SIMULATOR=vcs
+    make sim OPT_PROFILE=$profile OPT_TOOL=vcs
     
     echo "$profile VCS simulation completed successfully!"
 done
