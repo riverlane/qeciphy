@@ -14,3 +14,6 @@ csrc/
 simv.daidir/
 synopsys_sim.setup
 simv
+novas.conf
+novas.rc
+*_learn_dir/

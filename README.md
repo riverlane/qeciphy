@@ -165,6 +165,7 @@ make uvm-sim OPT_TEST=<test> OPT_PROFILE=<profile> OPT_ARGS=+DUT_XFERS=20000 # R
 - **[Multi-Platform Simulation](docs/multi_platform_simulation.md)** - VCS and XSim simulation support
 - **[Contribution Guide](CONTRIBUTING.md)** - Development and contribution guidelines
 - **[UVM Verification](docs/UVM_Simulation.md)** - UVM testbench architecture and usage instructions
+- **[Formal Verification](docs/formal_verification_guide.md)** - Formal verification methodology and usage instructions
 
 ## License
 

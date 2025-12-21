@@ -8,6 +8,7 @@ OPT_MODE?=batch
 OPT_PROFILE?=
 OPT_SIM_FILES  ?= false
 OPT_TOOL?=
+OPT_TOP?=
 OPT_TEST?=
 OPT_ARGS?=0
 OPT_SEED?=0
@@ -53,12 +54,14 @@ LINT_FILELIST := lint.f
 SRC_FILELIST := src.f
 XCI_FILELIST := xci.f
 UVM_FILELIST := uvm.f
+SVA_FILELIST := sva.f
 
 # Extracted file lists
 LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(LINT_FILELIST))
 SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST))
 SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
+VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SVA_FILELIST))
 XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sources.py $(XCI_FILELIST); fi)
 
 # Tool paths and directories
@@ -71,11 +74,12 @@ GEN_XCI_TCL_gty := vendors/xilinx/qeciphy_gty_transceiver.tcl
 XSIM_TCL := scripts/vivado_sim.tcl
 VIVADO_SYNTH_TCL := scripts/vivado_synth.tcl
 VIVADO_SIM_EXPORT_TCL := scripts/vivado_sim_export.tcl
+FORMAL_TCL := scripts/vcf_default.tcl
 
 # -------------------------------------------------------------
 # Targets
 # -------------------------------------------------------------
-.PHONY: help lint synth sim generate-xci format clean distclean uvm-sim
+.PHONY: help lint synth sim generate-xci format clean distclean uvm-sim formal
 
 .DEFAULT_GOAL := help
 
@@ -96,6 +100,11 @@ help:
 	@echo "    - Run simulation using XSim (default) or VCS"
 	@echo "    - Required variables: OPT_PROFILE"
 	@echo "    - Optional variables: OPT_TOOL=(xsim|vcs)"
+	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
+	@echo ""
+	@echo "  formal"
+	@echo "    - Run formal verification using Synopsys VCF"
+	@echo "    - Required variables: OPT_TOP"
 	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
 	@echo ""
 	@echo "  uvm-sim"
@@ -154,6 +163,13 @@ endif
 		exit 1; \
 	}
 
+check_top:
+ifeq ($(OPT_TOP),)
+	@echo "ERROR: OPT_TOP is required but not specified."
+	@echo "Usage: make <target> OPT_TOP=<top_module>"
+	@exit 1
+endif
+
 # -------------------------------------------------------------
 # Simulator validation
 # -------------------------------------------------------------
@@ -184,6 +200,12 @@ check_vivado:
 check_vcs:
 	@if ! command -v vcs >/dev/null 2>&1; then \
 		echo "ERROR: VCS not found in PATH. Please ensure VCS is installed and available."; \
+		exit 1; \
+	fi
+
+check_vcf:
+	@if ! command -v vcf >/dev/null 2>&1; then \
+		echo "ERROR: VCF not found in PATH. Please ensure VCF is installed and available."; \
 		exit 1; \
 	fi
 
@@ -227,6 +249,11 @@ sim:
 		$(MAKE) vivado_sim; \
 	fi
 
+formal:
+	@$(MAKE) check_top
+	@echo "INFO: Running formal verification for $(OPT_TOP)"
+	$(MAKE) vcf_formal
+
 synth: 
 	@$(MAKE) check_profile
 	@echo "INFO: Running synthesis for profile $(OPT_PROFILE)"
@@ -235,6 +262,7 @@ synth:
 clean:
 	@echo "INFO: Cleaning build artifacts"
 	@rm -rf .Xil/ vivado* *.log run/ scripts/__pycache__/ simv synopsys_sim.setup simv.daidir/ csrc/ ucli.key verdi_config_file
+	@rm -rf novas.conf novas.rc *_learn_dir/
 
 distclean: clean
 	@echo "INFO: Performing distclean"
@@ -326,6 +354,17 @@ vcs_sim:
 	else \
 		./simv; \
 	fi
+
+vcf_formal:
+	@$(MAKE) check_vcf
+	@mkdir -p $(RUN_DIR)/formal/${OPT_TOP}
+	@export OPT_TOP=$(OPT_TOP) && export OPT_MODE=$(OPT_MODE) && export VCF_FILES="$(VCF_FILES)" && \
+	if [ "$(OPT_MODE)" = "gui" ]; then \
+		vcf -verdi -f $(FORMAL_TCL) -out_dir $(RUN_DIR)/formal/${OPT_TOP}/vcf_logs; \
+	else \
+		vcf -f $(FORMAL_TCL) -out_dir $(RUN_DIR)/formal/${OPT_TOP}/vcf_logs; \
+	fi
+
 uvm-vcs-compile-sim:
 	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
     echo "INFO: Running uvm simulation" \
