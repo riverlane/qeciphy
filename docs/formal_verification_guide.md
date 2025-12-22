@@ -56,7 +56,8 @@ module <module_name>_checker (
   endproperty
 
   // Assertions to verify design behavior
-  <property_name>_A : assert property (<property_name>);
+  <property_name>_A : assert property (<property_name>)
+    else $fatal(1, "<Failure message> at %m");
   
 endmodule
 ```
