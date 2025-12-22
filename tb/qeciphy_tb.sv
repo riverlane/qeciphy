@@ -6,9 +6,9 @@
 
 module qeciphy_tb;
 
-   `ifdef XSIM
-      `include "all_bind.svh"
-   `endif
+`ifdef XSIM
+   `include "all_bind.svh"
+`endif
 
    //----------------------------------------
    // Macros
