@@ -59,7 +59,7 @@ SVA_FILELIST := sva.f
 # Extracted file lists
 LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(LINT_FILELIST))
 SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST))
-SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST))
+SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST) $(SVA_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
 VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SVA_FILELIST))
 XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sources.py $(XCI_FILELIST); fi)

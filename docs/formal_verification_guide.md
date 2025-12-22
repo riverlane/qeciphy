@@ -126,6 +126,12 @@ sva/checkers/<module_name>_checker.sv
 sva/binds/<module_name>_bind.sv
 ```
 
+And the bind file to `sva/binds/all_bind.svh`.
+
+```systemverilog
+`include "<module_name>_bind.sv"
+```
+
 ## Running Formal Verification
 
 ### Prerequisites
