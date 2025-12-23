@@ -367,45 +367,45 @@ vcf_formal:
 
 uvm-vcs-compile-sim:
 	@export XILINX_VIVADO=$$(dirname `dirname \`which vivado\``) && \
-    echo "INFO: Running uvm simulation" \
-    echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
-    echo "INFO: Filtering out VHDL files from generated simulation files" && \
-    grep -v "\.vhd$$" generated_sim.f > generated_sim_verilog_only.f && \
-    GT_TYPE_DEF="$(get_gt_type)" && \
-    echo "INFO: Using GT_TYPE=$$GT_TYPE_DEF for profile $(OPT_PROFILE)" && \
-    echo "INFO: Compiling design + IP + Xilinx GT/clock primitives + SecureIP into VCS" && \
-   vcs -full64 -ntb_opts uvm -sverilog +systemverilogext+2017 -quiet -xlrm floating_pnt_constraint \
+	echo "INFO: Running uvm simulation" \
+	echo "INFO: Using XILINX_VIVADO=$$XILINX_VIVADO" && \
+	echo "INFO: Filtering out VHDL files from generated simulation files" && \
+	grep -v "\.vhd$$" generated_sim.f > generated_sim_verilog_only.f && \
+	GT_TYPE_DEF="$(get_gt_type)" && \
+	echo "INFO: Using GT_TYPE=$$GT_TYPE_DEF for profile $(OPT_PROFILE)" && \
+	echo "INFO: Compiling design + IP + Xilinx GT/clock primitives + SecureIP into VCS" && \
+	vcs -full64 -ntb_opts uvm -sverilog +systemverilogext+2017 -quiet -xlrm floating_pnt_constraint \
 	+define+SYNOPSYS_SV +define+UVM_DISABLE_AUTO_ITEM_RECORDING +lint=TFIPC-L -sv_net_ports -sverilog \
 	-timescale=1ps/1ps +define+WAVES_FSDB +define+WAVES=\"fsdb\" +plusarg_save -debug_access+r -debug_region=cell+encrypt \
 	-cm_libs yv+celldefine -cm line+cond+tgl+fsm+branch+assert  \
 	+define+GT_TYPE=\"$$GT_TYPE_DEF\" -kdb -top WORK.qeciphy_uvmtb -top glbl \
-   	+v2k +define+VCS +libext+.v+.sv+.vp -ignore initializer_driver_checks \
+	+v2k +define+VCS +libext+.v+.sv+.vp -ignore initializer_driver_checks \
 	-work work \
-   	+incdir+src \
+	+incdir+src \
 	-F $(UVM_FILELIST) \
-   	-y $$XILINX_VIVADO/data/verilog/src/unisims \
-   	-y $$XILINX_VIVADO/data/verilog/src/retarget \
-   	-f $$XILINX_VIVADO/data/secureip/secureip_cell.list.f \
-   	$$XILINX_VIVADO/data/verilog/src/glbl.v \
-   	-file generated_sim_verilog_only.f \
-   	$(SRC_FILES) \
-   	-top glbl
+	-y $$XILINX_VIVADO/data/verilog/src/unisims \
+	-y $$XILINX_VIVADO/data/verilog/src/retarget \
+	-f $$XILINX_VIVADO/data/secureip/secureip_cell.list.f \
+	$$XILINX_VIVADO/data/verilog/src/glbl.v \
+	-file generated_sim_verilog_only.f \
+	$(SRC_FILES) \
+	-top glbl
 
 uvm-sim:
 	@$(MAKE) check_vcs
-   ifeq ($(OPT_MODE), gui)
+ifeq ($(OPT_MODE), gui)
 	@$(MAKE) uvm-vcs-compile-sim
-   ./simv $(OPT_ARGS) -gui=verdi  +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l ${OPT_TEST}.log +ntb_random_seed=$(OPT_SEED)
-   rm generated_sim_verilog_only.f
-   else ifeq ($(OPT_MODE),cov)
+	./simv $(OPT_ARGS) -gui=verdi  +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l ${OPT_TEST}.log +ntb_random_seed=$(OPT_SEED)
+	rm generated_sim_verilog_only.f
+else ifeq ($(OPT_MODE),cov)
 	@$(MAKE) uvm-vcs-compile-sim
 	./simv $(OPT_ARGS) +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l uvm_regression_logs/${OPT_TEST}_${OPT_SEED}_${OPT_PROFILE}.log +ntb_random_seed=$(OPT_SEED) -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/$(OPT_TEST)_$(OPT_SEED)__${OPT_PROFILE}_cov.vdb
 	rm generated_sim_verilog_only.f
-   else
+else
 	@$(MAKE) uvm-vcs-compile-sim
 	./simv $(OPT_ARGS) +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$(OPT_TEST) -l ${OPT_TEST}.log +ntb_random_seed=$(OPT_SEED) 
 	rm generated_sim_verilog_only.f
-   endif
+endif
  
 
 vivado_synth:
