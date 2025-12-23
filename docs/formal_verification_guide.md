@@ -56,7 +56,8 @@ module <module_name>_checker (
   endproperty
 
   // Assertions to verify design behavior
-  <property_name>_A : assert property (<property_name>);
+  <property_name>_A : assert property (<property_name>)
+    else $fatal(1, "<Failure message> at %m");
   
 endmodule
 ```
@@ -124,6 +125,12 @@ Add the new checker and bind files to `sva.f`:
 ```
 sva/checkers/<module_name>_checker.sv
 sva/binds/<module_name>_bind.sv
+```
+
+And the bind file to `sva/binds/all_bind.svh`.
+
+```systemverilog
+`include "<module_name>_bind.sv"
 ```
 
 ## Running Formal Verification

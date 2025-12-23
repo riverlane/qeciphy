@@ -51,6 +51,9 @@ create_project qeciphy_sim $output_dir -part $part_number -force
 set_property target_language Verilog [current_project]
 set_property simulator_language Mixed [current_project]
 
+# Add SVA bind include file
+add_files -fileset sim_1 sva/binds/all_bind.svh
+
 # Add source files
 foreach f $src_files {
     if {$f ne ""} {
@@ -78,6 +81,9 @@ set_property -name {xsim.simulate.runtime} -value {1s} -objects [get_filesets si
 
 # Pass variant define to simulation
 set_property verilog_define "GT_TYPE=\"$variant\"" [get_filesets sim_1]
+
+# Define XSIM for testbench conditional includes
+set_property verilog_define "XSIM" [get_filesets sim_1]
 
 # Update compile order and upgrade IPs
 update_compile_order -fileset sources_1
