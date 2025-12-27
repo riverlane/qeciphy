@@ -1,3 +1,4 @@
 sva/checkers/qeciphy_crc8_smbus_checker.sv
 sva/binds/qeciphy_crc8_smbus_bind.sv
-
+sva/checkers/qeciphy_crc16_ibm3740_checker.sv
+sva/binds/qeciphy_crc16_ibm3740_bind.sv

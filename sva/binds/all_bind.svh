@@ -3,3 +3,4 @@
 // Original authors: Aniket Datta
 
 `include "qeciphy_crc8_smbus_bind.sv"
+`include "qeciphy_crc16_ibm3740_bind.sv"
