@@ -32,42 +32,42 @@ module qeciphy_crc8_smbus_checker (
    endfunction
 
    // On reset, crc_valid_o should be low and crc_o should be zero.
-   property p_correct_crc_out_of_reset;
+   property p_crc8_correct_crc_out_of_reset;
       @(posedge clk_i) $rose(
           rst_n_i
       ) |-> !crc_valid_o && (crc_o == 8'd0);
    endproperty
 
-   p_correct_crc_out_of_reset_A :
-   assert property (p_correct_crc_out_of_reset);
+   p_crc8_correct_crc_out_of_reset_A :
+   assert property (p_crc8_correct_crc_out_of_reset);
 
 
    // crc_valid_o should assert exactly one cycle after any asserted tvalid_i.
-   property p_valid_delay;
+   property p_crc8_valid_delay;
       @(posedge clk_i) disable iff (!rst_n_i) tvalid_i |-> ##1 crc_valid_o;
    endproperty
 
-   p_valid_delay_A :
-   assert property (p_valid_delay);
+   p_crc8_valid_delay_A :
+   assert property (p_crc8_valid_delay);
 
    // crc_valid_o should never assert spuriously. It must be preceded by tvalid_i in the prior cycle.
-   property p_valid_no_spurious;
+   property p_crc8_valid_no_spurious;
       @(posedge clk_i) disable iff (!rst_n_i) crc_valid_o |-> $past(
           tvalid_i, 1
       );
    endproperty
 
-   p_valid_no_spurious_A :
-   assert property (p_valid_no_spurious);
+   p_crc8_valid_no_spurious_A :
+   assert property (p_crc8_valid_no_spurious);
 
-   // On each valid beat, the next-cycle CRC output must match the expected CRC value.
-   property p_crc_one_step;
-      @(posedge clk_i) disable iff (!rst_n_i) tvalid_i |-> ##1 (crc_valid_o && crc_o == crc8_smbus_step(
+   // Check step-by-step correctness
+   property p_crc8_one_step_matches_model;
+      @(posedge clk_i) disable iff (!rst_n_i) crc_valid_o |-> (crc_o == crc8_smbus_step(
           $past(crc_o, 1), $past(tdata_i, 1)
       ));
    endproperty
 
-   p_crc_one_step_A :
-   assert property (p_crc_one_step);
+   p_crc8_one_step_matches_model_A :
+   assert property (p_crc8_one_step_matches_model);
 
 endmodule
