@@ -4,3 +4,5 @@ sva/checkers/qeciphy_crc16_ibm3740_checker.sv
 sva/binds/qeciphy_crc16_ibm3740_bind.sv
 sva/checkers/qeciphy_crc_compute_checker.sv
 sva/binds/qeciphy_crc_compute_bind.sv
+sva/checkers/qeciphy_crc_check_checker.sv
+sva/binds/qeciphy_crc_check_bind.sv

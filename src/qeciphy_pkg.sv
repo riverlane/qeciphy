@@ -18,5 +18,15 @@ package qeciphy_pkg;
       end
    endfunction
 
+   // QECIPHY Validation Packet Structure
+   typedef struct packed {
+      logic [15:0] crc45;
+      logic [15:0] crc23;
+      logic [15:0] crc01;
+      logic [1:0]  reserved_15_14;
+      logic [5:0]  valids;
+      logic [7:0]  crcvw;
+   } qeciphy_vd_pkt_t;
+
 endpackage : qeciphy_pkg
 `endif
