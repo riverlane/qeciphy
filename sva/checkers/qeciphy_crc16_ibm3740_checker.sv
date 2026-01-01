@@ -35,7 +35,8 @@ module qeciphy_crc16_ibm3740_checker (
    endproperty
 
    p_correct_crc16_out_of_reset_A :
-   assert property (p_correct_crc16_out_of_reset);
+   assert property (p_correct_crc16_out_of_reset)
+   else $fatal(1, "Wrong CRC16 value out of reset at %m");
 
    // crc_valid_o should assert exactly 2 cycles after tvalid_i.
    property p_crc16_valid_delay;
@@ -43,7 +44,8 @@ module qeciphy_crc16_ibm3740_checker (
    endproperty
 
    p_crc16_valid_delay_A :
-   assert property (p_crc16_valid_delay);
+   assert property (p_crc16_valid_delay)
+   else $fatal(1, "CRC16 valid signal timing incorrect at %m");
 
    // crc_valid_o should never assert spuriously. It must be preceded by tvalid_i 2 cycles earlier.
    property p_crc16_valid_no_spurious;
@@ -53,7 +55,8 @@ module qeciphy_crc16_ibm3740_checker (
    endproperty
 
    p_crc16_valid_no_spurious_A :
-   assert property (p_crc16_valid_no_spurious);
+   assert property (p_crc16_valid_no_spurious)
+   else $fatal(1, "Spurious CRC16 valid signal at %m");
 
    // Check step-by-step correctness (only checked in simulation)
    property p_crc16_step_matches_model;
@@ -63,6 +66,7 @@ module qeciphy_crc16_ibm3740_checker (
    endproperty
 
    p_crc16_step_matches_model_A :
-   assert property (p_crc16_step_matches_model);
+   assert property (p_crc16_step_matches_model)
+   else $fatal(1, "CRC16 value incorrect at %m");
 
 endmodule
