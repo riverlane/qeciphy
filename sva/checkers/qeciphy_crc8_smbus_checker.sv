@@ -39,7 +39,8 @@ module qeciphy_crc8_smbus_checker (
    endproperty
 
    p_crc8_correct_crc_out_of_reset_A :
-   assert property (p_crc8_correct_crc_out_of_reset);
+   assert property (p_crc8_correct_crc_out_of_reset)
+   else $fatal(1, "Wrong CRC8 value out of reset at %m");
 
 
    // crc_valid_o should assert exactly one cycle after any asserted tvalid_i.
@@ -48,7 +49,8 @@ module qeciphy_crc8_smbus_checker (
    endproperty
 
    p_crc8_valid_delay_A :
-   assert property (p_crc8_valid_delay);
+   assert property (p_crc8_valid_delay)
+   else $fatal(1, "CRC8 valid signal timing incorrect at %m");
 
    // crc_valid_o should never assert spuriously. It must be preceded by tvalid_i in the prior cycle.
    property p_crc8_valid_no_spurious;
@@ -58,7 +60,8 @@ module qeciphy_crc8_smbus_checker (
    endproperty
 
    p_crc8_valid_no_spurious_A :
-   assert property (p_crc8_valid_no_spurious);
+   assert property (p_crc8_valid_no_spurious)
+   else $fatal(1, "Spurious CRC8 valid signal at %m");
 
    // Check step-by-step correctness
    property p_crc8_one_step_matches_model;
@@ -68,6 +71,7 @@ module qeciphy_crc8_smbus_checker (
    endproperty
 
    p_crc8_one_step_matches_model_A :
-   assert property (p_crc8_one_step_matches_model);
+   assert property (p_crc8_one_step_matches_model)
+   else $fatal(1, "CRC8 value incorrect at %m");
 
 endmodule
