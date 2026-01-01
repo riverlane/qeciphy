@@ -13,7 +13,7 @@
 // - Compares calculated CRC values (crc01_i, crc23_i, crc45_i, crcvw_i) against
 //   expected values from the validation packet
 // - Performs byte-wise comparison for 16-bit CRC values to reduce combinational load
-// - Generates a sticky error signal if any CRC comparison fails
+// - Generates an error signal if any CRC comparison fails
 // - Uses 2-cycle pipeline
 //------------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ module qeciphy_crc_check (
    logic                  crc45_byte_match                                     [0:1];  // Per-byte match results for CRC45
    logic                  crcvw_match;  // Match result for CRC validation word
    logic            [1:0] valid_pipe;  // Valid signal pipeline for timing
-   logic                  crc_error;  // Internal error signal (sticky)
+   logic                  crc_error;  // Internal error signal
 
    assign check_done_o = valid_pipe[1];  // Completion after pipeline delay
 
@@ -84,12 +84,10 @@ module qeciphy_crc_check (
 
    assign crc_error_o = crc_error;
 
-   // Sticky error signal generation
+   // Error signal generation
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) begin
          crc_error <= 1'b0;
-      end else if (crc_error) begin
-         crc_error <= 1'b1;  // Sticky: once set, remains high until reset
       end else if (valid_pipe[0]) begin
          // Set error if any CRC comparison fails
          crc_error <= ~((crc01_byte_match[0] && crc01_byte_match[1]) && (crc23_byte_match[0] && crc23_byte_match[1]) && (crc45_byte_match[0] && crc45_byte_match[1]) && crcvw_match);
