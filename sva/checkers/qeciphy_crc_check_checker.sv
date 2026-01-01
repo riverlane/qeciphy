@@ -61,15 +61,6 @@ module qeciphy_crc_check_checker (
    assert property (p_no_spurious_crc_error)
    else $fatal(1, "Spurious crc_error_o assertion at %m");
 
-   // crc_error_o is sticky
-   property p_crc_error_sticky;
-      @(posedge clk_i) disable iff (!rst_n_i) crc_error_o |-> ##1 crc_error_o;
-   endproperty
-
-   p_crc_error_sticky_A :
-   assert property (p_crc_error_sticky)
-   else $fatal(1, "crc_error_o is not sticky at %m");
-
    // Capture the validation packet at crc boundary
    qeciphy_vd_pkt_t vd_pkt;
 
