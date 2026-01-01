@@ -36,6 +36,11 @@ module qeciphy_crc_compute_checker (
     input logic [7:0] crcvw_o
 );
 
+   localparam CRC01_VALID_TO_OUTPUT_VALID_LATENCY = 4;
+   localparam CRC23_VALID_TO_OUTPUT_VALID_LATENCY = 2;
+   localparam CRC45_VALID_TO_OUTPUT_VALID_LATENCY = 0;
+   localparam CRCVW_VALID_TO_OUTPUT_VALID_LATENCY = 0;
+
    // At most one of the crc enables can be high at any clock cycle
    property p_crc_en_onehot;
       @(posedge clk_i) disable iff (!rst_n_i) $onehot0(
@@ -44,7 +49,8 @@ module qeciphy_crc_compute_checker (
    endproperty
 
    p_crc_en_onehot_A :
-   assert property (p_crc_en_onehot);
+   assert property (p_crc_en_onehot)
+   else $fatal(1, "CRC enable signals are not one-hot at %m");
 
    // crc_valid signals from the CRC modules and their corresponding rst_n signals are mutually exclusive
    // crc01
@@ -53,7 +59,8 @@ module qeciphy_crc_compute_checker (
    endproperty
 
    p_crc01_valid_rst_mutually_exclusive_A :
-   assert property (p_crc01_valid_rst_mutually_exclusive);
+   assert property (p_crc01_valid_rst_mutually_exclusive)
+   else $fatal(1, "CRC01 valid and reset signals are not mutually exclusive at %m");
 
    // crc23
    property p_crc23_valid_rst_mutually_exclusive;
@@ -61,7 +68,8 @@ module qeciphy_crc_compute_checker (
    endproperty
 
    p_crc23_valid_rst_mutually_exclusive_A :
-   assert property (p_crc23_valid_rst_mutually_exclusive);
+   assert property (p_crc23_valid_rst_mutually_exclusive)
+   else $fatal(1, "CRC23 valid and reset signals are not mutually exclusive at %m");
 
    // crc45
    property p_crc45_valid_rst_mutually_exclusive;
@@ -69,7 +77,8 @@ module qeciphy_crc_compute_checker (
    endproperty
 
    p_crc45_valid_rst_mutually_exclusive_A :
-   assert property (p_crc45_valid_rst_mutually_exclusive);
+   assert property (p_crc45_valid_rst_mutually_exclusive)
+   else $fatal(1, "CRC45 valid and reset signals are not mutually exclusive at %m");
 
    // crcvw
    property p_crcvw_valid_rst_mutually_exclusive;
@@ -77,7 +86,8 @@ module qeciphy_crc_compute_checker (
    endproperty
 
    p_crcvw_valid_rst_mutually_exclusive_A :
-   assert property (p_crcvw_valid_rst_mutually_exclusive);
+   assert property (p_crcvw_valid_rst_mutually_exclusive)
+   else $fatal(1, "CRCVW valid and reset signals are not mutually exclusive at %m");
 
    // Check correct timing of crc enables with respect to FAW and CRC boundaries
    sequence s_correct_enable_timing_upto_crc_boundary;
@@ -96,7 +106,8 @@ module qeciphy_crc_compute_checker (
    endproperty
 
    p_correct_enable_timing_from_faw_boundary_A :
-   assert property (p_correct_enable_timing_from_faw_boundary);
+   assert property (p_correct_enable_timing_from_faw_boundary)
+   else $fatal(1, "CRC enable signals timing incorrect at %m");
 
    // Check correct timing of crc resets with respect to FAW and CRC boundaries
    sequence s_correct_crc_rst_timing_upto_crc_boundary;
@@ -117,20 +128,39 @@ module qeciphy_crc_compute_checker (
    endproperty
 
    p_correct_crc_rst_timing_from_faw_boundary_A :
-   assert property (p_correct_crc_rst_timing_from_faw_boundary);
+   assert property (p_correct_crc_rst_timing_from_faw_boundary)
+   else $fatal(1, "CRC reset signals timing incorrect at %m");
 
    // Uutput CRC values must match calculated values when crc_valid_o is asserted
    property p_correct_crc_output_values;
       @(posedge clk_i) disable iff (!rst_n_i) crc_valid_o |-> ((crc01_o == $past(
-          crc01_calc, 4
+          crc01_calc, CRC01_VALID_TO_OUTPUT_VALID_LATENCY
       )) && (crc23_o == $past(
-          crc23_calc, 2
+          crc23_calc, CRC23_VALID_TO_OUTPUT_VALID_LATENCY
       )) && (crc45_o == crc45_calc) && (crcvw_o == crcvw_calc));
    endproperty
 
    p_correct_crc_output_values_A :
-   assert property (p_correct_crc_output_values);
+   assert property (p_correct_crc_output_values)
+   else $fatal(1, "CRC output values incorrect at %m");
 
+   property p_no_spurious_crc_valid_o;
+      @(posedge clk_i) disable iff (!rst_n_i) crc_valid_o |-> $past(
+          crc_boundary_i
+      );
+   endproperty
+
+   p_no_spurious_crc_valid_o_A :
+   assert property (p_no_spurious_crc_valid_o)
+   else $fatal(1, "Spurious crc_valid_o assertion at %m");
+
+   property p_crc_valid_o_timing;
+      @(posedge clk_i) disable iff (!rst_n_i) crc_boundary_i |-> ##1 crc_valid_o;
+   endproperty
+
+   p_crc_valid_o_timing_A :
+   assert property (p_crc_valid_o_timing)
+   else $fatal(1, "crc_valid_o timing incorrect at %m");
 
    // Ensure crc_valid_o is reachable
    cover_crc_valid_o_C :
