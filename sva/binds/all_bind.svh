@@ -6,3 +6,4 @@
 `include "qeciphy_crc16_ibm3740_bind.sv"
 `include "qeciphy_crc_compute_bind.sv"
 `include "qeciphy_crc_check_bind.sv"
+`include "qeciphy_rx_monitor_bind.sv"
