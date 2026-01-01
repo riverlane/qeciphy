@@ -5,6 +5,7 @@ src/qeciphy_pkg.sv
 src/qeciphy_gtx_common.sv
 src/qeciphy_crc_compute.sv
 src/qeciphy_crc_check.sv
+src/qeciphy_rx_monitor.sv
 src/qeciphy_crc16_ibm3740.sv
 src/qeciphy_crc8_smbus.sv
 src/qeciphy_rx_bytealigner.sv
