@@ -8,3 +8,6 @@ sva/checkers/qeciphy_crc_check_checker.sv
 sva/binds/qeciphy_crc_check_bind.sv
 sva/checkers/qeciphy_rx_monitor_checker.sv
 sva/binds/qeciphy_rx_monitor_bind.sv
+sva/checkers/qeciphy_rx_boundary_gen_checker.sv
+sva/binds/qeciphy_rx_boundary_gen_bind.sv
+
