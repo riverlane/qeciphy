@@ -7,3 +7,5 @@
 `include "qeciphy_crc_compute_bind.sv"
 `include "qeciphy_crc_check_bind.sv"
 `include "qeciphy_rx_monitor_bind.sv"
+`include "qeciphy_rx_boundary_gen_bind.sv"
+
