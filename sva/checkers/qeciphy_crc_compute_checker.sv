@@ -89,49 +89,78 @@ module qeciphy_crc_compute_checker (
    assert property (p_crcvw_valid_rst_mutually_exclusive)
    else $fatal(1, "CRCVW valid and reset signals are not mutually exclusive at %m");
 
-   // Check correct timing of crc enables with respect to FAW and CRC boundaries
-   sequence s_correct_enable_timing_upto_crc_boundary;
-      ( !crc_boundary_i && crc01_en && !crc23_en && !crc45_en && !crcvw_en) [* 2] ##1
-        ( !crc_boundary_i && !crc01_en && crc23_en && !crc45_en && !crcvw_en) [* 2] ##1
-        ( !crc_boundary_i && !crc01_en && !crc23_en && crc45_en && !crcvw_en) [* 2] ##1
-        ( crc_boundary_i && !crc01_en && !crc23_en && !crc45_en && crcvw_en);
-   endsequence
-
-   sequence s_correct_enable_timing_from_faw_boundary;
-      (faw_boundary_i && !crc_boundary_i && !crc01_en && !crc23_en && !crc45_en && !crcvw_en) ##1 s_correct_enable_timing_upto_crc_boundary [* 1: $];
-   endsequence
-
-   property p_correct_enable_timing_from_faw_boundary;
-      @(posedge clk_i) disable iff (!rst_n_i) faw_boundary_i |-> s_correct_enable_timing_from_faw_boundary;
+   // CRC enable signals should be asserted and deasserted at correct times around FAW boundary
+   property p_correct_enable_timing_around_faw_boundary;
+      @(posedge clk_i) disable iff (!rst_n_i) faw_boundary_i |-> (!crc01_en && !crc23_en && !crc45_en && !crcvw_en);
    endproperty
 
-   p_correct_enable_timing_from_faw_boundary_A :
-   assert property (p_correct_enable_timing_from_faw_boundary)
-   else $fatal(1, "CRC enable signals timing incorrect at %m");
+   p_correct_enable_timing_around_faw_boundary_A :
+   assert property (p_correct_enable_timing_around_faw_boundary)
+   else $fatal(1, "CRC enable signals timing around FAW boundary incorrect at %m");
 
-   // Check correct timing of crc resets with respect to FAW and CRC boundaries
-   sequence s_correct_crc_rst_timing_upto_crc_boundary;
-      ( !crc_boundary_i && crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n) ##1
-        ( !crc_boundary_i && crc01_rst_n && crc23_rst_n && !crc45_rst_n && !crcvw_rst_n) ##1
-        ( !crc_boundary_i && crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n) [* 2] ##1
-        ( !crc_boundary_i && !crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n) ##1
-        ( !crc_boundary_i && crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n) ##1
-        ( crc_boundary_i && crc01_rst_n && !crc23_rst_n && crc45_rst_n && crcvw_rst_n);
-   endsequence
-
-   sequence s_correct_crc_rst_timing_from_faw_boundary;
-      (faw_boundary_i && !crc_boundary_i && crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n) ##1 s_correct_crc_rst_timing_upto_crc_boundary [* 1: $];
-   endsequence
-
-   property p_correct_crc_rst_timing_from_faw_boundary;
-      @(posedge clk_i) disable iff (!rst_n_i) faw_boundary_i |-> s_correct_crc_rst_timing_from_faw_boundary;
+   // CRC enable signals should be asserted and deasserted at correct times around CRC boundary
+   property p_correct_enable_timing_around_crc_boundary;
+      @(posedge clk_i) disable iff (!rst_n_i) crc_boundary_i |-> (!crc01_en && !crc23_en && !crc45_en && crcvw_en) && $past(
+          !crc01_en && !crc23_en && crc45_en && !crcvw_en, 1
+      ) && $past(
+          !crc01_en && !crc23_en && crc45_en && !crcvw_en, 2
+      ) && $past(
+          !crc01_en && crc23_en && !crc45_en && !crcvw_en, 3
+      ) && $past(
+          !crc01_en && crc23_en && !crc45_en && !crcvw_en, 4
+      ) && $past(
+          crc01_en && !crc23_en && !crc45_en && !crcvw_en, 5
+      ) && $past(
+          crc01_en && !crc23_en && !crc45_en && !crcvw_en, 6
+      );
    endproperty
 
-   p_correct_crc_rst_timing_from_faw_boundary_A :
-   assert property (p_correct_crc_rst_timing_from_faw_boundary)
-   else $fatal(1, "CRC reset signals timing incorrect at %m");
+   p_correct_enable_timing_around_crc_boundary_A :
+   assert property (p_correct_enable_timing_around_crc_boundary)
+   else $fatal(1, "CRC enable signals timing around CRC boundary incorrect at %m");
 
-   // Uutput CRC values must match calculated values when crc_valid_o is asserted
+   // Track if first FAW boundary has been seen
+   logic first_faw_seen_t;
+
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         first_faw_seen_t <= 1'b0;
+      end else if (faw_boundary_i) begin
+         first_faw_seen_t <= 1'b1;
+      end
+   end
+
+   // CRC reset signals should be asserted and deasserted at correct times around FAW boundary
+   property p_correct_reset_timing_around_faw_boundary;
+      @(posedge clk_i) disable iff (!rst_n_i) first_faw_seen_t && faw_boundary_i |-> (crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n);
+   endproperty
+
+   p_correct_reset_timing_around_faw_boundary_A :
+   assert property (p_correct_reset_timing_around_faw_boundary)
+   else $fatal(1, "CRC reset signals timing around FAW boundary incorrect at %m");
+
+   // CRC reset signals should be asserted and deasserted at correct times around CRC boundary
+   property p_correct_reset_timing_around_crc_boundary;
+      @(posedge clk_i) disable iff (!rst_n_i) crc_boundary_i |-> (crc01_rst_n && !crc23_rst_n && crc45_rst_n && crcvw_rst_n) && $past(
+          crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n, 1
+      ) && $past(
+          !crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n, 2
+      ) && $past(
+          crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n, 3
+      ) && $past(
+          crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n, 4
+      ) && $past(
+          crc01_rst_n && crc23_rst_n && !crc45_rst_n && !crcvw_rst_n, 5
+      ) && $past(
+          crc01_rst_n && crc23_rst_n && crc45_rst_n && crcvw_rst_n, 6
+      );
+   endproperty
+
+   p_correct_reset_timing_around_crc_boundary_A :
+   assert property (p_correct_reset_timing_around_crc_boundary)
+   else $fatal(1, "CRC reset signals timing around CRC boundary incorrect at %m");
+
+   // Output CRC values must match calculated values when crc_valid_o is asserted
    property p_correct_crc_output_values;
       @(posedge clk_i) disable iff (!rst_n_i) crc_valid_o |-> ((crc01_o == $past(
           crc01_calc, CRC01_VALID_TO_OUTPUT_VALID_LATENCY
@@ -144,6 +173,7 @@ module qeciphy_crc_compute_checker (
    assert property (p_correct_crc_output_values)
    else $fatal(1, "CRC output values incorrect at %m");
 
+   // crc_valid_o should only be asserted when a CRC boundary occurs
    property p_no_spurious_crc_valid_o;
       @(posedge clk_i) disable iff (!rst_n_i) crc_valid_o |-> $past(
           crc_boundary_i
@@ -154,6 +184,7 @@ module qeciphy_crc_compute_checker (
    assert property (p_no_spurious_crc_valid_o)
    else $fatal(1, "Spurious crc_valid_o assertion at %m");
 
+   // crc_valid_o should be asserted one cycle after crc_boundary_i
    property p_crc_valid_o_timing;
       @(posedge clk_i) disable iff (!rst_n_i) crc_boundary_i |-> ##1 crc_valid_o;
    endproperty
