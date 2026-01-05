@@ -8,4 +8,4 @@
 `include "qeciphy_crc_check_bind.sv"
 `include "qeciphy_rx_monitor_bind.sv"
 `include "qeciphy_rx_boundary_gen_bind.sv"
-
+`include "qeciphy_tx_boundary_gen_bind.sv"
