@@ -18,23 +18,23 @@
 //------------------------------------------------------------------------------
 
 module qeciphy_tx_boundary_gen (
-    input logic clk_i,                    // Clock input
-    input logic rst_n_i,                  // Active-low reset
-    output logic faw_boundary_o,          // FAW boundary signal (every 64 cycles)
-    output logic almost_faw_boundary_o,   // Early FAW boundary warning (1 cycle ahead)
-    output logic crc_boundary_o           // CRC boundary signal (every 7 cycles, gated)
+    input  logic clk_i,                  // Clock input
+    input  logic rst_n_i,                // Active-low reset
+    output logic faw_boundary_o,         // FAW boundary signal (every 64 cycles)
+    output logic almost_faw_boundary_o,  // Early FAW boundary warning (1 cycle ahead)
+    output logic crc_boundary_o          // CRC boundary signal (every 7 cycles, gated)
 );
-   
+
    // FAW Boundary Generation
-   logic [5:0] faw_counter;            // Counter for 64 cycle FAW frame
-   logic almost_faw_boundary;          // Internal almost FAW boundary signal
-   logic faw_boundary;                 // Internal FAW boundary signal
+   logic [5:0] faw_counter;  // Counter for 64 cycle FAW frame
+   logic       almost_faw_boundary;  // Internal almost FAW boundary signal
+   logic       faw_boundary;  // Internal FAW boundary signal
 
    // CRC Boundary Generation  
-   logic [2:0] crc_counter;            // Counter for 7 cycle CRC frame
-   logic almost_crc_boundary;          // Internal almost CRC boundary signal
-   logic crc_boundary;                 // Internal CRC boundary signal
-   logic crc_boundary_en;              // Enable for CRC boundary output
+   logic [2:0] crc_counter;  // Counter for 7 cycle CRC frame
+   logic       almost_crc_boundary;  // Internal almost CRC boundary signal
+   logic       crc_boundary;  // Internal CRC boundary signal
+   logic       crc_boundary_en;  // Enable for CRC boundary output
 
    //--------------------------------------------------------------------------
    // Output Assignments
@@ -50,7 +50,7 @@ module qeciphy_tx_boundary_gen (
       if (!rst_n_i) begin
          faw_counter <= '0;
       end else if (almost_faw_boundary) begin
-         faw_counter <= '0;                // Reset when reaching end of frame
+         faw_counter <= '0;  // Reset when reaching end of frame
       end else begin
          faw_counter <= faw_counter + 6'd1;  // Increment every cycle
       end
@@ -71,7 +71,7 @@ module qeciphy_tx_boundary_gen (
       if (!rst_n_i) begin
          faw_boundary <= 1'b0;
       end else begin
-         faw_boundary <= almost_faw_boundary; // Delayed by 1 cycle
+         faw_boundary <= almost_faw_boundary;  // Delayed by 1 cycle
       end
    end
 
@@ -106,7 +106,7 @@ module qeciphy_tx_boundary_gen (
       if (!rst_n_i) begin
          almost_crc_boundary <= 1'b0;
       end else begin
-         almost_crc_boundary <= (crc_counter == 3'h5);  
+         almost_crc_boundary <= (crc_counter == 3'h5);
       end
    end
 
