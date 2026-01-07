@@ -14,3 +14,5 @@ sva/checkers/qeciphy_tx_boundary_gen_checker.sv
 sva/binds/qeciphy_tx_boundary_gen_bind.sv
 sva/checkers/qeciphy_rx_controller_checker.sv
 sva/binds/qeciphy_rx_controller_bind.sv
+sva/checkers/qeciphy_rx_channeldecoder_checker.sv
+sva/binds/qeciphy_rx_channeldecoder_bind.sv
