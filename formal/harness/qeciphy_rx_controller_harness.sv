@@ -84,13 +84,15 @@ module qeciphy_rx_controller_harness;
    p_faw_err_requires_locked_delay_A :
    assume property (p_faw_err_requires_locked_delay);
 
-   // crc_err_i and faw_err_i are mutually exclusive (only one can be asserted at a time)
-   property p_errors_mutually_exclusive;
-      @(posedge clk_i) disable iff (!rst_n_i) !(crc_err_i && faw_err_i);
+   // crc_err_i and faw_err_i can't rise simultaneously
+   property p_errors_not_simultaneous;
+      @(posedge clk_i) disable iff (!rst_n_i) !$rose(
+          crc_err_i && faw_err_i
+      );
    endproperty
 
-   p_errors_mutually_exclusive_A :
-   assume property (p_errors_mutually_exclusive);
+   p_errors_not_simultaneous_A :
+   assume property (p_errors_not_simultaneous);
 
    // crc_err_i is sticky - once asserted, stays high until rx_enable_o falls
    property p_crc_err_sticky_until_enable_falls;
