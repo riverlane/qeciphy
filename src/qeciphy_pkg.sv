@@ -29,6 +29,13 @@ package qeciphy_pkg;
       logic [7:0]  byte_comma;
    } qeciphy_faw_t;
 
+   // QECIPHY error codes
+   typedef enum logic [3:0] {
+      NO_ERROR  = 4'h0,
+      FAW_ERROR = 4'h1,
+      CRC_ERROR = 4'h2
+   } qeciphy_error_t;
+
    // To check if the data is a Frame Alignment Word
    function bit is_faw(input logic [63:0] data);
       begin
