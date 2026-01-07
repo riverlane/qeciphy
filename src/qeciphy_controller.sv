@@ -22,7 +22,9 @@ module qeciphy_controller (
     output logic       o_pd_req,
     output logic       o_pd_ack,
     output logic       o_allow_user_tx,
-    output logic       o_rst_n
+    output logic       o_rst_n,
+    output logic       o_link_ready,
+    output logic       o_fault_fatal
 );
 
 
@@ -191,5 +193,8 @@ module qeciphy_controller (
          o_allow_user_tx <= 1'b1;
       end
    end
+
+   assign o_link_ready = (state == LINK_READY);
+   assign o_fault_fatal = (state == FAULT_FATAL);
 
 endmodule  //qeciphy_controller

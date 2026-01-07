@@ -40,8 +40,6 @@ module qeciphy_tb;
 
    localparam int TEST_SEQUENCE_LEN = 2048;
    localparam string TEST_DATASET = "random";  // "counter" or "random"
-   localparam time SLEEP_DURATION = 10000ns;
-   localparam int SLEEP_AT_TX_INDEX = 1000;
 
    //----------------------------------------
    // Typedefs
@@ -78,10 +76,6 @@ module qeciphy_tb;
    logic                   fclk             [                  0:1];
    logic                   aclk             [                  0:1];
    logic                   arstn            [                  0:1];
-
-   logic                   pstate           [                  0:1];
-   logic                   preq             [                  0:1];
-   logic                   paccept          [                  0:1];
 
    fsm_t                   status           [                  0:1];
    error_t                 ecode            [                  0:1];
@@ -170,14 +164,6 @@ module qeciphy_tb;
       axis_tx[1].tvalid = 1'b0;
       axis_tx[0].tdata  = '0;
       axis_tx[1].tdata  = '0;
-   end
-
-   // P-channel defaults
-   initial begin
-      pstate[0] = 1'b1;
-      pstate[1] = 1'b1;
-      preq[0]   = 1'b0;
-      preq[1]   = 1'b0;
    end
 
    // Test data generation
@@ -393,78 +379,6 @@ module qeciphy_tb;
       end
    endtask
 
-   task automatic wait_for_paccept(input bit dut, input bit val);
-      if (dut == 0) begin
-         while (paccept[0] == val) @(posedge aclk[0]);
-      end else begin
-         while (paccept[1] == val) @(posedge aclk[1]);
-      end
-   endtask
-
-   task automatic power_down_req(input bit dut);
-      string message;
-      if (dut == 0) begin
-         @(posedge aclk[0]);
-         pstate[0] <= 1'b0;
-         @(posedge aclk[0]);
-         preq[0] <= 1'b1;
-      end else begin
-         @(posedge aclk[1]);
-         pstate[1] <= 1'b0;
-         @(posedge aclk[1]);
-         preq[1] <= 1'b1;
-      end
-
-      message = $sformatf("Power-down request sent to DUT%0d", dut);
-      `msg_info(message);
-
-      wait_for_paccept(dut, 1'b0);
-
-      if (dut == 0) begin
-         @(posedge aclk[0]);
-         preq[0] <= 1'b0;
-      end else begin
-         @(posedge aclk[1]);
-         preq[1] <= 1'b0;
-      end
-
-      wait_for_paccept(dut, 1'b1);
-      message = $sformatf("Power-down request accepted by DUT%0d", dut);
-      `msg_info(message);
-   endtask
-
-   task automatic power_up_req(input bit dut);
-      string message;
-      if (dut == 0) begin
-         @(posedge aclk[0]);
-         pstate[0] <= 1'b1;
-         @(posedge aclk[0]);
-         preq[0] <= 1'b1;
-      end else begin
-         @(posedge aclk[1]);
-         pstate[1] <= 1'b1;
-         @(posedge aclk[1]);
-         preq[1] <= 1'b1;
-      end
-
-      message = $sformatf("Power-up request sent to DUT%0d", dut);
-      `msg_info(message);
-
-      wait_for_paccept(dut, 1'b0);
-
-      if (dut == 0) begin
-         @(posedge aclk[0]);
-         preq[0] <= 1'b0;
-      end else begin
-         @(posedge aclk[1]);
-         preq[1] <= 1'b0;
-      end
-
-      wait_for_paccept(dut, 1'b1);
-      message = $sformatf("Power-up request accepted by DUT%0d", dut);
-      `msg_info(message);
-   endtask
-
    //----------------------------------------
    // DUTs
    //----------------------------------------
@@ -483,10 +397,7 @@ module qeciphy_tb;
        .RX_TVALID(axis_rx[0].tvalid),
        .RX_TREADY(axis_rx[0].tready),
        .STATUS   (status[0]),
-       .ECODE    (ecode[0]),
-       .PSTATE   (pstate[0]),
-       .PREQ     (preq[0]),
-       .PACCEPT  (paccept[0])
+       .ECODE    (ecode[0])
    );
 
    QECIPHY #(
@@ -503,10 +414,7 @@ module qeciphy_tb;
        .RX_TVALID(axis_rx[1].tvalid),
        .RX_TREADY(axis_rx[1].tready),
        .STATUS   (status[1]),
-       .ECODE    (ecode[1]),
-       .PSTATE   (pstate[1]),
-       .PREQ     (preq[1]),
-       .PACCEPT  (paccept[1])
+       .ECODE    (ecode[1])
    );
 
    //----------------------------------------
@@ -528,14 +436,6 @@ module qeciphy_tb;
          drive_tx0_data();
          drive_tx1_data();
       join_none
-
-      // Run until TX[0] reaches sleep index
-      `msg_info("Sending valid data before sleep");
-      while (tx0_idx < SLEEP_AT_TX_INDEX) @(posedge aclk[0]);
-
-      power_down_req(1'b0);
-      #(SLEEP_DURATION);
-      power_up_req(1'b0);
 
       compare_rx0_tx1();
       compare_rx1_tx0();
