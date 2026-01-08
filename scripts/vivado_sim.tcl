@@ -79,19 +79,18 @@ foreach f $xci_files {
 set_property top $sim_top [get_filesets sim_1]
 set_property -name {xsim.simulate.runtime} -value {1s} -objects [get_filesets sim_1]
 
-# Pass variant define to simulation
-set_property verilog_define "GT_TYPE=\"$variant\"" [get_filesets sim_1]
-
-# Define XSIM for testbench conditional includes
-set_property verilog_define "XSIM" [get_filesets sim_1]
+# Defines
+set_property verilog_define [list "GT_TYPE=\"$variant\"" "XSIM"] [get_filesets sim_1]
 
 # Update compile order and upgrade IPs
 update_compile_order -fileset sources_1
 upgrade_ip [get_ips]
 
 # Launch simulation
-if {[catch launch_simulation errorstring]} {
+if {[catch {launch_simulation} errorstring]} {
     puts "ERROR: Vivado - $errorstring"
+    exit 1
 } else {
     close_sim
+    exit 0
 }
