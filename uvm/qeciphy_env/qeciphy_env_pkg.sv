@@ -23,7 +23,6 @@ package qeciphy_env_pkg;
    `include "uvm_macros.svh"
 
    // HINT: Import any packages needed by the environment here.
-   import riv_pbus_controller_agent_pkg::*;
    import riv_rdy_vld_sink_agent_pkg::*;
    import riv_rdy_vld_source_agent_pkg::*;
 
@@ -33,7 +32,6 @@ package qeciphy_env_pkg;
    `include "qeciphy_env_sequencer.svh"              // Agent's sequencer.
 
    `include "qeciphy_env_data_xfer_scoreboard.svh"
-   `include "qeciphy_env_state_scoreboard.svh"
 
    // HINT: `include "qeciphy_env___covid___coverage.svh"
 

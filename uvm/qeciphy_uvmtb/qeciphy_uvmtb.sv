@@ -26,11 +26,6 @@ module qeciphy_uvmtb ();
    logic dut_fclk;
    logic dut_arst_n;
 
-   logic dut_pstate;
-   logic dut_preq;
-   logic dut_paccept;
-   logic dut_pactive;
-
    logic [63:0] dut_tx_tdata;
    logic        dut_tx_tvalid;
    logic        dut_tx_tready;
@@ -45,11 +40,6 @@ module qeciphy_uvmtb ();
    logic tbphy_rclk;
    logic tbphy_fclk;
    logic tbphy_arst_n;
-
-   logic tbphy_pstate;
-   logic tbphy_preq;
-   logic tbphy_paccept;
-   logic tbphy_pactive;
 
    logic [63:0] tbphy_tx_tdata;
    logic        tbphy_tx_tvalid;
@@ -85,11 +75,7 @@ module qeciphy_uvmtb ();
       .RX_TVALID (dut_rx_tvalid),
       .RX_TREADY (dut_rx_tready),
       .STATUS    (dut_status),
-      .ECODE     (dut_ecode),
-      .PSTATE    (dut_pstate),
-      .PREQ      (dut_preq),
-      .PACCEPT   (dut_paccept),
-      .PACTIVE   (dut_pactive)
+      .ECODE     (dut_ecode)
    );
    //----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -109,11 +95,7 @@ module qeciphy_uvmtb ();
       .RX_TVALID (tbphy_rx_tvalid),
       .RX_TREADY (tbphy_rx_tready),
       .STATUS    (tbphy_status),
-      .ECODE     (tbphy_ecode),
-      .PSTATE    (tbphy_pstate),
-      .PREQ      (tbphy_preq),
-      .PACCEPT   (tbphy_paccept),
-      .PACTIVE   (tbphy_pactive)
+      .ECODE     (tbphy_ecode)
    );
    //----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -141,14 +123,6 @@ module qeciphy_uvmtb ();
    riv_clk_rst_gen_vip_if    i_dut_rclk_if( .clk_reqs('{1'b1}), .clks('{dut_rclk}), .resets() );
    riv_clk_rst_gen_vip_if    i_dut_fclk_if( .clk_reqs('{1'b1}), .clks('{dut_fclk}), .resets() );
 
-   riv_pbus_controller_bfm#(.VIF_NAME("dut_pbus_vif")) i_dut_pbus_bfm (
-      .rst_n   (dut_arst_n),
-      .pstate  (dut_pstate),
-      .preq    (dut_preq),
-      .paccept (dut_paccept),
-      .pactive (dut_pactive)
-   );
-
    riv_rdy_vld_sink_bfm#(.WIDTH(64), .VIF_NAME("dut_axis_rx_vif")) i_dut_axis_rx_bfm(
       .clk   (dut_aclk),
       .rst_n (dut_arst_n),
@@ -173,14 +147,6 @@ module qeciphy_uvmtb ();
    riv_clk_rst_gen_vip_if  i_tbphy_aclk_if( .clk_reqs('{1'b1}), .clks('{tbphy_aclk}), .resets('{tbphy_arst_n}) );
    riv_clk_rst_gen_vip_if  i_tbphy_rclk_if( .clk_reqs('{1'b1}), .clks('{tbphy_rclk}), .resets() );
    riv_clk_rst_gen_vip_if  i_tbphy_fclk_if( .clk_reqs('{1'b1}), .clks('{tbphy_fclk}), .resets() );
-
-   riv_pbus_controller_bfm#(.VIF_NAME("tbphy_pbus_vif")) i_tbphy_pbus_bfm (
-      .rst_n   (tbphy_arst_n),
-      .pstate  (tbphy_pstate),
-      .preq    (tbphy_preq),
-      .paccept (tbphy_paccept),
-      .pactive (tbphy_pactive)
-   );
 
    riv_rdy_vld_sink_bfm#(.WIDTH(64), .VIF_NAME("tbphy_axis_rx_vif")) i_tbphy_axis_rx_bfm(
       .clk   (tbphy_aclk),

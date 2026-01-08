@@ -20,10 +20,8 @@ class qeciphy_env_sequencer extends uvm_sequencer;
 
    // HINT: Declare handles to sub-sequencers here. Connect them in connect phase of environment. For example:
    //       subseqr_type m_subseqr;
-   riv_pbus_controller_sequencer  m_dut_pbus_seqr;
    riv_rdy_vld_sink_sequencer     m_dut_axis_rx_seqr;
    riv_rdy_vld_source_sequencer   m_dut_axis_tx_seqr;
-   riv_pbus_controller_sequencer  m_tbphy_pbus_seqr;
    riv_rdy_vld_sink_sequencer     m_tbphy_axis_rx_seqr;
    riv_rdy_vld_source_sequencer   m_tbphy_axis_tx_seqr;
 

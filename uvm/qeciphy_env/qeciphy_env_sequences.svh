@@ -17,10 +17,7 @@
 
    `include "qeciphy_null_test_seq.svh"         // Null test - just checks that the simulator fires up OK.
    `include "qeciphy_txrx_test_seq.svh"         // TxRx test - General random traffic to/from DUT.
-   `include "qeciphy_power_state_test_seq.svh"  // Power-State test - Random power-down/-up cycles.
    `include "qeciphy_errors_test_seq.svh"
-   `include "qeciphy_reset_test_seq.svh"
-   `include "qeciphy_sleep_to_reset_test_seq.svh"
    // AUTO: End of list ** DO NOT REMOVE THIS LINE **
 
 `endif  // QECIPHY_ENV_SEQUENCES_SVH_

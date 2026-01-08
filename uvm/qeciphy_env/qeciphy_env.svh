@@ -20,15 +20,11 @@ class qeciphy_env extends uvm_component;
    qeciphy_env_sequencer m_sequencer;
 
    // Agents, scoreboards/checkers, coverage collectors etc., along with their config objects.
-   riv_pbus_controller_config m_dut_pbus_cfg;
-   riv_pbus_controller_agent  m_dut_pbus_agt;
    riv_rdy_vld_sink_config    m_dut_axis_rx_cfg;
    riv_rdy_vld_sink_agent     m_dut_axis_rx_agt;
    riv_rdy_vld_source_config  m_dut_axis_tx_cfg;
    riv_rdy_vld_source_agent   m_dut_axis_tx_agt;
 
-   riv_pbus_controller_config m_tbphy_pbus_cfg;
-   riv_pbus_controller_agent  m_tbphy_pbus_agt;
    riv_rdy_vld_sink_config    m_tbphy_axis_rx_cfg;
    riv_rdy_vld_sink_agent     m_tbphy_axis_rx_agt;
    riv_rdy_vld_source_config  m_tbphy_axis_tx_cfg;
@@ -36,7 +32,6 @@ class qeciphy_env extends uvm_component;
 
    qeciphy_env_data_xfer_scoreboard  m_dut2tbphy_data_scbd;
    qeciphy_env_data_xfer_scoreboard  m_tbphy2dut_data_scbd;
-   qeciphy_env_state_scoreboard      m_state_scbd;
 
 
    //----------------------------------------------------------------------------------------------------------------------------------------
@@ -99,11 +94,6 @@ class qeciphy_env extends uvm_component;
    function void configure_agents();
       const string  msg_id = { get_type_name(), ".configure_agents" };
 
-      m_dut_pbus_cfg = riv_pbus_controller_config::type_id::create("m_dut_pbus_cfg", .contxt(get_full_name()));
-      m_dut_pbus_cfg.m_vif = m_config.m_vifs.dut_pbus_vif;
-      if (m_config.m_is_active == UVM_PASSIVE) m_dut_pbus_cfg.set_passive();
-      uvm_config_db#(riv_pbus_controller_config)::set(this, "m_dut_pbus_agt*", "config", m_dut_pbus_cfg);
-
       m_dut_axis_rx_cfg = riv_rdy_vld_sink_config::type_id::create("m_dut_axis_rx_cfg", .contxt(get_full_name()));
       m_dut_axis_rx_cfg.m_vif = m_config.m_vifs.dut_axis_rx_vif;
       m_dut_axis_rx_cfg.m_always_ready = 1'b1;
@@ -114,11 +104,6 @@ class qeciphy_env extends uvm_component;
       m_dut_axis_tx_cfg.m_vif = m_config.m_vifs.dut_axis_tx_vif;
       if (m_config.m_is_active == UVM_PASSIVE) m_dut_axis_tx_cfg.set_passive();
       uvm_config_db#(riv_rdy_vld_source_config)::set(this, "m_dut_axis_tx_agt*", "config", m_dut_axis_tx_cfg);
-
-      m_tbphy_pbus_cfg = riv_pbus_controller_config::type_id::create("m_tbphy_pbus_cfg", .contxt(get_full_name()));
-      m_tbphy_pbus_cfg.m_vif = m_config.m_vifs.tbphy_pbus_vif;
-      if (m_config.m_is_active == UVM_PASSIVE) m_tbphy_pbus_cfg.set_passive();
-      uvm_config_db#(riv_pbus_controller_config)::set(this, "m_tbphy_pbus_agt*", "config", m_tbphy_pbus_cfg);
 
       m_tbphy_axis_rx_cfg = riv_rdy_vld_sink_config::type_id::create("m_tbphy_axis_rx_cfg", .contxt(get_full_name()));
       m_tbphy_axis_rx_cfg.m_vif = m_config.m_vifs.tbphy_axis_rx_vif;
@@ -143,11 +128,9 @@ class qeciphy_env extends uvm_component;
    function void build_agents();
       const string  msg_id = { get_type_name(), ".build_agents" };
 
-      m_dut_pbus_agt    = riv_pbus_controller_agent::type_id::create("m_dut_pbus_agt", .parent(this));
       m_dut_axis_rx_agt = riv_rdy_vld_sink_agent::type_id::create("m_dut_axis_rx_agt", .parent(this));
       m_dut_axis_tx_agt = riv_rdy_vld_source_agent::type_id::create("m_dut_axis_tx_agt", .parent(this));
 
-      m_tbphy_pbus_agt    = riv_pbus_controller_agent::type_id::create("m_tbphy_pbus_agt", .parent(this));
       m_tbphy_axis_rx_agt = riv_rdy_vld_sink_agent::type_id::create("m_tbphy_axis_rx_agt", .parent(this));
       m_tbphy_axis_tx_agt = riv_rdy_vld_source_agent::type_id::create("m_tbphy_axis_tx_agt", .parent(this));
 
@@ -165,8 +148,7 @@ class qeciphy_env extends uvm_component;
 
       m_dut2tbphy_data_scbd = qeciphy_env_data_xfer_scoreboard::type_id::create("m_dut2tbphy_data_scbd", .parent(this));
       m_tbphy2dut_data_scbd = qeciphy_env_data_xfer_scoreboard::type_id::create("m_tbphy2dut_data_scbd", .parent(this));
-      m_state_scbd          = qeciphy_env_state_scoreboard::type_id::create("m_state_scbd", .parent(this));
-
+      
    endfunction : build_scoreboards
    //----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -208,10 +190,8 @@ class qeciphy_env extends uvm_component;
    function void connect_sub_sequencers();
       const string  msg_id = { get_type_name(), ".connect_sub_sequencers" };
 
-      m_sequencer.m_dut_pbus_seqr      = m_dut_pbus_agt.m_sequencer;
       m_sequencer.m_dut_axis_rx_seqr   = m_dut_axis_rx_agt.m_sequencer;
       m_sequencer.m_dut_axis_tx_seqr   = m_dut_axis_tx_agt.m_sequencer;
-      m_sequencer.m_tbphy_pbus_seqr    = m_tbphy_pbus_agt.m_sequencer;
       m_sequencer.m_tbphy_axis_rx_seqr = m_tbphy_axis_rx_agt.m_sequencer;
       m_sequencer.m_tbphy_axis_tx_seqr = m_tbphy_axis_tx_agt.m_sequencer;
 
@@ -232,11 +212,6 @@ class qeciphy_env extends uvm_component;
 
       m_dut_axis_tx_agt.collected_item_ap.connect(m_dut2tbphy_data_scbd.axis_source_ap_imp);
       m_tbphy_axis_rx_agt.collected_item_ap.connect(m_dut2tbphy_data_scbd.axis_sink_ap_imp);
-
-      m_dut_pbus_agt.change_request_ap.connect(m_state_scbd.dut_pbus_start_ap_imp);
-      m_tbphy_pbus_agt.change_request_ap.connect(m_state_scbd.tbphy_pbus_start_ap_imp);
-      m_dut_pbus_agt.collected_item_ap.connect(m_state_scbd.dut_pbus_ap_imp);
-      m_tbphy_pbus_agt.collected_item_ap.connect(m_state_scbd.tbphy_pbus_ap_imp);
 
    endfunction : connect_scoreboards
    //----------------------------------------------------------------------------------------------------------------------------------------
