@@ -17,7 +17,7 @@ module qeciphy_tb;
    `define msg_fatal(_str) $display("FATAL: (%0.2fus) %s", $realtime/1000.0, ``_str)
 
 `ifndef GT_TYPE
-   `define GT_TYPE "GTH"
+   `define GT_TYPE "GTY"
 `endif
 
    glbl glbl ();
