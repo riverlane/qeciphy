@@ -9,6 +9,7 @@ package qeciphy_pkg;
 
    localparam BYTE_ALIGNMENT_COMMA = 8'hBC;
    localparam WORD_ALIGNMENT_COMMA = 8'hCB;
+   localparam IDLE_WORD = 64'h0;
 
    // QECIPHY Validation Packet Structure
    typedef struct packed {
