@@ -194,7 +194,7 @@ module qeciphy_controller (
       end
    end
 
-   assign o_link_ready = (state == LINK_READY);
+   assign o_link_ready  = (state == LINK_READY);
    assign o_fault_fatal = (state == FAULT_FATAL);
 
 endmodule  //qeciphy_controller

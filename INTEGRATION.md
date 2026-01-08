@@ -206,12 +206,8 @@ QECIPHY #(
     // Status and Control
     .STATUS     (qeciphy_status),
     .ECODE      (qeciphy_ecode),
-    
-    // Power Management (optional)
-    .PSTATE     (power_state),
-    .PREQ       (power_request),
-    .PACCEPT    (power_accept),
-    .PACTIVE    (power_active),
+    .LINK_READY (qeciphy_link_ready),
+    .FAULT_FATAL(qeciphy_fault_fatal),
     
     // GT Interface (connect to transceivers)
     .GT_TXP     (gt_txp),
@@ -468,26 +464,6 @@ QECIPHY uses standard AXI4-Stream protocol with 64-bit data width:
 - `4'h0`: OK - No error
 - `4'h1`: FAP-MISSING - Frame Alignment Packet missing
 - `4'h2`: CRC-ERROR - CRC validation failed
-
-### Power Management Interface
-
-QECIPHY provides an optional P-channel interface for power state control, implementing the AMBA Low Power Interface Specification (P Channel Interface, Issue C):
-
-- **PSTATE**: Requested power state (1=active, 0=low power)
-- **PREQ**: Power state change request signal (active HIGH). Assert to request transition to the power state specified by PSTATE
-- **PACCEPT**: Power state acknowledgment signal (active HIGH). Indicates acceptance of the requested power state transition
-- **PACTIVE**: Power state request output from PHY (active HIGH). PHY asserts this signal when it is currently in low power state but detects new AXI-Stream data available on the TX channel, requesting to be transitioned to active power state
-
-#### Always-On Mode
-If you want to keep the transceivers always active (no power management):
-- Tie PSTATE to `1'b1` (always ON)
-- Tie PREQ to `1'b0` (no power state transitions requested)
-
-```systemverilog
-// Always-on configuration
-assign power_state = 1'b1;    // Always ON
-assign power_request = 1'b0;  // No transitions
-```
 
 ## Support
 

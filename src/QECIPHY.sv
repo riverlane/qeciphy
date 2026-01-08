@@ -171,7 +171,7 @@ module QECIPHY #(
    // -------------------------------------------------------------
    // Controller instance
    // -------------------------------------------------------------
-   
+
    qeciphy_controller i_qeciphy_controller (
        .axis_clk       (ACLK),
        .axis_rst_n     (ARSTn),
