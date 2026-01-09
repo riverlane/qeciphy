@@ -21,10 +21,6 @@ module qeciphy_syn_wrapper (
    logic [63:0] RX_TDATA;
    logic        RX_TVALID;
    logic        RX_TREADY;
-   logic        PSTATE;
-   logic        PREQ;
-   logic        PACCEPT;
-   logic        PACTIVE;
    logic [ 3:0] STATUS;
    logic [ 3:0] ECODE;
    logic [ 4:0] rst_counter;
@@ -68,20 +64,16 @@ module qeciphy_syn_wrapper (
        .clk   (ACLK),
        .probe0(RX_TDATA),
        .probe1(RX_TVALID),
-       .probe2(PACCEPT),
-       .probe3(PACTIVE),
-       .probe4(STATUS),
-       .probe5(ECODE),
-       .probe6(sfp_enable),
-       .probe7(RXDATA_error)
+       .probe2(STATUS),
+       .probe3(ECODE),
+       .probe4(sfp_enable),
+       .probe5(RXDATA_error)
    );
 
    qeciphy_vio i_vio (
        .clk       (ACLK),
        .probe_out0(rst_n_async),
-       .probe_out1(PSTATE),
-       .probe_out2(PREQ),
-       .probe_out3(sfp_enable)
+       .probe_out1(sfp_enable)
    );
 
    // Generate 16 cycle reset that de-asserts synchronously
@@ -151,10 +143,6 @@ module qeciphy_syn_wrapper (
        .RX_TDATA (RX_TDATA),
        .RX_TVALID(RX_TVALID),
        .RX_TREADY(RX_TREADY),
-       .PSTATE   (PSTATE),
-       .PREQ     (PREQ),
-       .PACCEPT  (PACCEPT),
-       .PACTIVE  (PACTIVE),
        .STATUS   (STATUS),
        .ECODE    (ECODE)
    );

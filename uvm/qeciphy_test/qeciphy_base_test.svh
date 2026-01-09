@@ -271,9 +271,6 @@ class qeciphy_base_test extends uvm_test;
          `uvm_fatal(msg_id, "Can't find 'dut_fclk_vif' in ConfigDB")
       end
 
-      if (! uvm_config_db#(virtual riv_pbus_controller_agent_if)::get(uvm_root::get(), "", "dut_pbus_vif", m_env_config.m_vifs.dut_pbus_vif)) begin
-         `uvm_fatal(msg_id, "Can't find 'dut_pbus_vif' in ConfigDB")
-      end
 
       if (! uvm_config_db#(virtual riv_rdy_vld_sink_agent_if)::get(uvm_root::get(), "", "dut_axis_rx_vif", m_env_config.m_vifs.dut_axis_rx_vif)) begin
          `uvm_fatal(msg_id, "Can't find 'dut_axis_rx_vif' in ConfigDB")
@@ -293,10 +290,6 @@ class qeciphy_base_test extends uvm_test;
 
       if (! uvm_config_db#(virtual riv_clk_rst_gen_vip_if)::get(uvm_root::get(), "", "tbphy_fclk_vif", m_env_config.m_vifs.tbphy_fclk_vif)) begin
          `uvm_fatal(msg_id, "Can't find 'tbphy_fclk_vif' in ConfigDB")
-      end
-
-      if (! uvm_config_db#(virtual riv_pbus_controller_agent_if)::get(uvm_root::get(), "", "tbphy_pbus_vif", m_env_config.m_vifs.tbphy_pbus_vif)) begin
-         `uvm_fatal(msg_id, "Can't find 'tbphy_pbus_vif' in ConfigDB")
       end
 
       if (! uvm_config_db#(virtual riv_rdy_vld_sink_agent_if)::get(uvm_root::get(), "", "tbphy_axis_rx_vif", m_env_config.m_vifs.tbphy_axis_rx_vif)) begin

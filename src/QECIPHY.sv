@@ -19,10 +19,8 @@ module QECIPHY #(
     input  logic        RX_TREADY,
     output logic [ 3:0] STATUS,
     output logic [ 3:0] ECODE,
-    input  logic        PSTATE,
-    input  logic        PREQ,
-    output logic        PACCEPT,
-    output logic        PACTIVE
+    output logic        LINK_READY,
+    output logic        FAULT_FATAL
 );
 
    // -------------------------------------------------------------
@@ -184,17 +182,19 @@ module QECIPHY #(
        .i_crc_error    (crc_mismatch_axis),
        .o_state        (STATUS),
        .o_ecode        (ECODE),
-       .i_pstate       (PSTATE),
-       .i_preq         (PREQ),
-       .o_paccept      (PACCEPT),
-       .o_pactive      (PACTIVE),
+       .i_pstate       (1'b1),
+       .i_preq         (1'b0),
+       .o_paccept      (),
+       .o_pactive      (),
        .i_tx_tvalid    (TX_TVALID),
        .i_remote_pd_ack(remote_pd_ack_axis),
        .i_remote_pd_req(remote_pd_req_axis),
        .o_pd_ack       (pd_ack_axis),
        .o_pd_req       (pd_req_axis),
        .o_allow_user_tx(allow_user_tx),
-       .o_rst_n        (contr_rst_n)
+       .o_rst_n        (contr_rst_n),
+       .o_link_ready   (LINK_READY),
+       .o_fault_fatal  (FAULT_FATAL)
    );
 
    // -------------------------------------------------------------

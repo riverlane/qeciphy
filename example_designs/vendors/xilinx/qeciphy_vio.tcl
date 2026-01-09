@@ -34,11 +34,10 @@ set ip_obj [create_ip -name vio -vendor xilinx.com -library ip -version 3.0 -mod
 set_property -dict [list \
   CONFIG.C_EN_PROBE_IN_ACTIVITY {0} \
   CONFIG.C_NUM_PROBE_IN {0} \
-  CONFIG.C_NUM_PROBE_OUT {4} \
+  CONFIG.C_NUM_PROBE_OUT {2} \
   CONFIG.C_PROBE_OUT0_INIT_VAL {0x1} \
-  CONFIG.C_PROBE_OUT1_INIT_VAL {0x1} \
-  CONFIG.C_PROBE_OUT3_INIT_VAL {0xf} \
-  CONFIG.C_PROBE_OUT3_WIDTH {4} \
+  CONFIG.C_PROBE_OUT1_INIT_VAL {0xf} \
+  CONFIG.C_PROBE_OUT1_WIDTH {4} \
 ] [get_ips $ip_name]
 
 puts "INFO: IP core '$ip_name' created successfully"

@@ -25,7 +25,6 @@ QECIPHY is a physical layer implementation according to the QECi (Quantum Error 
 - **Frame Alignment**: Automatic byte and word boundary detection
 - **Error Detection**: CRC-16 for data packets, CRC-8 for control packets
 - **Link Management**: Automatic link training and status monitoring
-- **Power Management**: Optional power state control with P-channel interface
 - **Functionality Verified**: Verified using SV-UVM testbench
 
 **Bottom Line:** You only need to send valid data packets from one FPGA and receive valid data packets on the other - no need to add headers, manage link state, or handle physical layer protocols.
@@ -94,12 +93,8 @@ module QECIPHY #(
     // Status and Control
     output logic [3:0]  STATUS,     // Link status
     output logic [3:0]  ECODE,      // Error codes
-    
-    // Power Management
-    input  logic        PSTATE,     // Power state request
-    input  logic        PREQ,       // Power request
-    output logic        PACCEPT,    // Power accept
-    output logic        PACTIVE     // Power active
+    output logic        LINK_READY, // Link ready indicator
+    output logic        FAULT_FATAL // Fatal fault indicator
 );
 ```
 
