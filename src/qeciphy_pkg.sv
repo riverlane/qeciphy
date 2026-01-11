@@ -32,9 +32,11 @@ package qeciphy_pkg;
 
    // QECIPHY error codes
    typedef enum logic [3:0] {
-      NO_ERROR  = 4'h0,
+      NO_ERROR = 4'h0,
       FAW_ERROR = 4'h1,
-      CRC_ERROR = 4'h2
+      CRC_ERROR = 4'h2,
+      TX_FIFO_OVERFLOW = 4'h3,
+      RX_FIFO_OVERFLOW = 4'h4
    } qeciphy_error_t;
 
    // To check if the data is a Frame Alignment Word

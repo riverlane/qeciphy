@@ -39,34 +39,34 @@ module qeciphy_error_handler (
 );
 
    import qeciphy_pkg::*;
-   
+
    qeciphy_error_t ecode;  // Internal error code using package enum type
-   logic         fault_fatal;  // Internal fault fatal signal
-   
+   logic           fault_fatal;  // Internal fault fatal signal
+
    // Output assignments
    assign ecode_o = ecode;
-    assign fault_fatal_o = fault_fatal;
-   
+   assign fault_fatal_o = fault_fatal;
+
    // Latch fault_fatal on any error condition, clear only on reset
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) begin
-         fault_fatal <= 1'b0;  
+         fault_fatal <= 1'b0;
       end else if (rx_fault_fatal_i || tx_fifo_overflow_i || rx_fifo_overflow_i) begin
-         fault_fatal <= 1'b1; 
+         fault_fatal <= 1'b1;
       end
    end
 
-   
+
    // Priority-based error code assignment, latched until reset
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) begin
          ecode <= NO_ERROR;
       end else if (!fault_fatal && rx_fault_fatal_i) begin
-         ecode <= qeciphy_error_t'(rx_error_code_i);  
+         ecode <= qeciphy_error_t'(rx_error_code_i);
       end else if (!fault_fatal && tx_fifo_overflow_i) begin
-         ecode <= TX_FIFO_OVERFLOW;  
+         ecode <= TX_FIFO_OVERFLOW;
       end else if (!fault_fatal && rx_fifo_overflow_i) begin
-         ecode <= RX_FIFO_OVERFLOW;  
+         ecode <= RX_FIFO_OVERFLOW;
       end
    end
 
