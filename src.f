@@ -11,6 +11,7 @@ src/qeciphy_rx_controller.sv
 src/qeciphy_tx_boundary_gen.sv
 src/qeciphy_tx_packet_gen.sv
 src/qeciphy_tx_controller.sv
+src/qeciphy_tx_64b_to_32b.sv
 src/qeciphy_crc16_ibm3740.sv
 src/qeciphy_crc8_smbus.sv
 src/qeciphy_rx_bytealigner.sv
