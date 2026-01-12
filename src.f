@@ -21,4 +21,5 @@ src/qeciphy_tx.sv
 src/qeciphy_controller.sv
 src/qeciphy_gt_wrapper.sv
 src/qeciphy_resetcontroller.sv
+src/qeciphy_cdc.sv
 src/QECIPHY.sv
