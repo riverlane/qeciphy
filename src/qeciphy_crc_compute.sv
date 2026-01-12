@@ -157,10 +157,10 @@ module qeciphy_crc_compute (
    end
 
    // Reset signal generation
-   assign crc01_rst_n  = ~rst_pipe[CRC01_RESET_BIT];
-   assign crc23_rst_n  = ~rst_pipe[CRC23_RESET_BIT];
-   assign crc45_rst_n  = ~rst_pipe[CRC45_RESET_BIT];
-   assign crcvw_rst_n  = ~rst_pipe[CRCVW_RESET_BIT];
+   assign crc01_rst_n  = ~rst_pipe[CRC01_RESET_BIT] && rst_n_i;
+   assign crc23_rst_n  = ~rst_pipe[CRC23_RESET_BIT] && rst_n_i;
+   assign crc45_rst_n  = ~rst_pipe[CRC45_RESET_BIT] && rst_n_i;
+   assign crcvw_rst_n  = ~rst_pipe[CRCVW_RESET_BIT] && rst_n_i;
 
    // Reset pipeline
    assign rst_pipe_nxt = boundary_detected ? 7'b0000001 : (rst_pipe << 1);
