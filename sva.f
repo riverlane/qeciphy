@@ -20,3 +20,5 @@ sva/checkers/qeciphy_tx_packet_gen_checker.sv
 sva/binds/qeciphy_tx_packet_gen_bind.sv
 sva/checkers/qeciphy_tx_channelencoder_checker.sv
 sva/binds/qeciphy_tx_channelencoder_bind.sv
+sva/checkers/riv_counter_checker.sv
+sva/binds/riv_counter_bind.sv
