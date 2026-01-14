@@ -24,14 +24,15 @@ module qeciphy_cdc (
     // =========================================================================
     // RX Clock Domain Interface
     // =========================================================================
-    input  logic rx_clk_i,                 // RX clock
-    input  logic rx_rst_n_i,               // RX domain active-low reset
-    input  logic gt_rx_rst_done_rclk_i,    // GT RX reset completion
-    input  logic rx_fault_fatal_rclk_i,    // RX fault status
-    input  logic rx_rdy_rclk_i,            // Local RX ready status
-    input  logic remote_rx_rdy_rclk_i,     // Remote RX ready status
-    input  logic rx_fifo_overflow_rclk_i,  // RX FIFO overflow status
-    output logic rx_enable_rclk_o,         // RX enable control
+    input  logic rx_clk_i,                    // RX clock
+    input  logic rx_rst_n_i,                  // RX domain active-low reset
+    input  logic gt_rx_rst_done_rclk_i,       // GT RX reset completion
+    input  logic rx_fault_fatal_rclk_i,       // RX fault status
+    input  logic rx_rdy_rclk_i,               // Local RX ready status
+    input  logic remote_rx_rdy_rclk_i,        // Remote RX ready status
+    input  logic rx_fifo_overflow_rclk_i,     // RX FIFO overflow status
+    input  logic rx_datapath_aligned_rclk_i,  // RX datapath reset done status
+    output logic rx_enable_rclk_o,            // RX enable control
 
     // =========================================================================
     // TX Clock Domain Interface  
@@ -53,18 +54,19 @@ module qeciphy_cdc (
     // =========================================================================
     // AXI Stream Clock Domain Interface
     // =========================================================================
-    input  logic axis_clk_i,              // AXI Stream interface clock
-    input  logic axis_rst_n_i,            // AXIS domain active-low reset
-    input  logic rx_enable_aclk_i,        // RX enable command
-    input  logic tx_link_enable_aclk_i,   // TX link enable command
-    input  logic tx_data_enable_aclk_i,   // TX data enable command
-    output logic gt_rx_rst_done_aclk_o,   // GT RX reset done status
-    output logic gt_tx_rst_done_aclk_o,   // GT TX reset done status
-    output logic gt_power_good_aclk_o,    // GT power good status
-    output logic rx_fault_fatal_aclk_o,   // RX fault status
-    output logic rx_rdy_aclk_o,           // RX ready status
-    output logic remote_rx_rdy_aclk_o,    // Remote RX ready status
-    output logic rx_fifo_overflow_aclk_o  // RX FIFO overflow status
+    input  logic axis_clk_i,                 // AXI Stream interface clock
+    input  logic axis_rst_n_i,               // AXIS domain active-low reset
+    input  logic rx_enable_aclk_i,           // RX enable command
+    input  logic tx_link_enable_aclk_i,      // TX link enable command
+    input  logic tx_data_enable_aclk_i,      // TX data enable command
+    output logic gt_rx_rst_done_aclk_o,      // GT RX reset done status
+    output logic gt_tx_rst_done_aclk_o,      // GT TX reset done status
+    output logic gt_power_good_aclk_o,       // GT power good status
+    output logic rx_fault_fatal_aclk_o,      // RX fault status
+    output logic rx_rdy_aclk_o,              // RX ready status
+    output logic remote_rx_rdy_aclk_o,       // Remote RX ready status
+    output logic rx_fifo_overflow_aclk_o,    // RX FIFO overflow status
+    output logic rx_datapath_aligned_aclk_o  // RX datapath reset done status
 );
 
    // =========================================================================
@@ -154,6 +156,13 @@ module qeciphy_cdc (
        .dst_clk(axis_clk_i),
        .dst_rst_n(axis_rst_n_i),
        .dst_out(rx_fifo_overflow_aclk_o)
+   );
+
+   riv_synchronizer_2ff i_cdc_rx_datapath_aligned_aclk (
+       .src_in(rx_datapath_aligned_rclk_i),
+       .dst_clk(axis_clk_i),
+       .dst_rst_n(axis_rst_n_i),
+       .dst_out(rx_datapath_aligned_aclk_o)
    );
 
 endmodule
