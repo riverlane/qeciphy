@@ -15,6 +15,7 @@ src/qeciphy_tx_64b_to_32b.sv
 src/qeciphy_crc16_ibm3740.sv
 src/qeciphy_crc8_smbus.sv
 src/qeciphy_rx_bytealigner.sv
+src/qeciphy_rx_32b_to_64b.sv
 src/qeciphy_rx_channeldecoder.sv
 src/qeciphy_rx.sv
 src/qeciphy_tx_channelencoder.sv
