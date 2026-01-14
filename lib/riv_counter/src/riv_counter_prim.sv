@@ -44,7 +44,7 @@ module riv_counter_prim (
    // - Asserted when count reaches zero
    always_ff @(posedge clk) begin
       if (~rst_n) begin
-         done <= 1'b0;
+         done <= 1'b1;
       end else if (load) begin
          done <= value_is_zero;
       end else if (done && enable) begin
