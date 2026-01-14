@@ -18,9 +18,7 @@ src/qeciphy_rx_bytealigner.sv
 src/qeciphy_rx_32b_to_64b.sv
 src/qeciphy_serdes.sv
 src/qeciphy_rx_channeldecoder.sv
-src/qeciphy_rx.sv
 src/qeciphy_tx_channelencoder.sv
-src/qeciphy_tx.sv
 src/qeciphy_controller.sv
 src/qeciphy_gt_wrapper.sv
 src/qeciphy_resetcontroller.sv
