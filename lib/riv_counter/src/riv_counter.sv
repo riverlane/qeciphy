@@ -38,7 +38,6 @@ module riv_counter #(
    logic [      N_PRIM-1:0] prim_done;  // Done signals from each primitive
    logic [      N_PRIM-1:0] prim_enable;  // Enable signals to each primitive  
    logic [PADDED_WIDTH-1:0] padded_value;  // Input value padded to 4-bit boundary
-   logic                    upper_bits_done;  // Registered AND of upper primitive done signals
 
    // Pad the input value with zeros in the upper bits to fit 4-bit boundaries
    assign padded_value   = {{(PADDED_WIDTH - WIDTH) {1'b0}}, value};
@@ -55,23 +54,7 @@ module riv_counter #(
       end
    endgenerate
 
-   // Register the upper bits done signal to reduce fan-in on the final output
-   // This improves timing by breaking up large AND operations across clock cycles
-   always_ff @(posedge clk) begin
-      if (~rst_n) begin
-         upper_bits_done <= 1'b0;
-      end else begin
-         if (N_PRIM == 1) begin
-            upper_bits_done <= 1'b1;  // Always true for single primitive
-         end else begin
-            upper_bits_done <= &prim_done[N_PRIM-1:1];  // AND of all upper primitive done signals
-         end
-      end
-   end
-
-   // Overall done signal: asserted when ALL primitives are done
-   // This indicates the entire multi-precision counter has reached zero
-   assign done = prim_done[0] && upper_bits_done;
+   assign done = &prim_done;
 
    // Instantiate the 4-bit counter primitives
    generate

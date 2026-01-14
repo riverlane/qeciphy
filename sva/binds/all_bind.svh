@@ -13,3 +13,4 @@
 `include "qeciphy_rx_channeldecoder_bind.sv"
 `include "qeciphy_tx_packet_gen_bind.sv"
 `include "qeciphy_tx_channelencoder_bind.sv"
+`include "riv_counter_bind.sv"
