@@ -1,200 +1,146 @@
 // SPDX-License-Identifier: LicenseRef-LICENSE
-// Copyright (c) 2024-2025 Riverlane Ltd.
+// Copyright (c) 2024-2026 Riverlane Ltd.
 // Original authors: Aniket Datta, Gargi Sunil
 
+//------------------------------------------------------------------------------
+// QECIPHY Controller
+//------------------------------------------------------------------------------
+// This module implements the main link establishment and control state machine
+// for the QECIPHY. It orchestrates the complete link initialization
+// sequence from reset to operational data transfer.
+//
+// Link Establishment Sequence:
+// 1. RESET -> Wait for system reset completion
+// 2. Enable TX link training -> Start transmitting alignment patterns
+// 3. Wait for RX datapath alignment -> SERDES byte/word alignment complete
+// 4. Enable RX processing -> Start receiving and processing data
+// 5. Wait for local RX lock -> Local receiver achieves frame synchronization
+// 6. Wait for remote RX lock -> Remote side confirms its receiver is ready
+// 7. Enable TX data -> Start transmitting actual user data
+// 8. READY -> Link is fully operational for bidirectional data transfer
+//
+// Error Handling:
+// - Fatal faults transition directly to FAULT_FATAL state from any state
+// - Fault state is persistent until system reset
+//------------------------------------------------------------------------------
+
+`include "qeciphy_pkg.sv"
+
 module qeciphy_controller (
-    input  logic       axis_clk,
-    input  logic       axis_rst_n,
-    input  logic       i_reset_done,
-    input  logic       i_rx_rdy,
-    input  logic       i_remote_rx_rdy,
-    input  logic       i_fap_missing,
-    input  logic       i_crc_error,
-    output logic [3:0] o_state,
-    output logic [3:0] o_ecode,
-    input  logic       i_pstate,
-    input  logic       i_preq,
-    output logic       o_paccept,
-    output logic       o_pactive,
-    input  logic       i_tx_tvalid,
-    input  logic       i_remote_pd_ack,
-    input  logic       i_remote_pd_req,
-    output logic       o_pd_req,
-    output logic       o_pd_ack,
-    output logic       o_allow_user_tx,
-    output logic       o_rst_n,
-    output logic       o_link_ready,
-    output logic       o_fault_fatal
+    // System Interface
+    input logic clk_i,   // Clock input
+    input logic rst_n_i, // Active-low reset
+
+    // Status Inputs
+    input logic reset_done_i,           // System reset sequence completed
+    input logic rx_datapath_aligned_i,  // SERDES alignment completed
+    input logic rx_ready_i,             // Local RX frame lock achieved
+    input logic remote_rx_ready_i,      // Remote RX ready status received
+    input logic fault_fatal_i,          // Fatal error detected
+
+    // Control Outputs
+    output logic       link_ready_o,      // Link ready for user data transfer
+    output logic       fault_fatal_o,     // Fatal error state indicator
+    output logic [3:0] status_o,          // Link status code
+    output logic       tx_link_enable_o,  // Enable TX training pattern
+    output logic       tx_data_enable_o,  // Enable TX user data transmission
+    output logic       rx_enable_o        // Enable RX data processing
 );
 
+   import qeciphy_pkg::*;
 
-   // -------------------------------------------------------------
-   // Local declaration
-   // -------------------------------------------------------------
+   // =========================================================================
+   // State Machine Definition
+   // =========================================================================
+   // One-hot encoding allows direct decoding of control signals from state bits
+   // Each state bit directly controls specific enable signals where applicable
 
-   logic any_error;
-   logic state_ready;
-   logic state_sleep;
-   logic state_link_training;
-   logic error_check_enable;
-   logic pd_req_nxt;
-   logic pu_req;
-   logic pu_req_nxt;
-   logic paccept_nxt;
-   logic pactive_nxt;
-   logic usr_pd_req_latched;
-   logic remote_pd_req_latched;
-
-   // -------------------------------------------------------------
-   // Type definition
-   // -------------------------------------------------------------
-   typedef enum bit [3:0] {
-      RESET = 0,
-      WAIT_FOR_RESET = 1,
-      LINK_TRAINING = 2,
-      RX_LOCKED = 3,
-      LINK_READY = 4,
-      FAULT_FATAL = 5,
-      SLEEP = 6,
-      WAIT_FOR_POWERDOWN = 7
+   typedef enum logic [13:0] {
+      RESET                  = 14'b00000000000001,  // Initial reset state
+      WAIT_RESET_DONE        = 14'b00000000000010,  // Waiting for reset completion
+      TX_LINK_ENABLE         = 14'b00100000000100,  // Enable TX training pattern
+      WAIT_RX_DATAPATH_ALIGN = 14'b00100000001000,  // Wait for SERDES alignment  
+      RX_ENABLE              = 14'b01100000010000,  // Enable RX processing
+      WAIT_RX_LOCKED         = 14'b01100000100000,  // Wait for local RX lock
+      LOCAL_RX_LOCKED        = 14'b01100001000000,  // Local RX locked
+      BOTH_RX_LOCKED         = 14'b01100010000000,  // Both RX sides locked
+      TX_DATA_ENABLE         = 14'b11100100000000,  // Enable TX data
+      READY                  = 14'b11101000000000,  // Link fully ready
+      FAULT_FATAL            = 14'b00010000000000   // Fatal error state
    } fsm_t;
 
-   typedef enum bit [3:0] {
-      OK,
-      FAP_MISSING,
-      CRC_ERROR
-   } error_t;
+   fsm_t state, state_nxt;  // Current and next state registers
+   qeciphy_status_t status;  // Mapped status output
+   logic            in_ready_state;  // Link ready flag
+   logic            in_fault_state;  // Fault state flag
 
-   fsm_t state, state_nxt;
-   error_t err, error_nxt;
+   // =========================================================================
+   // Control Signal Generation
+   // =========================================================================
 
-   // -------------------------------------------------------------
-   // General
-   // -------------------------------------------------------------
+   assign in_ready_state   = state[9];
+   assign in_fault_state   = state[10];
 
-   assign any_error  = i_fap_missing || i_crc_error;
+   assign link_ready_o     = in_ready_state;
+   assign fault_fatal_o    = in_fault_state;
+   assign tx_link_enable_o = state[11];
+   assign tx_data_enable_o = state[13];
+   assign rx_enable_o      = state[12];
 
-   // -------------------------------------------------------------
-   // Power up and power down requests
-   // -------------------------------------------------------------
+   // =========================================================================
+   // Status Code Mapping
+   // =========================================================================
+   // Maps internal detailed states to external simplified status codes
 
-   assign pd_req_nxt = (~i_pstate && i_preq && state_ready) ? 1'b1 : state_sleep ? 1'b0 : o_pd_req;
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) o_pd_req <= 1'b0;
-      else o_pd_req <= pd_req_nxt;
-   end
-
-   assign pu_req_nxt = (i_pstate && i_preq && state_sleep) ? 1'b1 : 1'b0;
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) pu_req <= 1'b0;
-      else pu_req <= pu_req_nxt;
-   end
-
-   assign paccept_nxt = (~i_preq && o_paccept) ? 1'b0 : (state_sleep && i_preq && ~i_pstate) ? 1'b1 : (state_ready && i_preq && i_pstate) ? 1'b1 : o_paccept;
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) o_paccept <= 1'b0;
-      else o_paccept <= paccept_nxt;
-   end
-
-   assign pactive_nxt = (state_link_training) ? 1'b0 : (state_sleep && i_tx_tvalid) ? 1'b1 : o_pactive;
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) o_pactive <= 1'b0;
-      else o_pactive <= pactive_nxt;
-   end
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) begin
-         usr_pd_req_latched <= 1'b0;
-      end else if (state_link_training) begin
-         usr_pd_req_latched <= 1'b0;
-      end else if (~i_pstate && i_preq && state_ready) begin
-         usr_pd_req_latched <= 1'b1;
-      end
-   end
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) begin
-         remote_pd_req_latched <= 1'b0;
-      end else if (state_link_training) begin
-         remote_pd_req_latched <= 1'b0;
-      end else if (i_remote_pd_req && state_ready) begin
-         remote_pd_req_latched <= 1'b1;
-      end
-   end
-
-   // -------------------------------------------------------------
-   // FSM
-   // -------------------------------------------------------------
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) state <= RESET;
-      else state <= state_nxt;
-   end
+   assign status_o         = status;
 
    always_comb begin
       case (state)
-         // Keep the FSM in reset state till both the TX and RX reset
-         // is complete
-         RESET: state_nxt = WAIT_FOR_RESET;
-         WAIT_FOR_RESET: state_nxt = i_reset_done ? LINK_TRAINING : WAIT_FOR_RESET;
-         LINK_TRAINING: state_nxt = i_rx_rdy ? RX_LOCKED : LINK_TRAINING;
-         RX_LOCKED: state_nxt = any_error ? FAULT_FATAL : (i_remote_rx_rdy ? LINK_READY : RX_LOCKED);
-         LINK_READY: state_nxt = any_error ? FAULT_FATAL : i_remote_pd_ack ? SLEEP : o_pd_ack ? WAIT_FOR_POWERDOWN : LINK_READY;
-         SLEEP: state_nxt = pu_req ? WAIT_FOR_RESET : SLEEP;
-         WAIT_FOR_POWERDOWN: state_nxt = any_error ? RESET : WAIT_FOR_POWERDOWN;
-         FAULT_FATAL: state_nxt = FAULT_FATAL;
-         default: state_nxt = fsm_t'(1'bx);
+         RESET:                  status = RESET;
+         WAIT_RESET_DONE:        status = WAIT_FOR_RESET;
+         TX_LINK_ENABLE:         status = LINK_TRAINING;
+         WAIT_RX_DATAPATH_ALIGN: status = LINK_TRAINING;
+         RX_ENABLE:              status = LINK_TRAINING;
+         WAIT_RX_LOCKED:         status = LINK_TRAINING;
+         LOCAL_RX_LOCKED:        status = RX_LOCKED;
+         BOTH_RX_LOCKED:         status = RX_LOCKED;
+         TX_DATA_ENABLE:         status = RX_LOCKED;
+         READY:                  status = LINK_READY;
+         FAULT_FATAL:            status = FAULT_FATAL;
+         default:                status = RESET;
       endcase
    end
 
-   assign state_ready = (state == LINK_READY);
-   assign state_sleep = (state == SLEEP);
-   assign state_link_training = (state == LINK_TRAINING);
+   // =========================================================================
+   // State Machine
+   // =========================================================================
 
-   // -------------------------------------------------------------
-   // Error
-   // -------------------------------------------------------------
-
-   assign error_check_enable = state_ready || (state == RX_LOCKED);
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) err <= OK;
-      else err <= error_nxt;
-   end
-
-   assign error_nxt = (error_check_enable && i_fap_missing) ? FAP_MISSING : ((error_check_enable && i_crc_error) ? CRC_ERROR : err);
-
-   // -------------------------------------------------------------
-   // Output assignments
-   // -------------------------------------------------------------
-
-   assign o_state   = state;
-   assign o_ecode   = err;
-   assign o_pd_ack  = i_remote_pd_req;
-
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) begin
-         o_rst_n <= 1'b0;
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         state <= RESET;
+      end else if (fault_fatal_i) begin
+         state <= FAULT_FATAL;  // Immediate transition on fatal fault
       end else begin
-         o_rst_n <= ~(state == SLEEP) && ~(state == RESET) && ~(state == FAULT_FATAL);
+         state <= state_nxt;
       end
    end
 
-   always_ff @(posedge axis_clk) begin
-      if (~axis_rst_n) begin
-         o_allow_user_tx <= 1'b0;
-      end else if (usr_pd_req_latched | remote_pd_req_latched) begin
-         o_allow_user_tx <= 1'b0;
-      end else if (state == LINK_READY) begin
-         o_allow_user_tx <= 1'b1;
-      end
+   // Next State Logic
+   always_comb begin
+      unique case (state)
+         RESET: state_nxt = WAIT_RESET_DONE;
+         WAIT_RESET_DONE: state_nxt = reset_done_i ? TX_LINK_ENABLE : WAIT_RESET_DONE;  // Wait for reset completion
+         TX_LINK_ENABLE: state_nxt = WAIT_RX_DATAPATH_ALIGN;  // Assert TX link enable
+         WAIT_RX_DATAPATH_ALIGN: state_nxt = rx_datapath_aligned_i ? RX_ENABLE : WAIT_RX_DATAPATH_ALIGN;  // Wait for SERDES byte and word alignment
+         RX_ENABLE: state_nxt = WAIT_RX_LOCKED;  // Enable RX processing
+         WAIT_RX_LOCKED: state_nxt = rx_ready_i ? LOCAL_RX_LOCKED : WAIT_RX_LOCKED;  // Wait for local RX lock
+         LOCAL_RX_LOCKED: state_nxt = remote_rx_ready_i ? BOTH_RX_LOCKED : LOCAL_RX_LOCKED;  // Wait for remote RX lock
+         BOTH_RX_LOCKED: state_nxt = TX_DATA_ENABLE;  // Both RX locked
+         TX_DATA_ENABLE: state_nxt = READY;  // Enable TX data
+         READY: state_nxt = READY;  // Link fully operational - sticky until fault
+         FAULT_FATAL: state_nxt = FAULT_FATAL;  // Sticky until reset
+         default: state_nxt = RESET;  // Safety fallback
+      endcase
    end
 
-   assign o_link_ready  = (state == LINK_READY);
-   assign o_fault_fatal = (state == FAULT_FATAL);
-
-endmodule  //qeciphy_controller
+endmodule

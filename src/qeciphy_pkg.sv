@@ -39,6 +39,16 @@ package qeciphy_pkg;
       RX_FIFO_OVERFLOW = 4'h4
    } qeciphy_error_t;
 
+   // QECIPHY status codes
+   typedef enum logic [3:0] {
+      RESET = 4'h0,
+      WAIT_FOR_RESET = 4'h1,
+      LINK_TRAINING = 4'h2,
+      RX_LOCKED = 4'h3,
+      LINK_READY = 4'h4,
+      FAULT_FATAL = 4'h5
+   } qeciphy_status_t;
+
    // To check if the data is a Frame Alignment Word
    function bit is_faw(input logic [63:0] data);
       begin
