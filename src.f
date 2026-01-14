@@ -25,4 +25,5 @@ src/qeciphy_controller.sv
 src/qeciphy_gt_wrapper.sv
 src/qeciphy_resetcontroller.sv
 src/qeciphy_cdc.sv
+src/qeciphy_error_handler.sv
 src/QECIPHY.sv
