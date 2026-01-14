@@ -36,11 +36,11 @@ module qeciphy_serdes #(
     output logic        gt_tx_rst_done_o,     // GT TX reset completion status
 
     // RX Interface
-    output logic        rx_clk_o,               // RX clock output (GT generated)
-    input  logic        rx_datapath_rst_n_i,    // RX datapath reset (active-low)
-    output logic [63:0] rx_tdata_o,             // 64-bit RX data
-    output logic        gt_rx_rst_done_o,       // GT RX reset completion status
-    output logic        rx_datapath_rst_done_o  // RX datapath alignment completion
+    output logic        rx_clk_o,              // RX clock output (GT generated)
+    input  logic        rx_datapath_rst_n_i,   // RX datapath reset (active-low)
+    output logic [63:0] rx_tdata_o,            // 64-bit RX data
+    output logic        gt_rx_rst_done_o,      // GT RX reset completion status
+    output logic        rx_datapath_aligned_o  // RX datapath alignment completion
 );
 
    // RX Path Signals
@@ -56,7 +56,7 @@ module qeciphy_serdes #(
    logic        tx_clk_2x;  // 2x TX clock from GT
 
    // Output Assignments
-   assign rx_datapath_rst_done_o = rx_word_aligned;
+   assign rx_datapath_aligned_o = rx_word_aligned;
 
    // =========================================================================
    // TX Data Path: 64-bit to 32-bit Serialization
