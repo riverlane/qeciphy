@@ -2,7 +2,7 @@
 // Copyright (c) 2025 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-bind qeciphy_crc_check qeciphy_crc_check_checker i_qeciphy_crc_check_checker_bind (
+bind qeciphy_crc_check qeciphy_crc_check_checker i_qeciphy_crc_check_bind (
     .clk_i         (clk_i),
     .rst_n_i       (rst_n_i),
     .crc_boundary_i(crc_boundary_i),
