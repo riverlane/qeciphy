@@ -2,8 +2,6 @@
 // Copyright (c) 2025 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-`include "qeciphy_pkg.sv"
-
 module qeciphy_crc_check_checker (
     input logic        clk_i,
     input logic        rst_n_i,
@@ -62,13 +60,13 @@ module qeciphy_crc_check_checker (
    else $fatal(1, "Spurious crc_error_o assertion at %m");
 
    // Capture the validation packet at crc boundary
-   qeciphy_vd_pkt_t vd_pkt;
+   qeciphy_vd_pkt_t vd_pkt_t;
 
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) begin
-         vd_pkt <= '0;
+         vd_pkt_t <= '0;
       end else if (crc_boundary_i) begin
-         vd_pkt = qeciphy_vd_pkt_t'(tdata_i);
+         vd_pkt_t <= qeciphy_vd_pkt_t'(tdata_i);
       end
    end
 
@@ -76,13 +74,13 @@ module qeciphy_crc_check_checker (
    property p_check_crc_error_correctness;
       @(posedge clk_i) disable iff (!rst_n_i) check_done_o && !$past(
           crc_error_o
-      ) |-> (crc_error_o == ~(((vd_pkt.crc01 == $past(
+      ) |-> (crc_error_o == ~(((vd_pkt_t.crc01 == $past(
           crc01_i, 2
-      )) && (vd_pkt.crc23 == $past(
+      )) && (vd_pkt_t.crc23 == $past(
           crc23_i, 2
-      )) && (vd_pkt.crc45 == $past(
+      )) && (vd_pkt_t.crc45 == $past(
           crc45_i, 2
-      )) && (vd_pkt.crcvw == $past(
+      )) && (vd_pkt_t.crcvw == $past(
           crcvw_i, 2
       )))));
    endproperty

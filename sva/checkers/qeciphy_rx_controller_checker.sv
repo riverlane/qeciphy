@@ -2,8 +2,6 @@
 // Copyright (c) 2026 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-`include "qeciphy_pkg.sv"
-
 module qeciphy_rx_controller_checker (
     input logic clk_i,
     input logic rst_n_i,
@@ -19,6 +17,7 @@ module qeciphy_rx_controller_checker (
 
    import qeciphy_pkg::*;
 
+   logic any_error;
    assign any_error = crc_err_i || faw_err_i;
 
    // Ensure that rx_enable_o is reachable
@@ -59,15 +58,6 @@ module qeciphy_rx_controller_checker (
    p_rx_enable_stable_when_enabled_no_errors_A :
    assert property (p_rx_enable_stable_when_enabled_no_errors)
    else $fatal(1, "rx_enable_o should remain high when enabled and no errors at %m");
-
-   // // rx_rdy_o goes HIGH when transitioning from TRAINING to READY (rx_locked_i && rx_enable_o && no errors)
-   // property p_rx_rdy_rises_on_lock_and_no_errors;
-   //    @(posedge clk_i) disable iff (!rst_n_i || !enable_i) !$past(rx_rdy_o) && rx_enable_o && rx_locked_i && !any_error && !$past(rx_fault_fatal_o) |-> ##1 rx_rdy_o;
-   // endproperty
-
-   // p_rx_rdy_rises_on_lock_and_no_errors_A :
-   // assert property (p_rx_rdy_rises_on_lock_and_no_errors)
-   // else $fatal(1, "rx_rdy_o should rise when locked and no errors at %m");
 
    // rx_rdy_o goes LOW immediately on any error
    property p_rx_rdy_falls_on_error;

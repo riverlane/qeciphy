@@ -20,7 +20,7 @@ module qeciphy_tx_boundary_gen_checker (
 
    // Realistic FAW and CRC boundary sequence
    property p_realistic_faw_crc_boundary_sequence;
-      @(posedge clk_i) disable iff (!rst_n_i || !enable_i) faw_boundary_o |-> s_realistic_faw_crc_boundary;
+      @(posedge clk_i) disable iff (!rst_n_i) faw_boundary_o |-> s_realistic_faw_crc_boundary;
    endproperty
 
    p_realistic_faw_crc_boundary_sequence_A :

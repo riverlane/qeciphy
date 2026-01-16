@@ -2,8 +2,6 @@
 // Copyright (c) 2026 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-`include "qeciphy_pkg.sv"
-
 module qeciphy_tx_packet_gen_checker (
     input logic        clk_i,
     input logic        rst_n_i,
@@ -27,6 +25,14 @@ module qeciphy_tx_packet_gen_checker (
    import qeciphy_pkg::*;
 
    localparam PIPELINE_DEPTH = 3;
+
+   // Calculate past offsets for valid bit checks
+   localparam int PAST_V5 = PIPELINE_DEPTH + 1;
+   localparam int PAST_V4 = PIPELINE_DEPTH + 2;
+   localparam int PAST_V3 = PIPELINE_DEPTH + 3;
+   localparam int PAST_V2 = PIPELINE_DEPTH + 4;
+   localparam int PAST_V1 = PIPELINE_DEPTH + 5;
+   localparam int PAST_V0 = PIPELINE_DEPTH + 6;
 
    qeciphy_vd_pkt_t vd_pkt;
 
@@ -70,17 +76,17 @@ module qeciphy_tx_packet_gen_checker (
       @(posedge clk_i) disable iff (!rst_n_i) (crc_boundary_i,
       off_idle = (tx_off_i || tx_idle_i)
       ) |-> ##PIPELINE_DEPTH(off_idle ? (vd_pkt.valids == 6'h0) : ((vd_pkt.valids[5] == $past(
-          s_axis_tvalid_i, PIPELINE_DEPTH + 1
+          s_axis_tvalid_i, PAST_V5
       )) && (vd_pkt.valids[4] == $past(
-          s_axis_tvalid_i, PIPELINE_DEPTH + 2
+          s_axis_tvalid_i, PAST_V4
       )) && (vd_pkt.valids[3] == $past(
-          s_axis_tvalid_i, PIPELINE_DEPTH + 3
+          s_axis_tvalid_i, PAST_V3
       )) && (vd_pkt.valids[2] == $past(
-          s_axis_tvalid_i, PIPELINE_DEPTH + 4
+          s_axis_tvalid_i, PAST_V2
       )) && (vd_pkt.valids[1] == $past(
-          s_axis_tvalid_i, PIPELINE_DEPTH + 5
+          s_axis_tvalid_i, PAST_V1
       )) && (vd_pkt.valids[0] == $past(
-          s_axis_tvalid_i, PIPELINE_DEPTH + 6
+          s_axis_tvalid_i, PAST_V0
       ))));
    endproperty
 

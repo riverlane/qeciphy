@@ -2,8 +2,6 @@
 // Copyright (c) 2026 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-`include "qeciphy_pkg.sv"
-
 module qeciphy_rx_boundary_gen_checker (
     input logic        clk_i,
     input logic        rst_n_i,
@@ -19,6 +17,16 @@ module qeciphy_rx_boundary_gen_checker (
 
    localparam FAW_TO_LOCKED_LATENCY = 4;
    localparam FAW_DISTANCE = 64;
+
+   // Calculate past offsets for FAW checks from locked assertion
+   localparam P0 = FAW_TO_LOCKED_LATENCY + 0 * FAW_DISTANCE;
+   localparam P1 = FAW_TO_LOCKED_LATENCY + 1 * FAW_DISTANCE;
+   localparam P2 = FAW_TO_LOCKED_LATENCY + 2 * FAW_DISTANCE;
+   localparam P3 = FAW_TO_LOCKED_LATENCY + 3 * FAW_DISTANCE;
+   localparam P4 = FAW_TO_LOCKED_LATENCY + 4 * FAW_DISTANCE;
+   localparam P5 = FAW_TO_LOCKED_LATENCY + 5 * FAW_DISTANCE;
+   localparam P6 = FAW_TO_LOCKED_LATENCY + 6 * FAW_DISTANCE;
+   localparam P7 = FAW_TO_LOCKED_LATENCY + 7 * FAW_DISTANCE;
 
    // Ensure that locked_o is rechable
    cover_locked_o_C :
@@ -95,21 +103,21 @@ module qeciphy_rx_boundary_gen_checker (
       @(posedge clk_i) disable iff (!rst_n_i) $rose(
           locked_o
       ) |-> $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY
+          is_faw(tdata_i), P0
       ) && $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY + FAW_DISTANCE
+          is_faw(tdata_i), P1
       ) && $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY + 2 * FAW_DISTANCE
+          is_faw(tdata_i), P2
       ) && $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY + 3 * FAW_DISTANCE
+          is_faw(tdata_i), P3
       ) && $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY + 4 * FAW_DISTANCE
+          is_faw(tdata_i), P4
       ) && $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY + 5 * FAW_DISTANCE
+          is_faw(tdata_i), P5
       ) && $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY + 6 * FAW_DISTANCE
+          is_faw(tdata_i), P6
       ) && $past(
-          is_faw(tdata_i), FAW_TO_LOCKED_LATENCY + 7 * FAW_DISTANCE
+          is_faw(tdata_i), P7
       );
    endproperty
 

@@ -2,8 +2,6 @@
 // Copyright (c) 2025 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-`include "src/qeciphy_pkg.sv"
-
 module qeciphy_rx_monitor_checker (
     input logic clk_i,
     input logic rst_n_i,
@@ -32,6 +30,60 @@ module qeciphy_rx_monitor_checker (
    localparam CHECK_DONE_TO_FIRST_DATA_OUT_LATENCY = 2;
    localparam CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY = CRC_BOUNDARY_TO_CHECK_DONE_LATENCY + CHECK_DONE_TO_FIRST_DATA_OUT_LATENCY;
    localparam TOTAL_DATA_PATH_LATENCY = FIRST_DATA_IN_TO_CRC_BOUNDARY_LATENCY + CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY;
+
+   // Store the latest FAW word
+   qeciphy_faw_t faw_t;
+
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         faw_t <= '0;
+      end else if (faw_boundary_i) begin
+         faw_t <= qeciphy_faw_t'(tdata_i);
+      end
+   end
+
+   qeciphy_vd_pkt_t vd_pkt_t;
+   qeciphy_vd_pkt_t vd_pkt_pipe_t[0:CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY-1];
+   qeciphy_vd_pkt_t vd_pkt_for_valids_check_t;
+
+   assign vd_pkt_pipe_t[0] = vd_pkt_t;
+   assign vd_pkt_for_valids_check_t = vd_pkt_pipe_t[CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY-1];
+
+   // Capture validation packet at CRC boundary
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         vd_pkt_t <= '0;
+      end else if (crc_boundary_i) begin
+         vd_pkt_t <= qeciphy_vd_pkt_t'(tdata_i);
+      end
+   end
+
+   // Pipeline the validation packet through the data path
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         for (int i = 1; i < CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY; i++) begin
+            vd_pkt_pipe_t[i] <= '0;
+         end
+      end else begin
+         for (int i = 1; i < CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY; i++) begin
+            vd_pkt_pipe_t[i] <= vd_pkt_pipe_t[i-1];
+         end
+      end
+   end
+
+   // Detect rising edge of remote_rx_rdy_o
+   logic remote_rx_rdy_o_q_t;
+   logic remote_rx_rdy_o__rose;
+
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         remote_rx_rdy_o_q_t <= 1'b0;
+      end else begin
+         remote_rx_rdy_o_q_t <= remote_rx_rdy_o;
+      end
+   end
+
+   assign remote_rx_rdy_o__rose = remote_rx_rdy_o && !remote_rx_rdy_o_q_t;
 
    // Ensure faw_error_o is reachable
    cover_faw_error_o_C :
@@ -115,14 +167,9 @@ module qeciphy_rx_monitor_checker (
 
    // remote_rx_rdy_o can only be raised when FAW indicates remote ready
    property p_no_spurious_remote_rx_rdy;
-      qeciphy_faw_t faw_snap;
-      @(posedge clk_i) disable iff (!rst_n_i) (1,
-      faw_snap = qeciphy_faw_t'(tdata_i)
-      ) ##1 $rose(
-          remote_rx_rdy_o
-      ) |-> $past(
+      @(posedge clk_i) disable iff (!rst_n_i) remote_rx_rdy_o__rose |-> $past(
           enable_i && faw_boundary_i
-      ) && faw_snap.rx_rdy;
+      ) && faw_t.rx_rdy;
    endproperty
 
    no_spurious_remote_rx_rdy_A :
@@ -131,10 +178,7 @@ module qeciphy_rx_monitor_checker (
 
    // remote_rx_rdy_o must be asserted whenever FAW indicates remote ready
    property p_remote_rx_rdy_correctness;
-      qeciphy_faw_t faw_snap;
-      @(posedge clk_i) disable iff (!rst_n_i) (faw_boundary_i && enable_i,
-      faw_snap = qeciphy_faw_t'(tdata_i)
-      ) |-> ##1 (remote_rx_rdy_o == faw_snap.rx_rdy);
+      @(posedge clk_i) disable iff (!rst_n_i) faw_boundary_i && enable_i |-> ##1 (remote_rx_rdy_o == faw_t.rx_rdy);
    endproperty
 
    remote_rx_rdy_correctness_A :
@@ -179,11 +223,10 @@ module qeciphy_rx_monitor_checker (
 
    // tvalid_o resepects the valid bits in the validation packet
    property p_tvalid_respects_valid_bits;
-      qeciphy_vd_pkt_t vd_pkt_snap;
-      @(posedge clk_i) disable iff (!rst_n_i || !enable_i || faw_error_o || crc_error_o) (crc_boundary_i && enable_i,
-      vd_pkt_snap = qeciphy_vd_pkt_t'(tdata_i)
-      ) |-> ##CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY tvalid_o == vd_pkt_snap.valids[0] ##1 tvalid_o == vd_pkt_snap.valids[1] ##1 tvalid_o == vd_pkt_snap.valids[2] ##1 tvalid_o == vd_pkt_snap.valids[3]
-          ##1 tvalid_o == vd_pkt_snap.valids[4] ##1 tvalid_o == vd_pkt_snap.valids[5];
+      @(posedge clk_i) disable iff (!rst_n_i || !enable_i || faw_error_o || crc_error_o) 
+      crc_boundary_i && enable_i 
+      |-> ##CRC_BOUNDARY_TO_FIRST_DATA_OUT_LATENCY tvalid_o == vd_pkt_for_valids_check_t.valids[0] ##1 tvalid_o == vd_pkt_for_valids_check_t.valids[1] ##1 tvalid_o == vd_pkt_for_valids_check_t.valids[2] ##1 tvalid_o == vd_pkt_for_valids_check_t.valids[3]
+          ##1 tvalid_o == vd_pkt_for_valids_check_t.valids[4] ##1 tvalid_o == vd_pkt_for_valids_check_t.valids[5];
    endproperty
 
    p_tvalid_respects_valid_bits_A :

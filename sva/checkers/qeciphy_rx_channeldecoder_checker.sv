@@ -2,8 +2,6 @@
 // Copyright (c) 2026 Riverlane Ltd.
 // Original authors: Aniket Datta
 
-`include "qeciphy_pkg.sv"
-
 module qeciphy_rx_channeldecoder_checker (
     input logic        clk_i,
     input logic        rst_n_i,
