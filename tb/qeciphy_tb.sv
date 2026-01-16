@@ -6,6 +6,9 @@
 
 module qeciphy_tb;
 
+   `include "../src/qeciphy_pkg.sv"
+   import qeciphy_pkg::*;
+
 `ifdef XSIM
    `include "all_bind.svh"
 `endif
@@ -51,62 +54,45 @@ module qeciphy_tb;
       logic        tready;
    } axis_t;
 
-   typedef enum logic [3:0] {
-      RESET,
-      WAIT_FOR_RESET,
-      LINK_TRAINING,
-      RX_LOCKED,
-      LINK_READY,
-      FAULT_FATAL,
-      SLEEP,
-      WAIT_FOR_POWERDOWN
-   } fsm_t;
-
-   typedef enum logic [3:0] {
-      OK,
-      FAP_MISSING,
-      CRC_ERROR
-   } error_t;
-
    //----------------------------------------
    // Signals
    //----------------------------------------
 
-   logic                   rclk             [                  0:1];
-   logic                   fclk             [                  0:1];
-   logic                   aclk             [                  0:1];
-   logic                   arstn            [                  0:1];
+   logic                            rclk             [                  0:1];
+   logic                            fclk             [                  0:1];
+   logic                            aclk             [                  0:1];
+   logic                            arstn            [                  0:1];
 
-   fsm_t                   status           [                  0:1];
-   error_t                 ecode            [                  0:1];
+   qeciphy_status_t                 status           [                  0:1];
+   qeciphy_error_t                  ecode            [                  0:1];
 
-   axis_t                  axis_tx          [                  0:1];
-   axis_t                  axis_rx          [                  0:1];
+   axis_t                           axis_tx          [                  0:1];
+   axis_t                           axis_rx          [                  0:1];
 
-   logic   [         31:0] cycle_cnt;
-   logic                   qpllclk;
+   logic            [         31:0] cycle_cnt;
+   logic                            qpllclk;
 
    //----------------------------------------
    // TB storage
    //----------------------------------------
 
-   logic   [         63:0] tx0_test_data    [0:TEST_SEQUENCE_LEN-1];
-   logic   [         63:0] tx1_test_data    [0:TEST_SEQUENCE_LEN-1];
-   logic   [         63:0] rx0_captured_data[0:TEST_SEQUENCE_LEN-1];
-   logic   [         63:0] rx1_captured_data[0:TEST_SEQUENCE_LEN-1];
+   logic            [         63:0] tx0_test_data    [0:TEST_SEQUENCE_LEN-1];
+   logic            [         63:0] tx1_test_data    [0:TEST_SEQUENCE_LEN-1];
+   logic            [         63:0] rx0_captured_data[0:TEST_SEQUENCE_LEN-1];
+   logic            [         63:0] rx1_captured_data[0:TEST_SEQUENCE_LEN-1];
 
-   int                     rx0_idx;
-   int                     rx1_idx;
-   int                     tx0_idx;
-   int                     tx1_idx;
+   int                              rx0_idx;
+   int                              rx1_idx;
+   int                              tx0_idx;
+   int                              tx1_idx;
 
-   logic                   rx0_capture_done;
-   logic                   rx1_capture_done;
+   logic                            rx0_capture_done;
+   logic                            rx1_capture_done;
 
-   logic   [MAX_SLIDE-1:0] dut1_txn;
-   logic   [MAX_SLIDE-1:0] dut1_txp;
-   logic   [MAX_SLIDE-1:0] dut0_txn;
-   logic   [MAX_SLIDE-1:0] dut0_txp;
+   logic            [MAX_SLIDE-1:0] dut1_txn;
+   logic            [MAX_SLIDE-1:0] dut1_txp;
+   logic            [MAX_SLIDE-1:0] dut0_txn;
+   logic            [MAX_SLIDE-1:0] dut0_txp;
 
    //----------------------------------------
    // Clocks & reset
@@ -190,43 +176,42 @@ module qeciphy_tb;
 
    generate
       if (`GT_TYPE == "GTX") begin : gen_gtx_links
-         assign dut0.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = dut1_txn[BIT_SLIDE-1];
-         assign dut0.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = dut1_txp[BIT_SLIDE-1];
+         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = dut1_txn[BIT_SLIDE-1];
+         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = dut1_txp[BIT_SLIDE-1];
 
-         assign dut1.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = dut0_txn[BIT_SLIDE-1];
-         assign dut1.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = dut0_txp[BIT_SLIDE-1];
-
+         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = dut0_txn[BIT_SLIDE-1];
+         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = dut0_txp[BIT_SLIDE-1];
          always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out};
+            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out};
+            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out};
+            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out};
+            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out};
          end
       end else if (`GT_TYPE == "GTY") begin : gen_gty_links
-         assign dut0.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = dut1_txn[BIT_SLIDE-1];
-         assign dut0.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = dut1_txp[BIT_SLIDE-1];
+         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = dut1_txn[BIT_SLIDE-1];
+         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = dut1_txp[BIT_SLIDE-1];
 
-         assign dut1.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = dut0_txn[BIT_SLIDE-1];
-         assign dut1.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = dut0_txp[BIT_SLIDE-1];
+         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = dut0_txn[BIT_SLIDE-1];
+         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = dut0_txp[BIT_SLIDE-1];
 
          always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out};
+            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out};
+            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out};
+            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out};
+            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out};
          end
       end else if (`GT_TYPE == "GTH") begin : gen_gth_links
-         assign dut0.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = dut1_txn[BIT_SLIDE-1];
-         assign dut0.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = dut1_txp[BIT_SLIDE-1];
+         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = dut1_txn[BIT_SLIDE-1];
+         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = dut1_txp[BIT_SLIDE-1];
 
-         assign dut1.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = dut0_txn[BIT_SLIDE-1];
-         assign dut1.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = dut0_txp[BIT_SLIDE-1];
+         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = dut0_txn[BIT_SLIDE-1];
+         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = dut0_txp[BIT_SLIDE-1];
 
          always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out};
+            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out};
+            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out};
+            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out};
+            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out};
          end
       end
    endgenerate
