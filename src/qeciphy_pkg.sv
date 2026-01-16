@@ -52,11 +52,11 @@ package qeciphy_pkg;
    // To check if the data is a Frame Alignment Word
    function bit is_faw(input logic [63:0] data);
       begin
-         bit is_faw;
+         bit faw_detected;
          qeciphy_faw_t faw;
          faw = qeciphy_faw_t'(data);
-         is_faw = (faw.word_comma == WORD_ALIGNMENT_COMMA) && (faw.byte_comma == BYTE_ALIGNMENT_COMMA);
-         return is_faw;
+         faw_detected = (faw.word_comma == WORD_ALIGNMENT_COMMA) && (faw.byte_comma == BYTE_ALIGNMENT_COMMA);
+         return faw_detected;
       end
    endfunction
 
