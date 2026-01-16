@@ -56,7 +56,7 @@ module qeciphy_crc_check (
       if (!rst_n_i) begin
          vd_pkt <= '0;
       end else if (crc_boundary_i) begin
-         vd_pkt = qeciphy_vd_pkt_t'(tdata_i);  // Cast input data to validation packet type
+         vd_pkt <= qeciphy_vd_pkt_t'(tdata_i);  // Cast input data to validation packet type
       end
    end
 
