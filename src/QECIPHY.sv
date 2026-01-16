@@ -26,8 +26,6 @@
 // - Hierarchical reset with proper sequencing across clock domains
 //------------------------------------------------------------------------------
 
-`include "qeciphy_pkg.sv"
-
 module QECIPHY #(
     parameter GT_TYPE = "GTY"  // GT transceiver type: "GTX", "GTY", or "GTH"
 ) (
