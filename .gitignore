@@ -17,3 +17,7 @@ simv
 novas.conf
 novas.rc
 *_learn_dir/
+signal.rc
+simv.vdb/
+verdiLog/
+.certitudeGUI/
