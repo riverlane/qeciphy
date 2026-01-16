@@ -52,8 +52,6 @@ module qeciphy_controller (
    // =========================================================================
    // State Machine Definition
    // =========================================================================
-   // One-hot encoding allows direct decoding of control signals from state bits
-   // Each state bit directly controls specific enable signals where applicable
 
    typedef enum logic [13:0] {
       RESET                  = 14'b00000000000001,  // Initial reset state
@@ -96,18 +94,18 @@ module qeciphy_controller (
 
    always_comb begin
       case (state)
-         RESET:                  status = RESET;
-         WAIT_RESET_DONE:        status = WAIT_FOR_RESET;
-         TX_LINK_ENABLE:         status = LINK_TRAINING;
-         WAIT_RX_DATAPATH_ALIGN: status = LINK_TRAINING;
-         RX_ENABLE:              status = LINK_TRAINING;
-         WAIT_RX_LOCKED:         status = LINK_TRAINING;
-         LOCAL_RX_LOCKED:        status = RX_LOCKED;
-         BOTH_RX_LOCKED:         status = RX_LOCKED;
-         TX_DATA_ENABLE:         status = RX_LOCKED;
-         READY:                  status = LINK_READY;
-         FAULT_FATAL:            status = FAULT_FATAL;
-         default:                status = RESET;
+         RESET:                  status = qeciphy_pkg::RESET;
+         WAIT_RESET_DONE:        status = qeciphy_pkg::WAIT_FOR_RESET;
+         TX_LINK_ENABLE:         status = qeciphy_pkg::LINK_TRAINING;
+         WAIT_RX_DATAPATH_ALIGN: status = qeciphy_pkg::LINK_TRAINING;
+         RX_ENABLE:              status = qeciphy_pkg::LINK_TRAINING;
+         WAIT_RX_LOCKED:         status = qeciphy_pkg::LINK_TRAINING;
+         LOCAL_RX_LOCKED:        status = qeciphy_pkg::RX_LOCKED;
+         BOTH_RX_LOCKED:         status = qeciphy_pkg::RX_LOCKED;
+         TX_DATA_ENABLE:         status = qeciphy_pkg::RX_LOCKED;
+         READY:                  status = qeciphy_pkg::LINK_READY;
+         FAULT_FATAL:            status = qeciphy_pkg::FAULT_FATAL;
+         default:                status = qeciphy_pkg::RESET;
       endcase
    end
 
