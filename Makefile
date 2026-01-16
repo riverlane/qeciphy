@@ -262,7 +262,7 @@ synth:
 clean:
 	@echo "INFO: Cleaning build artifacts"
 	@rm -rf .Xil/ vivado* *.log run/ scripts/__pycache__/ simv synopsys_sim.setup simv.daidir/ csrc/ ucli.key verdi_config_file
-	@rm -rf novas.conf novas.rc *_learn_dir/
+	@rm -rf novas.conf novas.rc *_learn_dir/ signal.rc simv.vdb/ verdiLog/ .certitudeGUI/
 
 distclean: clean
 	@echo "INFO: Performing distclean"
