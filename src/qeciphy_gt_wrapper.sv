@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: LicenseRef-LICENSE
-// Copyright (c) 2024-2025 Riverlane Ltd.
+// Copyright (c) 2024-2026 Riverlane Ltd.
 // Original authors: Dogancan Davutoglu, Aniket Datta
 
 module qeciphy_gt_wrapper #(
     parameter GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH"
 ) (
-    input logic gt_ref_clk,
+    input logic gt_ref_clk_i,
 
-    input  logic fclk,
-    input  logic rst_n,
-    output logic o_gt_power_good,
+    input  logic f_clk_i,
+    input  logic gt_rst_n_i,
+    output logic gt_power_good_o,
 
-    output logic        tx_clk,
-    output logic        gt_tx_clk,
-    input  logic [31:0] i_gt_tx_data,
-    output logic        o_tx_reset_done,
+    output logic        tx_clk_o,
+    output logic        tx_clk_2x_o,
+    input  logic [31:0] tx_tdata_i,
+    output logic        gt_tx_rst_done_o,
 
-    output logic        rx_clk,
-    output logic        gt_rx_clk,
-    output logic [31:0] o_gt_rx_data,
-    output logic        o_rx_reset_done,
-    output logic        o_rx_slide_rdy,
-    input  logic        i_rx_slide
+    output logic        rx_clk_o,
+    output logic        rx_clk_2x_o,
+    output logic [31:0] rx_tdata_o,
+    output logic        gt_rx_rst_done_o,
+    output logic        rx_slide_rdy_o,
+    input  logic        rx_slide_i
 );
 
    // -------------------------------------------------------------
@@ -49,18 +49,18 @@ module qeciphy_gt_wrapper #(
          qeciphy_gty_transceiver transceiver (
              .gtwiz_userclk_tx_active_in        (~userclk_tx_reset),
              .gtwiz_userclk_rx_active_in        (~userclk_rx_reset),
-             .gtwiz_reset_clk_freerun_in        (fclk),
-             .gtwiz_reset_all_in                (~rst_n),
-             .gtwiz_reset_tx_pll_and_datapath_in(~rst_n),
+             .gtwiz_reset_clk_freerun_in        (f_clk_i),
+             .gtwiz_reset_all_in                (~gt_rst_n_i),
+             .gtwiz_reset_tx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_tx_datapath_in        (1'b0),
-             .gtwiz_reset_rx_pll_and_datapath_in(~rst_n),
+             .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_rx_datapath_in        (1'b0),
              .gtwiz_reset_rx_cdr_stable_out     (),
-             .gtwiz_reset_tx_done_out           (o_tx_reset_done),
-             .gtwiz_reset_rx_done_out           (o_rx_reset_done),
-             .gtwiz_userdata_tx_in              (i_gt_tx_data),
-             .gtwiz_userdata_rx_out             (o_gt_rx_data),
-             .gtrefclk00_in                     (gt_ref_clk),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done_o),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done_o),
+             .gtwiz_userdata_tx_in              (tx_tdata_i),
+             .gtwiz_userdata_rx_out             (rx_tdata_o),
+             .gtrefclk00_in                     (gt_ref_clk_i),
              .qpll0lock_out                     (),
              .qpll0outclk_out                   (),
              .qpll0outrefclk_out                (),
@@ -69,15 +69,15 @@ module qeciphy_gt_wrapper #(
              .gtytxn_out                        (),
              .gtytxp_out                        (),
              .rx8b10ben_in                      (1'b1),
-             .rxusrclk_in                       (gt_rx_clk),
-             .rxusrclk2_in                      (gt_rx_clk),
+             .rxusrclk_in                       (rx_clk_2x_o),
+             .rxusrclk2_in                      (rx_clk_2x_o),
              .tx8b10ben_in                      (1'b1),
              .txctrl0_in                        (16'd0),
              .txctrl1_in                        (16'd0),
              .txctrl2_in                        (8'd0),
-             .txusrclk_in                       (gt_tx_clk),
-             .txusrclk2_in                      (gt_tx_clk),
-             .gtpowergood_out                   (o_gt_power_good),
+             .txusrclk_in                       (tx_clk_2x_o),
+             .txusrclk2_in                      (tx_clk_2x_o),
+             .gtpowergood_out                   (gt_power_good_o),
              .rxctrl0_out                       (),
              .rxctrl1_out                       (),
              .rxctrl2_out                       (),
@@ -86,15 +86,15 @@ module qeciphy_gt_wrapper #(
              .rxpmaresetdone_out                (rxpmaresetdone),
              .txoutclk_out                      (txoutclk),
              .txpmaresetdone_out                (txpmaresetdone),
-             .rxsliderdy_out                    (o_rx_slide_rdy),
-             .rxslide_in                        (i_rx_slide)
+             .rxsliderdy_out                    (rx_slide_rdy_o),
+             .rxslide_in                        (rx_slide_i)
          );
 
          // -------------------------------------------------------------
          // Clock buffers
          // -------------------------------------------------------------
 
-         // The gt_rx_clk is used both as rxusrclk_in and rxusrclk2_in.
+         // The rx_clk_2x_o is used both as rxusrclk_in and rxusrclk2_in.
          // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
          // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 4-51
          BUFG_GT i_BUFG_gt_rx_clk (
@@ -104,11 +104,11 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b000),
              .I      (rxoutclk),
-             .O      (gt_rx_clk)
+             .O      (rx_clk_2x_o)
          );
 
-         // The rx_clk is used by the Channel Decoder of the QEC-Phy when converting 32 bit data into 64 bits.
-         // rx_clk = gt_rx_clk/2 and they should be phase aligned.
+         // The rx_clk_o is used by the Channel Decoder of the QEC-Phy when converting 32 bit data into 64 bits.
+         // rx_clk_o = rx_clk_2x_o/2 and they should be phase aligned.
          BUFG_GT i_BUFG_rx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
@@ -116,10 +116,10 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b001),
              .I      (rxoutclk),
-             .O      (rx_clk)
+             .O      (rx_clk_o)
          );
 
-         // The gt_tx_clk is used both as txusrclk_in and txusrclk2_in.
+         // The tx_clk_2x_o is used both as txusrclk_in and txusrclk2_in.
          // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
          // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 3-3
          BUFG_GT i_BUFG_gt_tx_clk (
@@ -129,11 +129,11 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b000),
              .I      (txoutclk),
-             .O      (gt_tx_clk)
+             .O      (tx_clk_2x_o)
          );
 
-         // The tx_clk is used by the Channel Encoder of the QEC-Phy when converting 64 bit data into 32 bits.
-         // tx_clk = gt_tx_clk/2 and they should be phase aligned.
+         // The tx_clk_o is used by the Channel Encoder of the QEC-Phy when converting 64 bit data into 32 bits.
+         // tx_clk_o = tx_clk_2x_o/2 and they should be phase aligned.
          BUFG_GT i_BUFG_tx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
@@ -141,7 +141,7 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b001),
              .I      (txoutclk),
-             .O      (tx_clk)
+             .O      (tx_clk_o)
          );
 
       end else if (GT_TYPE == "GTH") begin : gen_GTH_transceiver
@@ -159,18 +159,18 @@ module qeciphy_gt_wrapper #(
          qeciphy_gth_transceiver transceiver (
              .gtwiz_userclk_tx_active_in        (~userclk_tx_reset),
              .gtwiz_userclk_rx_active_in        (~userclk_rx_reset),
-             .gtwiz_reset_clk_freerun_in        (fclk),
-             .gtwiz_reset_all_in                (~rst_n),
-             .gtwiz_reset_tx_pll_and_datapath_in(~rst_n),
+             .gtwiz_reset_clk_freerun_in        (f_clk_i),
+             .gtwiz_reset_all_in                (~gt_rst_n_i),
+             .gtwiz_reset_tx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_tx_datapath_in        (1'b0),
-             .gtwiz_reset_rx_pll_and_datapath_in(~rst_n),
+             .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_rx_datapath_in        (1'b0),
              .gtwiz_reset_rx_cdr_stable_out     (),
-             .gtwiz_reset_tx_done_out           (o_tx_reset_done),
-             .gtwiz_reset_rx_done_out           (o_rx_reset_done),
-             .gtwiz_userdata_tx_in              (i_gt_tx_data),
-             .gtwiz_userdata_rx_out             (o_gt_rx_data),
-             .gtrefclk00_in                     (gt_ref_clk),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done_o),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done_o),
+             .gtwiz_userdata_tx_in              (tx_tdata_i),
+             .gtwiz_userdata_rx_out             (rx_tdata_o),
+             .gtrefclk00_in                     (gt_ref_clk_i),
              .qpll0lock_out                     (),
              .qpll0outclk_out                   (),
              .qpll0outrefclk_out                (),
@@ -179,15 +179,15 @@ module qeciphy_gt_wrapper #(
              .gthtxn_out                        (),
              .gthtxp_out                        (),
              .rx8b10ben_in                      (1'b1),
-             .rxusrclk_in                       (gt_rx_clk),
-             .rxusrclk2_in                      (gt_rx_clk),
+             .rxusrclk_in                       (rx_clk_2x_o),
+             .rxusrclk2_in                      (rx_clk_2x_o),
              .tx8b10ben_in                      (1'b1),
              .txctrl0_in                        (16'd0),
              .txctrl1_in                        (16'd0),
              .txctrl2_in                        (8'd0),
-             .txusrclk_in                       (gt_tx_clk),
-             .txusrclk2_in                      (gt_tx_clk),
-             .gtpowergood_out                   (o_gt_power_good),
+             .txusrclk_in                       (tx_clk_2x_o),
+             .txusrclk2_in                      (tx_clk_2x_o),
+             .gtpowergood_out                   (gt_power_good_o),
              .rxctrl0_out                       (),
              .rxctrl1_out                       (),
              .rxctrl2_out                       (),
@@ -196,15 +196,15 @@ module qeciphy_gt_wrapper #(
              .rxpmaresetdone_out                (rxpmaresetdone),
              .txoutclk_out                      (txoutclk),
              .txpmaresetdone_out                (txpmaresetdone),
-             .rxsliderdy_out                    (o_rx_slide_rdy),
-             .rxslide_in                        (i_rx_slide)
+             .rxsliderdy_out                    (rx_slide_rdy_o),
+             .rxslide_in                        (rx_slide_i)
          );
 
          // -------------------------------------------------------------
          // Clock buffers
          // -------------------------------------------------------------
 
-         // The gt_rx_clk is used both as rxusrclk_in and rxusrclk2_in.
+         // The rx_clk_2x_o is used both as rxusrclk_in and rxusrclk2_in.
          // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
          // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 4-51
          BUFG_GT i_BUFG_gt_rx_clk (
@@ -214,11 +214,11 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b000),
              .I      (rxoutclk),
-             .O      (gt_rx_clk)
+             .O      (rx_clk_2x_o)
          );
 
-         // The rx_clk is used by the Channel Decoder of the QEC-Phy when converting 32 bit data into 64 bits.
-         // rx_clk = gt_rx_clk/2 and they should be phase aligned.
+         // The rx_clk_o is used by the Channel Decoder of the QEC-Phy when converting 32 bit data into 64 bits.
+         // rx_clk_o = rx_clk_2x_o/2 and they should be phase aligned.
          BUFG_GT i_BUFG_rx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
@@ -226,10 +226,10 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b001),
              .I      (rxoutclk),
-             .O      (rx_clk)
+             .O      (rx_clk_o)
          );
 
-         // The gt_tx_clk is used both as txusrclk_in and txusrclk2_in.
+         // The tx_clk_2x_o is used both as txusrclk_in and txusrclk2_in.
          // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
          // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 3-3
          BUFG_GT i_BUFG_gt_tx_clk (
@@ -239,11 +239,11 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b000),
              .I      (txoutclk),
-             .O      (gt_tx_clk)
+             .O      (tx_clk_2x_o)
          );
 
-         // The tx_clk is used by the Channel Encoder of the QEC-Phy when converting 64 bit data into 32 bits.
-         // tx_clk = gt_tx_clk/2 and they should be phase aligned.
+         // The tx_clk_o is used by the Channel Encoder of the QEC-Phy when converting 64 bit data into 32 bits.
+         // tx_clk_o = tx_clk_2x_o/2 and they should be phase aligned.
          BUFG_GT i_BUFG_tx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
@@ -251,7 +251,7 @@ module qeciphy_gt_wrapper #(
              .CLRMASK(1'b0),
              .DIV    (3'b001),
              .I      (txoutclk),
-             .O      (tx_clk)
+             .O      (tx_clk_o)
          );
 
       end else if (GT_TYPE == "GTX") begin : gen_GTX_transceiver
@@ -274,15 +274,15 @@ module qeciphy_gt_wrapper #(
          logic rxpmaresetdone;
 
          qeciphy_gtx_transceiver transceiver (
-             .sysclk_in                  (fclk),                // input wire sysclk_in
+             .sysclk_in                  (f_clk_i),             // input wire sysclk_in
              .soft_reset_tx_in           (1'b0),                // input wire soft_reset_tx_in
              .soft_reset_rx_in           (1'b0),                // input wire soft_reset_rx_in
              .dont_reset_on_data_error_in(1'b1),                // input wire dont_reset_on_data_error_in
-             .gt0_tx_fsm_reset_done_out  (o_tx_reset_done),     // output wire gt0_tx_fsm_reset_done_out
-             .gt0_rx_fsm_reset_done_out  (o_rx_reset_done),     // output wire gt0_rx_fsm_reset_done_out
+             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done_o),    // output wire gt0_tx_fsm_reset_done_out
+             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done_o),    // output wire gt0_rx_fsm_reset_done_out
              .gt0_data_valid_in          (rxpmaresetdone),      // input wire gt0_data_valid_in
              .gt0_drpaddr_in             (9'h00),               // input wire [8:0] gt0_drpaddr_in
-             .gt0_drpclk_in              (fclk),                // input wire gt0_drpclk_in
+             .gt0_drpclk_in              (f_clk_i),             // input wire gt0_drpclk_in
              .gt0_drpdi_in               (16'h0000),            // input wire [15:0] gt0_drpdi_in
              .gt0_drpdo_out              (),                    // output wire [15:0] gt0_drpdo_out
              .gt0_drpen_in               (1'b0),                // input wire gt0_drpen_in
@@ -294,9 +294,9 @@ module qeciphy_gt_wrapper #(
              .gt0_rxuserrdy_in           (1'b1),                // input wire gt0_rxuserrdy_in
              .gt0_eyescandataerror_out   (),                    // output wire gt0_eyescandataerror_out
              .gt0_eyescantrigger_in      (1'b0),                // input wire gt0_eyescantrigger_in
-             .gt0_rxusrclk_in            (gt_rx_clk),           // input wire gt0_rxusrclk_in
-             .gt0_rxusrclk2_in           (gt_rx_clk),           // input wire gt0_rxusrclk2_in
-             .gt0_rxdata_out             (o_gt_rx_data),        // output wire [31:0] gt0_rxdata_out
+             .gt0_rxusrclk_in            (rx_clk_2x_o),         // input wire gt0_rxusrclk_in
+             .gt0_rxusrclk2_in           (rx_clk_2x_o),         // input wire gt0_rxusrclk2_in
+             .gt0_rxdata_out             (rx_tdata_o),          // output wire [31:0] gt0_rxdata_out
              .gt0_rxdisperr_out          (),                    // output wire [3:0] gt0_rxdisperr_out
              .gt0_rxnotintable_out       (),                    // output wire [3:0] gt0_rxnotintable_out
              .gt0_gtxrxp_in              (),                    // input wire gt0_gtxrxp_in
@@ -306,23 +306,23 @@ module qeciphy_gt_wrapper #(
              .gt0_rxmonitorsel_in        (2'b00),               // input wire [1:0] gt0_rxmonitorsel_in
              .gt0_rxoutclk_out           (rxoutclk),            // output wire gt0_rxoutclk_out
              .gt0_rxoutclkfabric_out     (),                    // output wire gt0_rxoutclkfabric_out
-             .gt0_gtrxreset_in           (~rst_n),              // input wire gt0_gtrxreset_in
-             .gt0_rxpmareset_in          (~rst_n),              // input wire gt0_rxpmareset_in
-             .gt0_rxslide_in             (i_rx_slide),          // input wire gt0_rxslide_in
+             .gt0_gtrxreset_in           (~gt_rst_n_i),         // input wire gt0_gtrxreset_in
+             .gt0_rxpmareset_in          (~gt_rst_n_i),         // input wire gt0_rxpmareset_in
+             .gt0_rxslide_in             (rx_slide_i),          // input wire gt0_rxslide_in
              .gt0_rxcharisk_out          (),                    // output wire [3:0] gt0_rxcharisk_out
              .gt0_rxresetdone_out        (rxpmaresetdone),      // output wire gt0_rxresetdone_out
-             .gt0_gttxreset_in           (~rst_n),              // input wire gt0_gttxreset_in
+             .gt0_gttxreset_in           (~gt_rst_n_i),         // input wire gt0_gttxreset_in
              .gt0_txuserrdy_in           (1'b1),                // input wire gt0_txuserrdy_in
-             .gt0_txusrclk_in            (gt_tx_clk),           // input wire gt0_txusrclk_in
-             .gt0_txusrclk2_in           (gt_tx_clk),           // input wire gt0_txusrclk2_in
-             .gt0_txdata_in              (i_gt_tx_data),        // input wire [31:0] gt0_txdata_in
+             .gt0_txusrclk_in            (tx_clk_2x_o),         // input wire gt0_txusrclk_in
+             .gt0_txusrclk2_in           (tx_clk_2x_o),         // input wire gt0_txusrclk2_in
+             .gt0_txdata_in              (tx_tdata_i),          // input wire [31:0] gt0_txdata_in
              .gt0_gtxtxn_out             (),                    // output wire gt0_gtxtxn_out
              .gt0_gtxtxp_out             (),                    // output wire gt0_gtxtxp_out
              .gt0_txoutclk_out           (txoutclk),            // output wire gt0_txoutclk_out
              .gt0_txoutclkfabric_out     (),                    // output wire gt0_txoutclkfabric_out
              .gt0_txoutclkpcs_out        (),                    // output wire gt0_txoutclkpcs_out
              .gt0_txcharisk_in           (4'h0),                // input wire [3:0] gt0_txcharisk_in
-             .gt0_txpmareset_in          (~rst_n),              // input wire gt0_txpmareset_in
+             .gt0_txpmareset_in          (~gt_rst_n_i),         // input wire gt0_txpmareset_in
              .gt0_txresetdone_out        (),                    // output wire gt0_txresetdone_out
              .gt0_qplllock_in            (qplllock_out),        // input wire gt0_qplllock_in
              .gt0_qpllrefclklost_in      (qpllrefclklost_out),  // input wire gt0_qpllrefclklost_in
@@ -332,14 +332,14 @@ module qeciphy_gt_wrapper #(
          );
 
          // GTX transceiver does not have RXSLIDERDY
-         assign o_rx_slide_rdy = 1'b1;
+         assign rx_slide_rdy_o = 1'b1;
          // GTX transceiver does not have gt_power_good
-         assign o_gt_power_good = 1'b1;
+         assign gt_power_good_o = 1'b1;
 
          // MMCMs must be reset after clk input gets interrupted
          // Async reset generation for TX MMCM
          assign txoutclk_stopped_fall = txoutclk_stopped & ~txoutclk_stopped_d1;
-         always_ff @(posedge fclk) begin
+         always_ff @(posedge f_clk_i) begin
             txoutclk_stopped_d1 <= txoutclk_stopped;
             if (txoutclk_stopped_fall) tx_mmcm_reset <= 1'b1;
             else tx_mmcm_reset <= 1'b0;
@@ -347,7 +347,7 @@ module qeciphy_gt_wrapper #(
 
          // Async reset generation for RX MMCM
          assign rxoutclk_stopped_fall = rxoutclk_stopped & ~rxoutclk_stopped_d1;
-         always_ff @(posedge fclk) begin
+         always_ff @(posedge f_clk_i) begin
             rxoutclk_stopped_d1 <= rxoutclk_stopped;
             if (rxoutclk_stopped_fall) rx_mmcm_reset <= 1'b1;
             else rx_mmcm_reset <= 1'b0;
@@ -356,9 +356,9 @@ module qeciphy_gt_wrapper #(
          qeciphy_gtx_common i_gtx_common (
              .qpllrefclksel_in  (3'b010),
              .gtrefclk0_in      (1'b0),
-             .gtrefclk1_in      (gt_ref_clk),
+             .gtrefclk1_in      (gt_ref_clk_i),
              .qplllock_out      (qplllock_out),
-             .qplllockdetclk_in (fclk),
+             .qplllockdetclk_in (f_clk_i),
              .qplloutclk_out    (qplloutclk_out),
              .qplloutrefclk_out (qplloutrefclk_out),
              .qpllrefclklost_out(qpllrefclklost_out),
@@ -368,16 +368,16 @@ module qeciphy_gt_wrapper #(
          qeciphy_clk_mmcm i_tx_clks (
              .clk_in           (txoutclk),
              .reset            (tx_mmcm_reset),
-             .clk_out          (tx_clk),
-             .clk_out_2x       (gt_tx_clk),
+             .clk_out          (tx_clk_o),
+             .clk_out_2x       (tx_clk_2x_o),
              .input_clk_stopped(txoutclk_stopped)
          );
 
          qeciphy_clk_mmcm i_rx_clks (
              .clk_in           (rxoutclk),
              .reset            (rx_mmcm_reset),
-             .clk_out          (rx_clk),
-             .clk_out_2x       (gt_rx_clk),
+             .clk_out          (rx_clk_o),
+             .clk_out_2x       (rx_clk_2x_o),
              .input_clk_stopped(rxoutclk_stopped)
          );
 

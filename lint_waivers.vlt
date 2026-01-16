@@ -35,17 +35,6 @@ lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin c
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_rxresetdone_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_txresetdone_out'"
 
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_tx.sv" -match "Cell pin connected by name with empty reference: 'overflow'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_tx.sv" -match "Cell pin connected by name with empty reference: 'underflow'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_tx.sv" -match "Cell pin connected by name with empty reference: 'wwcount'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_tx.sv" -match "Cell pin connected by name with empty reference: 'rwcount'"
-
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_rx.sv" -match "Cell pin connected by name with empty reference: 'overflow'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_rx.sv" -match "Cell pin connected by name with empty reference: 'underflow'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_rx.sv" -match "Cell pin connected by name with empty reference: 'o_align_fail'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_rx.sv" -match "Cell pin connected by name with empty reference: 'wwcount'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_rx.sv" -match "Cell pin connected by name with empty reference: 'rwcount'"
-
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gtx_common.sv" -match "Cell pin connected by name with empty reference: *"
 
 // Ignore linting errors for lint stub files
