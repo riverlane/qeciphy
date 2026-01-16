@@ -197,34 +197,34 @@ module qeciphy_uvmtb ();
    generate
       if (`GT_TYPE == "GTY") begin : gen_GTY_connections
          initial $info("%m: Using GTY PHYs");
-         assign dut_txn   = i_dut.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out;
-         assign dut_txp   = i_dut.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out;
-         assign tbphy_txn = i_tbphy.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out;
-         assign tbphy_txp = i_tbphy.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out;
-         assign i_tbphy.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = tbphy_rxn;
-         assign i_tbphy.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = tbphy_rxp;
-         assign i_dut.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in   = dut_rxn;
-         assign i_dut.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in   = dut_rxp;
+         assign dut_txn   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out;
+         assign dut_txp   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out;
+         assign tbphy_txn = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out;
+         assign tbphy_txp = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out;
+         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = tbphy_rxn;
+         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = tbphy_rxp;
+         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in   = dut_rxn;
+         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in   = dut_rxp;
       end else if (`GT_TYPE == "GTX") begin : gen_GTX_connection
          initial $info("%m: Using GTX PHYs");
-         assign dut_txn   = i_dut.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out;
-         assign dut_txp   = i_dut.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out;
-         assign tbphy_txn = i_tbphy.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out;
-         assign tbphy_txp = i_tbphy.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out;
-         assign i_tbphy.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = tbphy_rxn;
-         assign i_tbphy.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = tbphy_rxp;
-         assign i_dut.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in   = dut_rxn;
-         assign i_dut.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in   = dut_rxp;
+         assign dut_txn   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out;
+         assign dut_txp   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out;
+         assign tbphy_txn = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out;
+         assign tbphy_txp = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out;
+         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = tbphy_rxn;
+         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = tbphy_rxp;
+         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in   = dut_rxn;
+         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in   = dut_rxp;
       end else if (`GT_TYPE == "GTH") begin : gen_GTH_connection
          initial $info("%m: Using GTH PHYs");
-         assign dut_txn   = i_dut.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out;
-         assign dut_txp   = i_dut.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out;
-         assign tbphy_txn = i_tbphy.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out;
-         assign tbphy_txp = i_tbphy.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out;
-         assign i_tbphy.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = tbphy_rxn;
-         assign i_tbphy.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = tbphy_rxp;
-         assign i_dut.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in   = dut_rxn;
-         assign i_dut.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in   = dut_rxp;
+         assign dut_txn   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out;
+         assign dut_txp   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out;
+         assign tbphy_txn = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out;
+         assign tbphy_txp = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out;
+         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = tbphy_rxn;
+         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = tbphy_rxp;
+         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in   = dut_rxn;
+         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in   = dut_rxp;
       end else begin : bad_GT_type
          $fatal("%m: Bad GT type %0s", `GT_TYPE);
       end
