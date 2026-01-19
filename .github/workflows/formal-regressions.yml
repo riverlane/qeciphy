@@ -1,0 +1,34 @@
+name: Formal Regressions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  formal-verification:
+    name: Run Formal Regressions
+    runs-on: sanity-builder
+    environment: ci
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run formal regression
+        run: ./scripts/run_formal_regression_tests.sh
+
+      - name: Generate results summary
+        if: always()
+        run: |
+          # Generate markdown summary
+          python3 scripts/parse_formal_regression_results.py > formal_summary.md
+          
+          # Add the summary to GitHub Actions step summary
+          cat formal_summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Archive results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formal-verification-results
+          path: run/formal/results/
+          retention-days: 30
