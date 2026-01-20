@@ -32,6 +32,7 @@ package qeciphy_env_pkg;
    `include "qeciphy_env_sequencer.svh"              // Agent's sequencer.
 
    `include "qeciphy_env_data_xfer_scoreboard.svh"
+   `include "qeciphy_env_state_scoreboard.svh"    // Scoreboard classes.
 
    // HINT: `include "qeciphy_env___covid___coverage.svh"
 

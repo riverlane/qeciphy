@@ -1,0 +1,16 @@
+name: UVM Regression Run (Manual)
+
+on:
+  workflow_dispatch:  # Allows the workflow to be triggered manually via a button in the Actions tab
+
+jobs:
+  uvm-regression:
+    runs-on: sanity-builder
+    environment: ci
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run UVM regression
+        run: |
+          bash uvm/regression_run.sh
