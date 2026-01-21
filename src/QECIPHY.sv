@@ -62,10 +62,10 @@ module QECIPHY #(
     // =========================================================================
     // GT Differential Signals
     // =========================================================================
-    input  logic       gt_rx_i_p,   // GT RX differential positive
-    input  logic       gt_rx_i_n,   // GT RX differential negative
-    output logic       gt_tx_o_p,   // GT TX differential positive
-    output logic       gt_tx_o_n    // GT TX differential negative
+    input  logic       gt_rx_p,   // GT RX differential positive
+    input  logic       gt_rx_n,   // GT RX differential negative
+    output logic       gt_tx_p,   // GT TX differential positive
+    output logic       gt_tx_n    // GT TX differential negative
 );
 
    // =========================================================================
@@ -293,10 +293,10 @@ module QECIPHY #(
        .rx_datapath_aligned_o(rx_datapath_aligned_rclk), // RX alignment completion to qeciphy_controller
 
        // GT differential signals
-       .gt_rx_i_p            (gt_rx_i_p),                // GT RX differential positive
-       .gt_rx_i_n            (gt_rx_i_n),                // GT RX differential negative
-       .gt_tx_o_p            (gt_tx_o_p),                // GT TX differential positive
-       .gt_tx_o_n            (gt_tx_o_n)                 // GT TX differential negative
+       .gt_rx_p            (gt_rx_p),                // GT RX differential positive
+       .gt_rx_n            (gt_rx_n),                // GT RX differential negative
+       .gt_tx_p            (gt_tx_p),                // GT TX differential positive
+       .gt_tx_n            (gt_tx_n)                 // GT TX differential negative
    );
 
    // =========================================================================
