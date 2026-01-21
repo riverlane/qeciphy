@@ -8,3 +8,6 @@ create_reset rst_n_i -sense low -clock clk_i
 
 # Disable CRC16 IBM3740 model checking (takes too long)
 fvdisable *i_qeciphy_crc16_ibm3740_bind.p_crc16_step_matches_model_A*
+
+# Set max time for formal run
+set_fml_var fml_max_time      1H
