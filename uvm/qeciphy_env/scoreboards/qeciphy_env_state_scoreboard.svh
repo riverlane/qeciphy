@@ -98,14 +98,19 @@ class qeciphy_env_state_scoreboard extends uvm_scoreboard;
          // Allow reset to take effect and then check that DUT is in reset until reset goes away (synchronously).
          #1.0ns
          while (m_miscio_vif.dut_arst_n === 1'b0) begin
+            @(posedge m_miscio_vif.dut_aclk);
             void'(check_status("DUT", PHY_RESET));
             @(posedge m_miscio_vif.dut_aclk);
          end
 
          // Once out of reset, check FSM operation until next reset happens.
          fork
+            begin
             wait (m_miscio_vif.dut_arst_n === 1'b0);
+            @(posedge m_miscio_vif.dut_aclk);
+            end
             check_fsm_states();
+            
          join_any
          disable fork;
 
