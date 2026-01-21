@@ -43,10 +43,10 @@ module qeciphy_serdes #(
     output logic        rx_datapath_aligned_o, // RX datapath alignment completion
 
     // GT differential signals
-    input  logic        gt_rx_p,             // GT RX differential positive
-    input  logic        gt_rx_n,             // GT RX differential negative
-    output logic        gt_tx_p,             // GT TX differential positive
-    output logic        gt_tx_n              // GT TX differential negative
+    input  logic        gt_rx_p_i,             // GT RX differential positive
+    input  logic        gt_rx_n_i,             // GT RX differential negative
+    output logic        gt_tx_p_o,             // GT TX differential positive
+    output logic        gt_tx_n_o              // GT TX differential negative
 );
 
    // RX Path Signals
@@ -134,10 +134,10 @@ module qeciphy_serdes #(
        .rx_slide_i      (rx_slide),          // Slide request input
 
        // GT differential signals
-       .gt_rx_p       (gt_rx_p),         // GT RX differential positive
-       .gt_rx_n       (gt_rx_n),         // GT RX differential negative
-       .gt_tx_p       (gt_tx_p),         // GT TX differential positive
-       .gt_tx_n       (gt_tx_n)          // GT TX differential negative
+       .gt_rx_p_i       (gt_rx_p_i),         // GT RX differential positive
+       .gt_rx_n_i       (gt_rx_n_i),         // GT RX differential negative
+       .gt_tx_p_o       (gt_tx_p_o),         // GT TX differential positive
+       .gt_tx_n_o       (gt_tx_n_o)          // GT TX differential negative
    );
 
 endmodule
