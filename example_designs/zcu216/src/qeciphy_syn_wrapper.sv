@@ -149,10 +149,10 @@ module qeciphy_syn_wrapper (
        .RX_TREADY(RX_TREADY),
        .STATUS   (STATUS),
        .ECODE    (ECODE),
-       .GT_RX_P(GT_RX_P),
-       .GT_RX_N(GT_RX_N),
-       .GT_TX_P(GT_TX_P),
-       .GT_TX_N(GT_TX_N)
+       .GT_RX_P  (GT_RX_P),
+       .GT_RX_N  (GT_RX_N),
+       .GT_TX_P  (GT_TX_P),
+       .GT_TX_N  (GT_TX_N)
    );
 
 endmodule
