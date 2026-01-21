@@ -21,7 +21,13 @@ module qeciphy_gt_wrapper #(
     output logic [31:0] rx_tdata_o,
     output logic        gt_rx_rst_done_o,
     output logic        rx_slide_rdy_o,
-    input  logic        rx_slide_i
+    input  logic        rx_slide_i,
+
+    // GT differential signals
+    input  logic        gt_rx_i_p,
+    input  logic        gt_rx_i_n,
+    output logic        gt_tx_o_p,
+    output logic        gt_tx_o_n
 );
 
    // -------------------------------------------------------------
@@ -64,10 +70,10 @@ module qeciphy_gt_wrapper #(
              .qpll0lock_out                     (),
              .qpll0outclk_out                   (),
              .qpll0outrefclk_out                (),
-             .gtyrxn_in                         (),
-             .gtyrxp_in                         (),
-             .gtytxn_out                        (),
-             .gtytxp_out                        (),
+             .gtyrxn_in                         (gt_rx_i_n),
+             .gtyrxp_in                         (gt_rx_i_p),
+             .gtytxn_out                        (gt_tx_o_n),
+             .gtytxp_out                        (gt_tx_o_p),
              .rx8b10ben_in                      (1'b1),
              .rxusrclk_in                       (rx_clk_2x_o),
              .rxusrclk2_in                      (rx_clk_2x_o),
@@ -174,10 +180,10 @@ module qeciphy_gt_wrapper #(
              .qpll0lock_out                     (),
              .qpll0outclk_out                   (),
              .qpll0outrefclk_out                (),
-             .gthrxn_in                         (),
-             .gthrxp_in                         (),
-             .gthtxn_out                        (),
-             .gthtxp_out                        (),
+             .gthrxn_in                         (gt_rx_i_n),
+             .gthrxp_in                         (gt_rx_i_p),
+             .gthtxn_out                        (gt_tx_o_n),
+             .gthtxp_out                        (gt_tx_o_p),
              .rx8b10ben_in                      (1'b1),
              .rxusrclk_in                       (rx_clk_2x_o),
              .rxusrclk2_in                      (rx_clk_2x_o),
@@ -299,8 +305,8 @@ module qeciphy_gt_wrapper #(
              .gt0_rxdata_out             (rx_tdata_o),          // output wire [31:0] gt0_rxdata_out
              .gt0_rxdisperr_out          (),                    // output wire [3:0] gt0_rxdisperr_out
              .gt0_rxnotintable_out       (),                    // output wire [3:0] gt0_rxnotintable_out
-             .gt0_gtxrxp_in              (),                    // input wire gt0_gtxrxp_in
-             .gt0_gtxrxn_in              (),                    // input wire gt0_gtxrxn_in
+             .gt0_gtxrxp_in              (gt_rx_i_p),           // input wire gt0_gtxrxp_in
+             .gt0_gtxrxn_in              (gt_rx_i_n),           // input wire gt0_gtxrxn_in
              .gt0_rxdfelpmreset_in       (1'b0),                // input wire gt0_rxdfelpmreset_in
              .gt0_rxmonitorout_out       (),                    // output wire [6:0] gt0_rxmonitorout_out
              .gt0_rxmonitorsel_in        (2'b00),               // input wire [1:0] gt0_rxmonitorsel_in
@@ -316,8 +322,8 @@ module qeciphy_gt_wrapper #(
              .gt0_txusrclk_in            (tx_clk_2x_o),         // input wire gt0_txusrclk_in
              .gt0_txusrclk2_in           (tx_clk_2x_o),         // input wire gt0_txusrclk2_in
              .gt0_txdata_in              (tx_tdata_i),          // input wire [31:0] gt0_txdata_in
-             .gt0_gtxtxn_out             (),                    // output wire gt0_gtxtxn_out
-             .gt0_gtxtxp_out             (),                    // output wire gt0_gtxtxp_out
+             .gt0_gtxtxn_out             (gt_tx_o_n),           // output wire gt0_gtxtxn_out
+             .gt0_gtxtxp_out             (gt_tx_o_p),           // output wire gt0_gtxtxp_out
              .gt0_txoutclk_out           (txoutclk),            // output wire gt0_txoutclk_out
              .gt0_txoutclkfabric_out     (),                    // output wire gt0_txoutclkfabric_out
              .gt0_txoutclkpcs_out        (),                    // output wire gt0_txoutclkpcs_out

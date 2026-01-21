@@ -7,6 +7,10 @@ module qeciphy_syn_wrapper (
     input  logic       gt_refclk_in_n,
     input  logic       clk_freerun_p,
     input  logic       clk_freerun_n,
+    input  logic       gt_rx_i_p,
+    input  logic       gt_rx_i_n,
+    output logic       gt_tx_o_p,
+    output logic       gt_tx_o_n,
     output logic [1:0] led
 );
 
@@ -138,7 +142,11 @@ module qeciphy_syn_wrapper (
        .RX_TVALID(RX_TVALID),
        .RX_TREADY(RX_TREADY),
        .STATUS   (STATUS),
-       .ECODE    (ECODE)
+       .ECODE    (ECODE),
+       .gt_rx_i_p(gt_rx_i_p),
+       .gt_rx_i_n(gt_rx_i_n),
+       .gt_tx_o_p(gt_tx_o_p),
+       .gt_tx_o_n(gt_tx_o_n)
    );
 
 endmodule

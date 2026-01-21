@@ -40,7 +40,13 @@ module qeciphy_serdes #(
     input  logic        rx_datapath_rst_n_i,   // RX datapath reset (active-low)
     output logic [63:0] rx_tdata_o,            // 64-bit RX data
     output logic        gt_rx_rst_done_o,      // GT RX reset completion status
-    output logic        rx_datapath_aligned_o  // RX datapath alignment completion
+    output logic        rx_datapath_aligned_o, // RX datapath alignment completion
+
+    // GT differential signals
+    input  logic        gt_rx_i_p,             // GT RX differential positive
+    input  logic        gt_rx_i_n,             // GT RX differential negative
+    output logic        gt_tx_o_p,             // GT TX differential positive
+    output logic        gt_tx_o_n              // GT TX differential negative
 );
 
    // RX Path Signals
@@ -125,7 +131,13 @@ module qeciphy_serdes #(
        .rx_tdata_o      (rx_tdata_32b),      // 32-bit RX data output
        .gt_rx_rst_done_o(gt_rx_rst_done_o),  // RX reset completion
        .rx_slide_rdy_o  (rx_slide_rdy),      // Slide ready status
-       .rx_slide_i      (rx_slide)           // Slide request input
+       .rx_slide_i      (rx_slide),          // Slide request input
+
+       // GT differential signals
+       .gt_rx_i_p       (gt_rx_i_p),         // GT RX differential positive
+       .gt_rx_i_n       (gt_rx_i_n),         // GT RX differential negative
+       .gt_tx_o_p       (gt_tx_o_p),         // GT TX differential positive
+       .gt_tx_o_n       (gt_tx_o_n)          // GT TX differential negative
    );
 
 endmodule
