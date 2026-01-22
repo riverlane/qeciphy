@@ -5,10 +5,10 @@
 module qeciphy_syn_wrapper (
     input  logic       gt_refclk_in_p,
     input  logic       gt_refclk_in_n,
-    input  logic       GT_RX_P,
-    input  logic       GT_RX_N,
-    output logic       GT_TX_P,
-    output logic       GT_TX_N,
+    input  logic       gt_rx_p,
+    input  logic       gt_rx_n,
+    output logic       gt_tx_p,
+    output logic       gt_tx_n,
     output logic [1:0] SFP_tx_enable,
     output logic [2:0] led
 );
@@ -149,10 +149,10 @@ module qeciphy_syn_wrapper (
        .RX_TREADY(RX_TREADY),
        .STATUS   (STATUS),
        .ECODE    (ECODE),
-       .GT_RX_P  (GT_RX_P),
-       .GT_RX_N  (GT_RX_N),
-       .GT_TX_P  (GT_TX_P),
-       .GT_TX_N  (GT_TX_N)
+       .GT_RX_P  (gt_rx_p),
+       .GT_RX_N  (gt_rx_n),
+       .GT_TX_P  (gt_tx_p),
+       .GT_TX_N  (gt_tx_n)
    );
 
 endmodule
