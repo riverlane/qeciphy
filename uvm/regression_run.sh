@@ -46,6 +46,14 @@ for profile in "${PROFILES[@]}"; do
              echo "${TEST_NAME}_${SEED}_$profile passed"
                 PASS=$((PASS+1))
          fi
+         # Fun emoji or ASCII-style header
+         if [ "$FAIL" -eq 0 ]; then
+             STATUS_EMOJI="🎉"
+             MSG="All tests passed! Great job! 🚀"
+         else
+             STATUS_EMOJI="💥"
+             MSG="Some tests failed! Don't give up! 😤"
+         fi
     done < "$INPUT_FILE"
     # Write profile summary to the file
     {
@@ -58,6 +66,9 @@ for profile in "${PROFILES[@]}"; do
         echo ""
         echo "Total Passed: $PASS"
         echo "Total Failed: $FAIL"
+        echo "========================================"
+        echo ""
+        echo -e "### $MSG"
         echo "========================================"
         echo ""
     } >> "$SUMMARY_FILE"
