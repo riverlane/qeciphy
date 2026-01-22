@@ -1,0 +1,191 @@
+/*
+
+AMD Vivado v2024.1 (64-bit) [Major: 2024, Minor: 1]
+SW Build: 5076996 on Wed May 22 18:36:09 MDT 2024
+IP Build: 5075265 on Wed May 22 21:45:21 MDT 2024
+IP Build: 5075265 on Wed May 22 21:45:21 MDT 2024
+
+Process ID (PID): 1766328
+License: Customer
+Mode: GUI Mode
+
+Current time: 	Wed Jan 21 15:57:30 GMT 2026
+Time zone: 	Greenwich Mean Time (Europe/London)
+
+OS: Red Hat Enterprise Linux release 8.10 (Ootpa)
+OS Version: 4.18.0-553.89.1.el8_10.x86_64
+OS Architecture: amd64
+Available processors (cores): 112
+LSB Release Description: NAME=Red Hat Enterprise Linux
+
+Display: 64
+Screen size: 1920x1080
+Local screen bounds: x = 0, y = 27, width = 1920, height = 1053
+Screen resolution (DPI): 100
+Available screens: 1
+Default font: family=Dialog,name=Dialog,style=plain,size=12
+Scale size: 12
+OS font scaling: 100%
+Anti-Alias Enabled: false
+
+Java version: 	21.0.1 64-bit
+JavaFX version: 21.0.1
+Java home: 	/tools/xilinx/Vivado/2024.1/tps/lnx64/jre21.0.1_12
+Java executable: 	/tools/xilinx/Vivado/2024.1/tps/lnx64/jre21.0.1_12/bin/java
+Java arguments: 	[-Dsun.java2d.pmoffscreen=false, -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2, -Dsun.java2d.xrender=false, -Dsun.java2d.uiScale.enabled=false, -Dswing.aatext=true, -XX:-UsePerfData, -Djdk.map.althashing.threshold=512, -XX:StringTableSize=4072, -XX:+UseStringDeduplication, -XX:MaxGCPauseMillis=200, -XX:+ParallelRefProcEnabled, --add-opens=java.desktop/javax.swing.plaf.synth=ALL-UNNAMED, --add-opens=java.base/java.nio=ALL-UNNAMED, --add-opens=java.desktop/sun.swing=ALL-UNNAMED, --add-opens=java.desktop/javax.swing=ALL-UNNAMED, --add-opens=java.desktop/javax.swing.tree=ALL-UNNAMED, --add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED, --add-opens=java.desktop/javax.swing.plaf.synth=ALL-UNNAMED, --add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED, --add-opens=java.desktop/javax.swing=ALL-UNNAMED, --add-opens=java.desktop/javax.swing.tree=ALL-UNNAMED, --add-opens=java.desktop/java.awt.event=ALL-UNNAMED, --add-exports=java.desktop/javax.swing.plaf.synth=ALL-UNNAMED, --add-exports=java.base/java.nio=ALL-UNNAMED, --add-exports=java.desktop/sun.swing=ALL-UNNAMED, --add-exports=java.desktop/javax.swing=ALL-UNNAMED, --add-exports=java.desktop/javax.swing.tree=ALL-UNNAMED, --add-exports=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED, --add-exports=java.desktop/sun.swing=ALL-UNNAMED, --add-exports=java.desktop/sun.swing.table=ALL-UNNAMED, --add-exports=java.desktop/sun.swing.plaf.synth=ALL-UNNAMED, --add-exports=java.desktop/sun.awt.shell=ALL-UNNAMED, --add-exports=java.base/sun.security.action=ALL-UNNAMED, --add-exports=java.desktop/sun.font=ALL-UNNAMED, --add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED, -XX:NewSize=80m, -XX:MaxNewSize=80m, -Xms512m, -Xmx4072m, -Xss10m, -Xrs]
+Java initial memory (-Xms): 	512 MB
+Java maximum memory (-Xmx):	 3 GB
+
+User name: 	esun
+User home directory: /home/esun
+User working directory: /projects/enablement/esun/projects/qeciphy/bugfix_esun_gt_serial/qeciphy
+User country: 	US
+User language: 	en
+User locale: 	en_US
+
+RDI_BASEROOT: /tools/xilinx/Vivado
+HDI_APPROOT: /tools/xilinx/Vivado/2024.1
+RDI_DATADIR: /tools/xilinx/SharedData/2024.1/data:/tools/xilinx/Vivado/2024.1/data
+RDI_BINDIR: /tools/xilinx/Vivado/2024.1/bin
+
+Vivado preferences file: /home/esun/.Xilinx/Vivado/2024.1/vivado.xml
+Vivado preferences directory: /home/esun/.Xilinx/Vivado/2024.1/
+Vivado layouts directory: /home/esun/.Xilinx/Vivado/2024.1/data/layouts
+PlanAhead jar file: 	/tools/xilinx/Vivado/2024.1/lib/classes/planAhead.jar
+Vivado log file: 	/projects/enablement/esun/projects/qeciphy/bugfix_esun_gt_serial/qeciphy/vivado.log
+Vivado journal file: 	/projects/enablement/esun/projects/qeciphy/bugfix_esun_gt_serial/qeciphy/vivado.jou
+Engine tmp dir: 	./.Xil/Vivado-1766328-fanta-rhel.euhpc.riverlane.com
+Non-Default Parameters:	[]
+
+Xilinx & AMD Environment Variables
+--------------------------------------------------------------------------------------------
+RDI_APPROOT: /tools/xilinx/Vivado/2024.1
+RDI_BASEROOT: /tools/xilinx/Vivado
+RDI_BINROOT: /tools/xilinx/Vivado/2024.1/bin
+RDI_BUILD: yes
+RDI_DATADIR: /tools/xilinx/SharedData/2024.1/data:/tools/xilinx/Vivado/2024.1/data
+RDI_INSTALLROOT: /tools/xilinx
+RDI_INSTALLVER: 2024.1
+RDI_JAVA_PLATFORM: 
+RDI_JAVA_VERSION: 21.0.1_12
+RDI_LIBDIR: /tools/xilinx/Vivado/2024.1/lib/lnx64.o/Rhel/8:/tools/xilinx/Vivado/2024.1/lib/lnx64.o/Rhel:/tools/xilinx/Vivado/2024.1/lib/lnx64.o
+RDI_OPT_EXT: .o
+RDI_PATCHROOT: 
+RDI_PLATFORM: lnx64
+RDI_PREPEND_PATH: /tools/xilinx/Vitis/2024.1/bin:/tools/xilinx/Vivado/2024.1/ids_lite/ISE/bin/lin64
+RDI_PROG: /tools/xilinx/Vivado/2024.1/bin/unwrapped/lnx64.o/vivado
+RDI_SESSION_INFO: /projects/enablement/esun/projects/qeciphy/bugfix_esun_gt_serial/qeciphy:fanta-rhel.euhpc.riverlane.com_1769011028_1766266
+RDI_SHARED_DATA: /tools/xilinx/SharedData/2024.1/data
+RDI_TPS_ROOT: /tools/xilinx/Vivado/2024.1/tps/lnx64
+RDI_USE_JDK21: True
+SHELL: /bin/bash
+VIVADO_HOME: /tools/xilinx/Vivado/2024.1
+XILINX: /tools/xilinx/Vivado/2024.1/ids_lite/ISE
+XILINXD_LICENSE_FILE: /tools/xilinx/node_locked_licenses/:41111@license-server.euhpc.riverlane.com
+XILINX_DSP: /tools/xilinx/Vivado/2024.1/ids_lite/ISE
+XILINX_HLS: /tools/xilinx/Vitis_HLS/2024.1
+XILINX_PLANAHEAD: /tools/xilinx/Vivado/2024.1
+XILINX_SDK: /tools/xilinx/Vitis/2024.1
+XILINX_VITIS: /tools/xilinx/Vitis/2024.1
+XILINX_VIVADO: /tools/xilinx/Vivado/2024.1
+XILINX_VIVADO_HLS: /tools/xilinx/Vivado/2024.1
+
+
+GUI allocated memory:	874 MB
+GUI max memory:		4,072 MB
+Engine allocated memory: 2,161 MB
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+
+*/
+
+// TclEventType: START_GUI
+// TclEventType: START_PROGRESS_DIALOG
+// Tcl Message: start_gui 
+// TclEventType: START_PROGRESS_DIALOG
+// TclEventType: DEBUG_PROBE_SET_CHANGE
+// TclEventType: FLOW_ADDED
+// Tcl Message: source scripts/vivado_sim.tcl 
+// Tcl Message: INFO: Simulation top: qeciphy_tb 
+// Tcl Message: # puts "INFO: Using part number: $part_number" 
+// Tcl Message: INFO: Using part number: xczu49dr-ffvf1760-2-e 
+// Tcl Message: # puts "INFO: Using variant: $variant" 
+// Tcl Message: INFO: Using variant: GTY 
+// Tcl Message: # puts "INFO: Source files: $src_files" 
+// Tcl Message: # puts "INFO: Simulation files: $sim_files" 
+// Tcl Message: # puts "INFO: XCI files: $xci_files" 
+// Tcl Message: INFO: XCI files: xci/qeciphy_gty_transceiver.xci 
+// Tcl Message: # set output_dir "./run/sim_qeciphy" # create_project qeciphy_sim $output_dir -part $part_number -force 
+// HMemoryUtils.trashcanNow. Engine heap size: 2,260 MB. GUI used memory: 68 MB. Current time: 1/21/26, 3:57:31 PM GMT
+// TclEventType: FILE_SET_NEW
+// TclEventType: RUN_ADD
+// TclEventType: RUN_CURRENT
+// TclEventType: PROJECT_DASHBOARD_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_NEW
+// [GUI Memory]: 95 MB (+97646kb) [00:00:18]
+// [Engine Memory]: 1,929 MB (+1871325kb) [00:00:18]
+// [GUI Memory]: 104 MB (+4402kb) [00:00:19]
+// [GUI Memory]: 142 MB (+33578kb) [00:00:19]
+// WARNING: HEventQueue.dispatchEvent() is taking  1541 ms.
+// TclEventType: FILE_SET_OPTIONS_CHANGE
+// Tcl Message: INFO: [IP_Flow 19-234] Refreshing IP repositories INFO: [IP_Flow 19-1704] No user IP repositories specified INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/tools/xilinx/Vivado/2024.1/data/ip'. 
+// TclEventType: FILE_SET_OPTIONS_CHANGE
+// [Engine Memory]: 2,065 MB (+41493kb) [00:00:20]
+// TclEventType: FILE_SET_OPTIONS_CHANGE
+// TclEventType: FILE_SET_CHANGE
+// Tcl Message: create_project: Time (s): cpu = 00:00:22 ; elapsed = 00:00:10 . Memory (MB): peak = 8462.242 ; gain = 410.484 ; free physical = 443953 ; free virtual = 589333 
+// Tcl Message: # set_property target_language Verilog [current_project] # set_property simulator_language Mixed [current_project] # add_files -fileset sim_1 sva/binds/all_bind.svh # foreach f $src_files { #     if {$f ne ""} { #         add_files -fileset sources_1 $f #     } # } # foreach f $sim_files { #     if {$f ne ""} { #         add_files -fileset sim_1 $f #     } # } 
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: LOAD_FEATURE
+// Tcl Message: # foreach f $xci_files { #     if {$f ne ""} { #         import_ip $f #     } # } 
+// Tcl Message: INFO: [Device 21-403] Loading part xczu49dr-ffvf1760-2-e 
+// [Engine Memory]: 2,953 MB (+822619kb) [00:00:28]
+// HMemoryUtils.trashcanNow. Engine heap size: 2,991 MB. GUI used memory: 73 MB. Current time: 1/21/26, 3:57:46 PM GMT
+// TclEventType: PACKAGER_OBJECT_CHANGE
+// HMemoryUtils.trashcanNow. Engine heap size: 3,106 MB. GUI used memory: 72 MB. Current time: 1/21/26, 3:57:56 PM GMT
+// TclEventType: PACKAGER_OBJECT_CHANGE
+// HMemoryUtils.trashcanNow. Engine heap size: 3,106 MB. GUI used memory: 72 MB. Current time: 1/21/26, 3:58:26 PM GMT
+// HMemoryUtils.trashcanNow. Engine heap size: 3,106 MB. GUI used memory: 72 MB. Current time: 1/21/26, 3:58:56 PM GMT
+// TclEventType: COMPOSITE_FILE_CHANGE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: COMPOSITE_FILE_CHANGE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: FILE_SET_OPTIONS_CHANGE
+// TclEventType: FILE_SET_CHANGE
+// Tcl Message: import_ip: Time (s): cpu = 00:01:32 ; elapsed = 00:01:36 . Memory (MB): peak = 9619.824 ; gain = 1055.098 ; free physical = 439047 ; free virtual = 585166 
+// Tcl Message: # set_property top $sim_top [get_filesets sim_1] # set_property -name {xsim.simulate.runtime} -value {1s} -objects [get_filesets sim_1] # set_property verilog_define [list "GT_TYPE=\"$variant\"" "XSIM"] [get_filesets sim_1] # update_compile_order -fileset sources_1 
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: LAUNCH_SIM
+// HMemoryUtils.trashcanNow. Engine heap size: 3,172 MB. GUI used memory: 72 MB. Current time: 1/21/26, 3:59:16 PM GMT
+// Tcl Message: # upgrade_ip [get_ips] 
+// Tcl Message: # if {[catch {launch_simulation} errorstring]} { #     puts "ERROR: Vivado - $errorstring" #     exit 1 # } else { #     close_sim #     exit 0 # } 
+// Tcl Message: Command: launch_simulation  
+// Tcl Message: INFO: [Vivado 12-12493] Simulation top is 'qeciphy_tb' INFO: [Vivado 12-5698] Checking validity of IPs in the design for the 'XSim' simulator... 
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: COMPOSITE_FILE_CHANGE
+// [Engine Memory]: 3,172 MB (+74444kb) [00:02:02]
+// TclEventType: PACKAGER_OBJECT_CHANGE
+// TclEventType: COMPOSITE_FILE_CHANGE
+// Tcl Message: INFO: [IP_Flow 19-1686] Generating 'Simulation' target for IP 'qeciphy_gty_transceiver'... 
+// TclEventType: COMPOSITE_FILE_CHANGE
+// TclEventType: FILE_SET_OPTIONS_CHANGE
+// TclEventType: PACKAGER_MESSAGE_RESET
+// TclEventType: PACKAGER_UNLOAD_CORE
+selectButton(RDIResource.ProgressDialog_BACKGROUND, "Background", "Sourcing Tcl script 'scripts/vivado_sim.tcl'"); // a (RDIResource.ProgressDialog_BACKGROUND)
+// Tcl Message: INFO: [USF-XSim-7] Finding pre-compiled libraries... INFO: [USF-XSim-11] File '/tools/xilinx/Vivado/2024.1/data/xsim/xsim.ini' copied to run dir:'/projects/enablement/esun/projects/qeciphy/bugfix_esun_gt_serial/qeciphy/run/sim_qeciphy/qeciphy_sim.sim/sim_1/behav/xsim' INFO: [SIM-utils-54] Inspecting design source files for 'qeciphy_tb' in fileset 'sim_1'... INFO: [USF-XSim-97] Finding global include files... INFO: [USF-XSim-98] Fetching design files from 'sim_1'... INFO: [USF-XSim-2] XSim::Compile design INFO: [USF-XSim-61] Executing 'COMPILE and ANALYZE' step in '/projects/enablement/esun/projects/qeciphy/bugfix_esun_gt_serial/qeciphy/run/sim_qeciphy/qeciphy_sim.sim/sim_1/behav/xsim' 
+// Tcl Message: xvlog --incr --relax -L uvm -prj qeciphy_tb_vlog.prj 
