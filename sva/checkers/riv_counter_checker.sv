@@ -15,15 +15,15 @@ module riv_counter_checker #(
 
     /* ------------ Counter Model ------------ */
 
-    logic [WIDTH-1:0] model_count;
+    logic [WIDTH-1:0] count_t;
 
     always @ (posedge clk) begin
         if (!rst_n) begin
-            model_count <= '0;
+            count_t <= '0;
         end else if (load) begin
-            model_count <= value;
+            count_t <= value;
         end else if (enable) begin
-            model_count <= model_count - 1;
+            count_t <= count_t - 1;
         end
     end
 
@@ -40,25 +40,25 @@ module riv_counter_checker #(
 
     /* ------------ Assertions ------------ */
 
-    // Property: done is only asserted when model_count is zero
-    property done_asserted_when_model_count_is_zero;
-        @(posedge clk) (model_count == '0) |-> done;
+    // Property: done is only asserted when count_t is zero
+    property p_done_asserted_when_count_t_is_zero;
+        @(posedge clk) (count_t == '0) |-> done;
     endproperty
-    assert_done_asserted_when_model_count_is_zero: assert property (done_asserted_when_model_count_is_zero)
-    else $fatal("done de-asserted while model_count is zero");
+    done_asserted_when_count_t_is_zero_A: assert property (p_done_asserted_when_count_t_is_zero)
+    else $fatal("done de-asserted while count_t is zero");
 
-    // property: done is de-asserted when model_count is non-zero
-    property done_deasserted_when_model_count_nonzero;
-        @(posedge clk) (model_count != '0) |-> !done;
+    // property: done is de-asserted when count_t is non-zero
+    property p_done_deasserted_when_count_t_nonzero;
+        @(posedge clk) (count_t != '0) |-> !done;
     endproperty
-    assert_done_deasserted_when_model_count_nonzero: assert property (done_deasserted_when_model_count_nonzero)
-    else $fatal("done asserted while model_count is non-zero");
+    done_deasserted_when_count_t_nonzero_A: assert property (p_done_deasserted_when_count_t_nonzero)
+    else $fatal("done asserted while count_t is non-zero");
 
-    // Property: internal_count matches model_count in lower WIDTH bits
-    property internal_count_matches_model_count;
-        @(posedge clk) internal_count[WIDTH-1:0] == model_count;
+    // Property: internal_count matches count_t in lower WIDTH bits
+    property p_internal_count_matches_count_t;
+        @(posedge clk) internal_count[WIDTH-1:0] == count_t;
     endproperty
-    assert_internal_count_matches_model_count: assert property (internal_count_matches_model_count)
-    else $fatal("internal_count does not match model_count");
+    internal_count_matches_count_t_A: assert property (p_internal_count_matches_count_t)
+    else $fatal("internal_count does not match count_t");
     
 endmodule
