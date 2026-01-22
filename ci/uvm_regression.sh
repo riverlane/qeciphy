@@ -11,4 +11,4 @@ echo "Loading Vivado and VCS..."
 module load xilinx/vivado/2024.1
 module load synopsys/vcs
 module load synopsys/verdi
-bash uvm/regression.sh
+bash uvm/regression_run.sh
