@@ -95,10 +95,10 @@ module qeciphy_tb;
    logic            [MAX_SLIDE-1:0] dut0_txp;
 
    // GT differential signals
-   logic                            gt_tx_p[0:1];
-   logic                            gt_tx_n[0:1];
-   logic                            gt_rx_p[0:1];
-   logic                            gt_rx_n[0:1];
+   logic                            gt_tx_p          [                  0:1];
+   logic                            gt_tx_n          [                  0:1];
+   logic                            gt_rx_p          [                  0:1];
+   logic                            gt_rx_n          [                  0:1];
 
    //----------------------------------------
    // Clocks & reset

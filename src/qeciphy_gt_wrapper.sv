@@ -24,10 +24,10 @@ module qeciphy_gt_wrapper #(
     input  logic        rx_slide_i,
 
     // GT differential signals
-    input  logic        gt_rx_p_i,
-    input  logic        gt_rx_n_i,
-    output logic        gt_tx_p_o,
-    output logic        gt_tx_n_o
+    input  logic gt_rx_p_i,
+    input  logic gt_rx_n_i,
+    output logic gt_tx_p_o,
+    output logic gt_tx_n_o
 );
 
    // -------------------------------------------------------------
