@@ -13,7 +13,7 @@ jobs:
 
       - name: Run UVM regression
         run: |
-          bash uvm/regression_run.sh
+          bash ci/uvm_regression.sh
       
       - name: Print contents of summary.txt to Workflow Page
         if: always()
