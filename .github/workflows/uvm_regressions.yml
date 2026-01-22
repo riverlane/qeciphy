@@ -14,3 +14,13 @@ jobs:
       - name: Run UVM regression
         run: |
           bash uvm/regression_run.sh
+      
+      - name: Print contents of summary.txt to Workflow Page
+        if: always()
+        run: |
+          echo '## UVM Regression Pass/Fail Summary' >> $GITHUB_STEP_SUMMARY
+          if [ -f uvm_regression_logs/summary.txt ]; then
+            cat uvm_regression_logs/summary.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No summary.txt file found." >> $GITHUB_STEP_SUMMARY
+          fi
