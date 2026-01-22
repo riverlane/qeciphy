@@ -32,6 +32,7 @@ class qeciphy_env extends uvm_component;
 
    qeciphy_env_data_xfer_scoreboard  m_dut2tbphy_data_scbd;
    qeciphy_env_data_xfer_scoreboard  m_tbphy2dut_data_scbd;
+   qeciphy_env_state_scoreboard      m_state_scbd;
 
 
    //----------------------------------------------------------------------------------------------------------------------------------------
@@ -148,7 +149,7 @@ class qeciphy_env extends uvm_component;
 
       m_dut2tbphy_data_scbd = qeciphy_env_data_xfer_scoreboard::type_id::create("m_dut2tbphy_data_scbd", .parent(this));
       m_tbphy2dut_data_scbd = qeciphy_env_data_xfer_scoreboard::type_id::create("m_tbphy2dut_data_scbd", .parent(this));
-      
+      m_state_scbd          = qeciphy_env_state_scoreboard::type_id::create("m_state_scbd", .parent(this));
    endfunction : build_scoreboards
    //----------------------------------------------------------------------------------------------------------------------------------------
 
