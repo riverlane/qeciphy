@@ -1,10 +1,10 @@
 
 #!/bin/bash
 mkdir -p uvm_regression_logs
-SUMMARY_FILE="uvm_regression_logs/summary.txt"
-: > "$SUMMARY_FILE"  # Empty the summary file at start
 INPUT_FILE="uvm/regression_list.txt"
 PROFILES=("zcu216" "zcu106" "kasliSoC")
+FAIL=0
+PASS=0
 for profile in "${PROFILES[@]}"; do
     echo "Cleaning previous builds..."
     make distclean
@@ -13,8 +13,6 @@ for profile in "${PROFILES[@]}"; do
     make generate-xci OPT_PROFILE=$profile OPT_SIM_FILES=true
 
     make uvm-vcs-compile-sim OPT_PROFILE=$profile
-    PASS=0
-    FAIL=0
     while IFS=',' read -r TEST_NAME OPT_ARGS; do
         # Construct from TEST_NAME (replace _test with _uvmtb)
         OPT_TEST="${TEST_NAME/_test}"
@@ -32,7 +30,7 @@ for profile in "${PROFILES[@]}"; do
                        OPT_SEED=$SEED 
                        LOG = ${TEST_NAME}_${SEED}_$profile.log "
         # Execute the command
-        ./simv -q OPT_ARGS=$OPT_ARGS_FORMATTED +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$TEST_NAME -l uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log +ntb_random_seed=${SEED} -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/${TEST_NAME}_${SEED}_$profile_cov.vdb[...] > /dev/null 2>&1
+        ./simv -q OPT_ARGS=$OPT_ARGS_FORMATTED +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$TEST_NAME -l uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log +ntb_random_seed=${SEED} -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/${TEST_NAME}_${SEED}_$profile_cov.vdb
         # check the log for pass/fail
          if [[ ! -f "uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log" ]]; then
             echo "Log file not found! Test $TEST_NAME may have failed to run."
@@ -47,22 +45,6 @@ for profile in "${PROFILES[@]}"; do
                 PASS=$((PASS+1))
          fi
     done < "$INPUT_FILE"
-    # Write profile summary to the file
-    {
-        echo "========================================"
-        echo "Profile: $profile"
-        echo "----------------------------------------"
-        for result in "${PROFILE_RESULTS[@]}"; do
-            echo "$result"
-        done
-        echo ""
-        echo "Total Passed: $PASS"
-        echo "Total Failed: $FAIL"
-        echo "========================================"
-        echo ""
-    } >> "$SUMMARY_FILE"
-    # Optionally print the summary at the end for CI logs
-    cat "$SUMMARY_FILE"
     echo " $profile:FAILED_TESTS: $FAIL
           PASSED_TESTS: $PASS"
 done
