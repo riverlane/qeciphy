@@ -50,17 +50,17 @@
 `include "qeciphy_pkg.sv"
 
 module qeciphy_rx_monitor (
-    input  logic        clk_i,
-    input  logic        rst_n_i,
-    input  logic [63:0] tdata_i,
-    output logic [63:0] tdata_o,
-    output logic        tvalid_o,
-    input  logic        enable_i,
-    input  logic        faw_boundary_i,
-    input  logic        crc_boundary_i,
-    output logic        crc_error_o,
-    output logic        faw_error_o,
-    output logic        remote_rx_rdy_o
+                              input  logic        clk_i,
+                              input  logic        rst_n_i,
+    (* MARK_DEBUG = "TRUE" *) input  logic [63:0] tdata_i,
+                              output logic [63:0] tdata_o,
+                              output logic        tvalid_o,
+    (* MARK_DEBUG = "TRUE" *) input  logic        enable_i,
+    (* MARK_DEBUG = "TRUE" *) input  logic        faw_boundary_i,
+    (* MARK_DEBUG = "TRUE" *) input  logic        crc_boundary_i,
+    (* MARK_DEBUG = "TRUE" *) output logic        crc_error_o,
+    (* MARK_DEBUG = "TRUE" *) output logic        faw_error_o,
+                              output logic        remote_rx_rdy_o
 );
 
    import qeciphy_pkg::*;

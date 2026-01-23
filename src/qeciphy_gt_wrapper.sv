@@ -7,23 +7,23 @@ module qeciphy_gt_wrapper #(
 ) (
     input logic gt_ref_clk_i,
 
-    input  logic f_clk_i,
-    input  logic gt_rst_n_i,
-    output logic gt_power_good_o,
+    input logic f_clk_i,
+    input logic gt_rst_n_i,
+    (* MARK_DEBUG = "TRUE" *) output logic gt_power_good_o,
 
-    output logic        tx_clk_o,
-    output logic        tx_clk_2x_o,
-    input  logic [31:0] tx_tdata_i,
-    output logic        gt_tx_rst_done_o,
+                              output logic        tx_clk_o,
+                              output logic        tx_clk_2x_o,
+                              input  logic [31:0] tx_tdata_i,
+    (* MARK_DEBUG = "TRUE" *) output logic        gt_tx_rst_done_o,
 
-    output logic        rx_clk_o,
-    output logic        rx_clk_2x_o,
-    output logic [31:0] rx_tdata_o,
-    output logic        gt_rx_rst_done_o,
-    output logic        rx_slide_rdy_o,
-    input  logic        rx_slide_i,
+                              output logic        rx_clk_o,
+                              output logic        rx_clk_2x_o,
+                              output logic [31:0] rx_tdata_o,
+    (* MARK_DEBUG = "TRUE" *) output logic        gt_rx_rst_done_o,
+    (* MARK_DEBUG = "TRUE" *) output logic        rx_slide_rdy_o,
+    (* MARK_DEBUG = "TRUE" *) input  logic        rx_slide_i,
 
-    // GT differential signals
+       // GT differential signals
     input  logic gt_rx_p_i,
     input  logic gt_rx_n_i,
     output logic gt_tx_p_o,
@@ -36,6 +36,38 @@ module qeciphy_gt_wrapper #(
 
    logic rxoutclk;
    logic txoutclk;
+   logic [15:0] gt_rx_rst_delay_counter;
+   logic [15:0] gt_tx_rst_delay_counter;
+   (* MARK_DEBUG = "TRUE" *) logic gt_tx_rst_done;
+   (* MARK_DEBUG = "TRUE" *) logic gt_rx_rst_done;
+   (* MARK_DEBUG = "TRUE" *) logic rx_pma_rst_done_internal;
+   (* MARK_DEBUG = "TRUE" *) logic tx_pma_rst_done_internal;
+   logic [15:0] rx_pma_rst_delay_counter;
+   logic [15:0] tx_pma_rst_delay_counter;
+
+   always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         gt_rx_rst_delay_counter <= '0;
+      end else if (!gt_rx_rst_done) begin
+         gt_rx_rst_delay_counter <= '0;
+      end else if (gt_rx_rst_done && !gt_rx_rst_delay_counter[15]) begin
+         gt_rx_rst_delay_counter <= gt_rx_rst_delay_counter + 16'd1;
+      end
+   end
+
+   assign gt_tx_rst_done_o = gt_tx_rst_delay_counter[15];
+
+   always_ff @(posedge tx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         gt_tx_rst_delay_counter <= '0;
+      end else if (!gt_tx_rst_done) begin
+         gt_tx_rst_delay_counter <= '0;
+      end else if (gt_tx_rst_done && !gt_tx_rst_delay_counter[15]) begin
+         gt_tx_rst_delay_counter <= gt_tx_rst_delay_counter + 16'd1;
+      end
+   end
+
+   assign gt_rx_rst_done_o = gt_rx_rst_delay_counter[15];
 
    // -------------------------------------------------------------
    // GTY transceiver instantiation
@@ -49,8 +81,40 @@ module qeciphy_gt_wrapper #(
          logic rxpmaresetdone;
          logic userclk_tx_reset;
          logic userclk_rx_reset;
-         assign userclk_tx_reset = ~txpmaresetdone;
-         assign userclk_rx_reset = ~rxpmaresetdone;
+
+         (* MARK_DEBUG = "TRUE" *)logic tx_rx_active;
+
+         assign tx_rx_active = rx_pma_rst_done_internal && tx_pma_rst_done_internal;
+
+         assign userclk_tx_reset = ~tx_rx_active;
+         assign userclk_rx_reset = ~tx_rx_active;
+
+         always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+            if (!gt_rst_n_i) begin
+               rx_pma_rst_delay_counter <= '0;
+            end else if (!rxpmaresetdone) begin
+               rx_pma_rst_delay_counter <= '0;
+            end else if (rxpmaresetdone && !rx_pma_rst_delay_counter[15]) begin
+               rx_pma_rst_delay_counter <= rx_pma_rst_delay_counter + 16'd1;
+            end
+         end
+
+         assign rx_pma_rst_done_internal = rx_pma_rst_delay_counter[15];
+
+         always_ff @(posedge tx_clk_2x_o or negedge gt_rst_n_i) begin
+            if (!gt_rst_n_i) begin
+               tx_pma_rst_delay_counter <= '0;
+            end else if (!txpmaresetdone) begin
+               tx_pma_rst_delay_counter <= '0;
+            end else if (txpmaresetdone && !tx_pma_rst_delay_counter[15]) begin
+               tx_pma_rst_delay_counter <= tx_pma_rst_delay_counter + 16'd1;
+            end
+         end
+
+         assign tx_pma_rst_done_internal = tx_pma_rst_delay_counter[15];
+
+         (* MARK_DEBUG = "TRUE" *)logic cdr_stable;
+         (* MARK_DEBUG = "TRUE" *)logic qpll0_lock;
 
          qeciphy_gty_transceiver transceiver (
              .gtwiz_userclk_tx_active_in        (~userclk_tx_reset),
@@ -61,13 +125,13 @@ module qeciphy_gt_wrapper #(
              .gtwiz_reset_tx_datapath_in        (1'b0),
              .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_rx_datapath_in        (1'b0),
-             .gtwiz_reset_rx_cdr_stable_out     (),
-             .gtwiz_reset_tx_done_out           (gt_tx_rst_done_o),
-             .gtwiz_reset_rx_done_out           (gt_rx_rst_done_o),
+             .gtwiz_reset_rx_cdr_stable_out     (cdr_stable),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
              .gtwiz_userdata_tx_in              (tx_tdata_i),
              .gtwiz_userdata_rx_out             (rx_tdata_o),
              .gtrefclk00_in                     (gt_ref_clk_i),
-             .qpll0lock_out                     (),
+             .qpll0lock_out                     (qpll0_lock),
              .qpll0outclk_out                   (),
              .qpll0outrefclk_out                (),
              .gtyrxn_in                         (gt_rx_n_i),
@@ -106,7 +170,7 @@ module qeciphy_gt_wrapper #(
          BUFG_GT i_BUFG_gt_rx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
-             .CLR    (userclk_rx_reset),
+             .CLR    (1'b0),
              .CLRMASK(1'b0),
              .DIV    (3'b000),
              .I      (rxoutclk),
@@ -118,7 +182,7 @@ module qeciphy_gt_wrapper #(
          BUFG_GT i_BUFG_rx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
-             .CLR    (userclk_rx_reset),
+             .CLR    (1'b0),
              .CLRMASK(1'b0),
              .DIV    (3'b001),
              .I      (rxoutclk),
@@ -131,7 +195,7 @@ module qeciphy_gt_wrapper #(
          BUFG_GT i_BUFG_gt_tx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
-             .CLR    (userclk_tx_reset),
+             .CLR    (1'b0),
              .CLRMASK(1'b0),
              .DIV    (3'b000),
              .I      (txoutclk),
@@ -143,7 +207,7 @@ module qeciphy_gt_wrapper #(
          BUFG_GT i_BUFG_tx_clk (
              .CE     (1'b1),
              .CEMASK (1'b0),
-             .CLR    (userclk_tx_reset),
+             .CLR    (1'b0),
              .CLRMASK(1'b0),
              .DIV    (3'b001),
              .I      (txoutclk),
@@ -172,8 +236,8 @@ module qeciphy_gt_wrapper #(
              .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_rx_datapath_in        (1'b0),
              .gtwiz_reset_rx_cdr_stable_out     (),
-             .gtwiz_reset_tx_done_out           (gt_tx_rst_done_o),
-             .gtwiz_reset_rx_done_out           (gt_rx_rst_done_o),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
              .gtwiz_userdata_tx_in              (tx_tdata_i),
              .gtwiz_userdata_rx_out             (rx_tdata_o),
              .gtrefclk00_in                     (gt_ref_clk_i),
@@ -284,8 +348,8 @@ module qeciphy_gt_wrapper #(
              .soft_reset_tx_in           (1'b0),                // input wire soft_reset_tx_in
              .soft_reset_rx_in           (1'b0),                // input wire soft_reset_rx_in
              .dont_reset_on_data_error_in(1'b1),                // input wire dont_reset_on_data_error_in
-             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done_o),    // output wire gt0_tx_fsm_reset_done_out
-             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done_o),    // output wire gt0_rx_fsm_reset_done_out
+             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done),      // output wire gt0_tx_fsm_reset_done_out
+             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done),      // output wire gt0_rx_fsm_reset_done_out
              .gt0_data_valid_in          (rxpmaresetdone),      // input wire gt0_data_valid_in
              .gt0_drpaddr_in             (9'h00),               // input wire [8:0] gt0_drpaddr_in
              .gt0_drpclk_in              (f_clk_i),             // input wire gt0_drpclk_in
@@ -391,3 +455,5 @@ module qeciphy_gt_wrapper #(
    endgenerate
 
 endmodule  // qeciphy_gt_wrapper
+
+

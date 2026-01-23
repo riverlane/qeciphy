@@ -7,11 +7,11 @@ module qeciphy_rx_bytealigner #(
     parameter integer TX_PATTERN_LENGTH = 6
 ) (
     input  logic                     clk_i,
-    input  logic                     rst_n_i,
-    input  logic                     slide_rdy_i,
-    input  logic [RX_DATA_WIDTH-1:0] tdata_i,
-    output logic                     slide_o,
-    output logic                     align_done_o,
+    (* MARK_DEBUG = "TRUE" *) input  logic                     rst_n_i,
+    (* MARK_DEBUG = "TRUE" *) input  logic                     slide_rdy_i,
+    (* MARK_DEBUG = "TRUE" *) input  logic [RX_DATA_WIDTH-1:0] tdata_i,
+    (* MARK_DEBUG = "TRUE" *) output logic                     slide_o,
+    (* MARK_DEBUG = "TRUE" *) output logic                     align_done_o,
     output logic                     align_fail_o
 );
 
@@ -35,14 +35,14 @@ module qeciphy_rx_bytealigner #(
    localparam RXSLIDE_COUNT_WIDTH = $clog2(RXSLIDE_COUNT_MAX);
    localparam RXSLIDE_IDLE_CYCLES = 32;  // "RXSLIDE must be deasserted for more than 32 RXUSRCLK2 cycles..." UG578 page:249
    localparam PATTERN_COUNT_WIDTH = $clog2(TX_PATTERN_LENGTH);
-   localparam RX_ALIGN_MATCH_MAX = 4'd8;
+   localparam RX_ALIGN_MATCH_MAX = 11'd8;
    localparam RX_ALIGN_COUNTER_WIDTH = $clog2(TX_PATTERN_LENGTH);
 
    // -------------------------------------------------------------
    // Declaration
    // -------------------------------------------------------------
 
-   fsm_t                              fsm;
+   (* MARK_DEBUG = "TRUE" *)fsm_t                              fsm;
    fsm_t                              fsm_nxt;
    logic                              fsm_idle;
    logic                              fsm_check;
@@ -52,25 +52,39 @@ module qeciphy_rx_bytealigner #(
    logic                              fsm_off;
    logic                              fsm_done;
    logic                              fsm_fail;
-   logic [     RXSLIDE_COUNT_WIDTH:0] rx_slide_count;
+   (* MARK_DEBUG = "TRUE" *) logic [     RXSLIDE_COUNT_WIDTH:0] rx_slide_count;
    logic [     RXSLIDE_COUNT_WIDTH:0] rx_slide_count_nxt;
-   logic [                       5:0] rx_slide_idle_count;
-   logic [                       5:0] rx_slide_idle_count_nxt;
+   (* MARK_DEBUG = "TRUE" *) logic [                       6:0] rx_slide_idle_count;
+   logic [                       6:0] rx_slide_idle_count_nxt;
    logic [     PATTERN_COUNT_WIDTH:0] rx_pattern_count;
    logic [     PATTERN_COUNT_WIDTH:0] rx_pattern_count_nxt;
    logic                              rx_slide_count_max;
    logic                              rx_slide_idle_count_max;
    logic                              rx_pattern_count_max;
-   logic                              rx_datan_comma_m;
-   logic [                       3:0] rx_align_matched_count;
-   logic [                       3:0] rx_align_matched_count_nxt;
+   (* MARK_DEBUG = "TRUE" *) logic                              rx_datan_comma_m;
+   logic [                      10:0] rx_align_matched_count;
+   logic [                      10:0] rx_align_matched_count_nxt;
    logic                              rx_align_matched_count_max;
    logic [RX_ALIGN_COUNTER_WIDTH-1:0] rx_align_timeout_count;
    logic [RX_ALIGN_COUNTER_WIDTH-1:0] rx_align_timeout_count_nxt;
-   logic                              rx_align_boundary_check;
-   logic                              rx_align_boundary_check_fail;
+   (* MARK_DEBUG = "TRUE" *) logic                              rx_align_boundary_check;
+   (* MARK_DEBUG = "TRUE" *) logic                              rx_align_boundary_check_fail;
    logic [                      31:0] rx_data;
    logic                              rx_align_matched;
+
+   //debug signals
+   (* MARK_DEBUG = "TRUE" *) logic                              faw_1_slot;
+   (* MARK_DEBUG = "TRUE" *) logic                              faw_2_slot;
+   (* MARK_DEBUG = "TRUE" *) logic                              data_slot;
+   (* MARK_DEBUG = "TRUE" *) logic                              crc_1_slot;
+   (* MARK_DEBUG = "TRUE" *) logic                              crc_2_slot;
+
+   logic                              data_zero;
+   logic                              crc_1;
+   logic                              crc_2;
+   logic                              faw_1;
+   logic                              faw_2;
+   (* MARK_DEBUG = "TRUE" *) logic [                       3:0] slot_count;
 
    // -------------------------------------------------------------
    // Hit logic
@@ -80,6 +94,12 @@ module qeciphy_rx_bytealigner #(
    assign rx_pattern_count_max    = rx_pattern_count == TX_PATTERN_LENGTH[PATTERN_COUNT_WIDTH:0] - 1;
    assign rx_slide_count_max      = rx_slide_count == RXSLIDE_COUNT_MAX[RXSLIDE_COUNT_WIDTH:0] - 1;
    assign rx_datan_comma_m        = rx_data == 32'h000000BC;
+
+   assign data_zero               = rx_data == 32'h00000000;
+   assign crc_2                   = rx_data == 32'h6A0A6A0A;
+   assign crc_1                   = rx_data == 32'h6A0A0000;
+   assign faw_2                   = rx_data == 32'h000000CB;
+   assign faw_1                   = rx_datan_comma_m;
 
    always_ff @(posedge clk_i) begin
       rx_data <= tdata_i;
@@ -100,7 +120,7 @@ module qeciphy_rx_bytealigner #(
          SLIDE0: fsm_nxt = SLIDE1;
          SLIDE1: fsm_nxt = OFF;
          OFF: fsm_nxt = slide_rdy_i & rx_slide_idle_count_max ? CHECK : OFF;
-         CHECK: fsm_nxt = rx_datan_comma_m ? REVIEW : rx_pattern_count_max ? (rx_slide_count_max ? FAIL : SLIDE0) : CHECK;
+         CHECK: fsm_nxt = rx_datan_comma_m ? REVIEW : rx_pattern_count_max ? (rx_slide_count_max ? FAIL : IDLE) : CHECK;
          REVIEW:
          fsm_nxt =  // Check that after the first successful hit for comma character
                     // we are able to match it for at least 8 consecutive times before proceeding
@@ -181,8 +201,29 @@ module qeciphy_rx_bytealigner #(
    assign rx_align_timeout_count_nxt = fsm_review ? rx_align_timeout_count + 'h1 : 'h0;
 
    assign rx_align_boundary_check = rx_align_timeout_count == '1;
-   assign rx_align_boundary_check_fail = rx_align_boundary_check ^ rx_datan_comma_m;
+   //assign rx_align_boundary_check_fail = rx_align_boundary_check ^ rx_datan_comma_m;
 
+   assign faw_1_slot = fsm_review && (rx_align_timeout_count == (RX_ALIGN_COUNTER_WIDTH'(TX_PATTERN_LENGTH - 1)));
+   assign faw_2_slot = fsm_review && (rx_align_timeout_count == '0);
+   assign crc_2_slot = fsm_review && (slot_count == 4'd14);
+   assign crc_1_slot = fsm_review && (slot_count == 4'd13);
+
+   always_comb begin
+      if (!fsm_review) data_slot <= 'h0;
+      else if (slot_count >= 4'd1 && slot_count < 4'd13) data_slot <= 'h1;
+      else data_slot <= 'h0;
+   end
+
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) slot_count <= 'h0;
+      else if ((!fsm_review)) slot_count <= 'h0;
+      else if ((rx_align_timeout_count == (RX_ALIGN_COUNTER_WIDTH'(TX_PATTERN_LENGTH - 2))) || faw_1_slot) slot_count <= 'h0;
+      else if (faw_2_slot) slot_count <= 'h1;
+      else if (slot_count == 4'd14) slot_count <= 'h1;
+      else slot_count <= slot_count + 'h1;
+   end
+
+   assign rx_align_boundary_check_fail = (data_slot & ~data_zero) | (crc_1_slot & ~crc_1) | (crc_2_slot & ~crc_2) | (faw_1_slot & ~faw_1) | (faw_2_slot & ~faw_2);
    // -------------------------------------------------------------
    // Output assignments
    // -------------------------------------------------------------
