@@ -180,47 +180,52 @@ module qeciphy_tb;
    // High-speed serial connectivity
    //----------------------------------------
 
-   generate
-      if (`GT_TYPE == "GTX") begin : gen_gtx_links
-         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
-         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
+   assign gt_rx_p[0] = gt_tx_p[1];
+   assign gt_rx_n[0] = gt_tx_n[1];
+   assign gt_rx_p[1] = gt_tx_p[0];
+   assign gt_rx_n[1] = gt_tx_n[0];
 
-         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
-         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
-         always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
-         end
-      end else if (`GT_TYPE == "GTY") begin : gen_gty_links
-         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
-         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
+   // generate
+   //    if (`GT_TYPE == "GTX") begin : gen_gtx_links
+   //       assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
+   //       assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
 
-         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
-         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
+   //       assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
+   //       assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
+   //       always_ff @(posedge qpllclk) begin
+   //          dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
+   //          dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
+   //          dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
+   //          dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
+   //       end
+   //    end else if (`GT_TYPE == "GTY") begin : gen_gty_links
+   //       assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
+   //       assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
 
-         always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
-         end
-      end else if (`GT_TYPE == "GTH") begin : gen_gth_links
-         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
-         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
+   //       assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
+   //       assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
 
-         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
-         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
+   //       always_ff @(posedge qpllclk) begin
+   //          dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
+   //          dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
+   //          dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
+   //          dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
+   //       end
+   //    end else if (`GT_TYPE == "GTH") begin : gen_gth_links
+   //       assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
+   //       assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
 
-         always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
-         end
-      end
-   endgenerate
+   //       assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
+   //       assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
+
+   //       always_ff @(posedge qpllclk) begin
+   //          dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
+   //          dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
+   //          dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
+   //          dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
+   //       end
+   //    end
+   // endgenerate
 
    //----------------------------------------
    // Capture RX data

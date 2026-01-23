@@ -35,7 +35,7 @@ module qeciphy_rx_bytealigner #(
    localparam RXSLIDE_COUNT_WIDTH = $clog2(RXSLIDE_COUNT_MAX);
    localparam RXSLIDE_IDLE_CYCLES = 32;  // "RXSLIDE must be deasserted for more than 32 RXUSRCLK2 cycles..." UG578 page:249
    localparam PATTERN_COUNT_WIDTH = $clog2(TX_PATTERN_LENGTH);
-   localparam RX_ALIGN_MATCH_MAX = 11'd8;
+   localparam RX_ALIGN_MATCH_MAX = 11'd1024;
    localparam RX_ALIGN_COUNTER_WIDTH = $clog2(TX_PATTERN_LENGTH);
 
    // -------------------------------------------------------------
@@ -98,7 +98,7 @@ module qeciphy_rx_bytealigner #(
    assign data_zero               = rx_data == 32'h00000000;
    assign crc_2                   = rx_data == 32'h6A0A6A0A;
    assign crc_1                   = rx_data == 32'h6A0A0000;
-   assign faw_2                   = rx_data == 32'h000000CB;
+   assign faw_2                   = (rx_data == 32'h000000CB) || (rx_data == 32'h800000CB);
    assign faw_1                   = rx_datan_comma_m;
 
    always_ff @(posedge clk_i) begin
