@@ -57,7 +57,15 @@ module QECIPHY #(
     output logic [3:0] STATUS,      // Link status code
     output logic [3:0] ECODE,       // Error code
     output logic       LINK_READY,  // Link ready for user data transfer
-    output logic       FAULT_FATAL  // Fatal error detected
+    output logic       FAULT_FATAL, // Fatal error detected
+
+    // =========================================================================
+    // GT Differential Signals
+    // =========================================================================
+    input  logic GT_RX_P,  // GT RX differential positive
+    input  logic GT_RX_N,  // GT RX differential negative
+    output logic GT_TX_P,  // GT TX differential positive
+    output logic GT_TX_N   // GT TX differential negative
 );
 
    // =========================================================================
@@ -282,7 +290,13 @@ module QECIPHY #(
        .rx_datapath_rst_n_i  (rx_datapath_rst_n),        // RX datapath reset input from qeciphy_resetcontroller
        .rx_tdata_o           (gt_rx_tdata),              // 64 bit RX data output to qeciphy_rx_channeldecoder
        .gt_rx_rst_done_o     (gt_rx_rst_done_rclk),      // RX reset completion to qeciphy_resetcontroller
-       .rx_datapath_aligned_o(rx_datapath_aligned_rclk)  // RX alignment completion to qeciphy_controller
+       .rx_datapath_aligned_o(rx_datapath_aligned_rclk), // RX alignment completion to qeciphy_controller
+
+       // GT differential signals
+       .gt_rx_p_i(GT_RX_P),  // GT RX differential positive
+       .gt_rx_n_i(GT_RX_N),  // GT RX differential negative
+       .gt_tx_p_o(GT_TX_P),  // GT TX differential positive
+       .gt_tx_n_o(GT_TX_N)   // GT TX differential negative
    );
 
    // =========================================================================

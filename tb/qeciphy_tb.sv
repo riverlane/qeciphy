@@ -94,6 +94,12 @@ module qeciphy_tb;
    logic            [MAX_SLIDE-1:0] dut0_txn;
    logic            [MAX_SLIDE-1:0] dut0_txp;
 
+   // GT differential signals
+   logic                            gt_tx_p          [                  0:1];
+   logic                            gt_tx_n          [                  0:1];
+   logic                            gt_rx_p          [                  0:1];
+   logic                            gt_rx_n          [                  0:1];
+
    //----------------------------------------
    // Clocks & reset
    //----------------------------------------
@@ -176,42 +182,42 @@ module qeciphy_tb;
 
    generate
       if (`GT_TYPE == "GTX") begin : gen_gtx_links
-         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = dut1_txn[BIT_SLIDE-1];
-         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = dut1_txp[BIT_SLIDE-1];
+         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
+         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
 
-         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = dut0_txn[BIT_SLIDE-1];
-         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = dut0_txp[BIT_SLIDE-1];
+         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
+         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
          always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out};
+            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
+            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
+            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
+            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
          end
       end else if (`GT_TYPE == "GTY") begin : gen_gty_links
-         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = dut1_txn[BIT_SLIDE-1];
-         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = dut1_txp[BIT_SLIDE-1];
+         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
+         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
 
-         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = dut0_txn[BIT_SLIDE-1];
-         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = dut0_txp[BIT_SLIDE-1];
+         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
+         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
 
          always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out};
+            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
+            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
+            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
+            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
          end
       end else if (`GT_TYPE == "GTH") begin : gen_gth_links
-         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = dut1_txn[BIT_SLIDE-1];
-         assign dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = dut1_txp[BIT_SLIDE-1];
+         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
+         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
 
-         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = dut0_txn[BIT_SLIDE-1];
-         assign dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = dut0_txp[BIT_SLIDE-1];
+         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
+         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
 
          always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], dut1.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], dut0.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out};
+            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
+            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
+            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
+            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
          end
       end
    endgenerate
@@ -382,7 +388,11 @@ module qeciphy_tb;
        .RX_TVALID(axis_rx[0].tvalid),
        .RX_TREADY(axis_rx[0].tready),
        .STATUS   (status[0]),
-       .ECODE    (ecode[0])
+       .ECODE    (ecode[0]),
+       .GT_RX_P  (gt_rx_p[0]),
+       .GT_RX_N  (gt_rx_n[0]),
+       .GT_TX_P  (gt_tx_p[0]),
+       .GT_TX_N  (gt_tx_n[0])
    );
 
    QECIPHY #(
@@ -399,7 +409,11 @@ module qeciphy_tb;
        .RX_TVALID(axis_rx[1].tvalid),
        .RX_TREADY(axis_rx[1].tready),
        .STATUS   (status[1]),
-       .ECODE    (ecode[1])
+       .ECODE    (ecode[1]),
+       .GT_RX_P  (gt_rx_p[1]),
+       .GT_RX_N  (gt_rx_n[1]),
+       .GT_TX_P  (gt_tx_p[1]),
+       .GT_TX_N  (gt_tx_n[1])
    );
 
    //----------------------------------------

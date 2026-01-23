@@ -75,7 +75,11 @@ module qeciphy_uvmtb ();
       .RX_TVALID (dut_rx_tvalid),
       .RX_TREADY (dut_rx_tready),
       .STATUS    (dut_status),
-      .ECODE     (dut_ecode)
+      .ECODE     (dut_ecode),
+      .GT_RX_P   (dut_rxp),
+      .GT_RX_N   (dut_rxn),
+      .GT_TX_P   (dut_txp),
+      .GT_TX_N   (dut_txn)
    );
    //----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -95,7 +99,11 @@ module qeciphy_uvmtb ();
       .RX_TVALID (tbphy_rx_tvalid),
       .RX_TREADY (tbphy_rx_tready),
       .STATUS    (tbphy_status),
-      .ECODE     (tbphy_ecode)
+      .ECODE     (tbphy_ecode),
+      .GT_RX_P   (tbphy_rxp),
+      .GT_RX_N   (tbphy_rxn),
+      .GT_TX_P   (tbphy_txp),
+      .GT_TX_N   (tbphy_txn)
    );
    //----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -188,48 +196,6 @@ module qeciphy_uvmtb ();
       uvm_config_db#(virtual riv_diff_pair_connector_vip_if)::set(uvm_root::get(), "", "tbphy2dut_conn_vif", i_tbphy2dut_conn_if);
       run_test();
    end
-   //----------------------------------------------------------------------------------------------------------------------------------------
-
-
-   //----------------------------------------------------------------------------------------------------------------------------------------
-   // Connect the two PHYs together.
-   //----------------------------------------------------------------------------------------------------------------------------------------
-   generate
-      if (`GT_TYPE == "GTY") begin : gen_GTY_connections
-         initial $info("%m: Using GTY PHYs");
-         assign dut_txn   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out;
-         assign dut_txp   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out;
-         assign tbphy_txn = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxn_out;
-         assign tbphy_txp = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtytxp_out;
-         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in = tbphy_rxn;
-         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in = tbphy_rxp;
-         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxn_in   = dut_rxn;
-         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTY_transceiver.transceiver.gtyrxp_in   = dut_rxp;
-      end else if (`GT_TYPE == "GTX") begin : gen_GTX_connection
-         initial $info("%m: Using GTX PHYs");
-         assign dut_txn   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out;
-         assign dut_txp   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out;
-         assign tbphy_txn = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxn_out;
-         assign tbphy_txp = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxtxp_out;
-         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in = tbphy_rxn;
-         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in = tbphy_rxp;
-         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxn_in   = dut_rxn;
-         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTX_transceiver.transceiver.gt0_gtxrxp_in   = dut_rxp;
-      end else if (`GT_TYPE == "GTH") begin : gen_GTH_connection
-         initial $info("%m: Using GTH PHYs");
-         assign dut_txn   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out;
-         assign dut_txp   = i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out;
-         assign tbphy_txn = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxn_out;
-         assign tbphy_txp = i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthtxp_out;
-         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in = tbphy_rxn;
-         assign i_tbphy.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in = tbphy_rxp;
-         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxn_in   = dut_rxn;
-         assign i_dut.i_qeciphy_serdes.i_qeciphy_gt_wrapper.gen_GTH_transceiver.transceiver.gthrxp_in   = dut_rxp;
-      end else begin : bad_GT_type
-         $fatal("%m: Bad GT type %0s", `GT_TYPE);
-      end
-
-   endgenerate
    //----------------------------------------------------------------------------------------------------------------------------------------
 
 
