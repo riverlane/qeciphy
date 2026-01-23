@@ -34,6 +34,7 @@ module qeciphy_gt_wrapper #(
    // Common signal declaration
    // -------------------------------------------------------------
 
+   localparam reset_counter_width = 10;
    logic rxoutclk;
    logic txoutclk;
    logic [15:0] gt_rx_rst_delay_counter;
@@ -50,24 +51,24 @@ module qeciphy_gt_wrapper #(
          gt_rx_rst_delay_counter <= '0;
       end else if (!gt_rx_rst_done) begin
          gt_rx_rst_delay_counter <= '0;
-      end else if (gt_rx_rst_done && !gt_rx_rst_delay_counter[15]) begin
+      end else if (gt_rx_rst_done && !gt_rx_rst_delay_counter[reset_counter_width]) begin
          gt_rx_rst_delay_counter <= gt_rx_rst_delay_counter + 16'd1;
       end
    end
 
-   assign gt_tx_rst_done_o = gt_tx_rst_delay_counter[15];
+   assign gt_tx_rst_done_o = gt_tx_rst_delay_counter[reset_counter_width];
 
    always_ff @(posedge tx_clk_2x_o or negedge gt_rst_n_i) begin
       if (!gt_rst_n_i) begin
          gt_tx_rst_delay_counter <= '0;
       end else if (!gt_tx_rst_done) begin
          gt_tx_rst_delay_counter <= '0;
-      end else if (gt_tx_rst_done && !gt_tx_rst_delay_counter[15]) begin
+      end else if (gt_tx_rst_done && !gt_tx_rst_delay_counter[reset_counter_width]) begin
          gt_tx_rst_delay_counter <= gt_tx_rst_delay_counter + 16'd1;
       end
    end
 
-   assign gt_rx_rst_done_o = gt_rx_rst_delay_counter[15];
+   assign gt_rx_rst_done_o = gt_rx_rst_delay_counter[reset_counter_width];
 
    // -------------------------------------------------------------
    // GTY transceiver instantiation
@@ -94,24 +95,24 @@ module qeciphy_gt_wrapper #(
                rx_pma_rst_delay_counter <= '0;
             end else if (!rxpmaresetdone) begin
                rx_pma_rst_delay_counter <= '0;
-            end else if (rxpmaresetdone && !rx_pma_rst_delay_counter[15]) begin
+            end else if (rxpmaresetdone && !rx_pma_rst_delay_counter[reset_counter_width]) begin
                rx_pma_rst_delay_counter <= rx_pma_rst_delay_counter + 16'd1;
             end
          end
 
-         assign rx_pma_rst_done_internal = rx_pma_rst_delay_counter[15];
+         assign rx_pma_rst_done_internal = rx_pma_rst_delay_counter[reset_counter_width];
 
          always_ff @(posedge tx_clk_2x_o or negedge gt_rst_n_i) begin
             if (!gt_rst_n_i) begin
                tx_pma_rst_delay_counter <= '0;
             end else if (!txpmaresetdone) begin
                tx_pma_rst_delay_counter <= '0;
-            end else if (txpmaresetdone && !tx_pma_rst_delay_counter[15]) begin
+            end else if (txpmaresetdone && !tx_pma_rst_delay_counter[reset_counter_width]) begin
                tx_pma_rst_delay_counter <= tx_pma_rst_delay_counter + 16'd1;
             end
          end
 
-         assign tx_pma_rst_done_internal = tx_pma_rst_delay_counter[15];
+         assign tx_pma_rst_done_internal = tx_pma_rst_delay_counter[reset_counter_width];
 
          (* MARK_DEBUG = "TRUE" *)logic cdr_stable;
          (* MARK_DEBUG = "TRUE" *)logic qpll0_lock;

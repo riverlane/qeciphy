@@ -35,7 +35,7 @@ module qeciphy_tb;
    localparam real FCLK_PERIOD_NS = (`GT_TYPE == "GTX") ? 8.0 : (`GT_TYPE == "GTH") ? 6.4 : 6.4;
 
    localparam real ACLK_PERIOD_NS = 4.0;  // >= 156.25 MHz
-   localparam real QPLL_PERIOD_NS = 0.08;
+   localparam real QPLL_PERIOD_NS = 1/10.3125;  // 10.3125 Gbps
 
    localparam int MAX_CYCLES = 32'h0002_0000;
    localparam int MAX_SLIDE = 40;

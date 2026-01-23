@@ -120,7 +120,7 @@ module qeciphy_rx_bytealigner #(
          SLIDE0: fsm_nxt = SLIDE1;
          SLIDE1: fsm_nxt = OFF;
          OFF: fsm_nxt = slide_rdy_i & rx_slide_idle_count_max ? CHECK : OFF;
-         CHECK: fsm_nxt = rx_datan_comma_m ? REVIEW : rx_pattern_count_max ? (rx_slide_count_max ? FAIL : IDLE) : CHECK;
+         CHECK: fsm_nxt = rx_datan_comma_m ? REVIEW : rx_pattern_count_max ? (rx_slide_count_max ? FAIL : SLIDE0) : CHECK;
          REVIEW:
          fsm_nxt =  // Check that after the first successful hit for comma character
                     // we are able to match it for at least 8 consecutive times before proceeding
