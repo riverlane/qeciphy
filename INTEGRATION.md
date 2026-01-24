@@ -1,6 +1,6 @@
 # QECIPHY Integration Guide
 
-This document provides detailed instructions for integrating QECIPHY into your FPGA design. If you haven't already, please read the [README.md](README.md) for an overview of QECIPHY's features and capabilities.
+This document provides detailed instructions for integrating QECIPHY into your FPGA design. If you haven't already, please read the [README.md](README.md) for an overview of QECIPHY's features and capabilities. If you are interested in the architecture of QECIPHY, please refer to the [architecture](docs/architecture.md) document.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ QECIPHY provides a simple AXI4-Stream interface that abstracts away all physical
 1. **Platform Configuration**: Set up your hardware profile and generate IP dependencies
 2. **HDL Instantiation**: Instantiate QECIPHY module directly in your SystemVerilog design
 3. **Interface Connection**: Connect AXI4-Stream interfaces to your application logic
-4. **Status Monitoring**: Implement link status and error handling
+4. **Status Monitoring**: Implement link status monitoring and error handling
 5. **Constraint Application**: Apply provided timing constraints
 
 ## Prerequisites
@@ -35,12 +35,6 @@ QECIPHY provides a simple AXI4-Stream interface that abstracts away all physical
 - Vivado 2024.1 or later
 - Python 3.8+ (for build scripts)
 - Make (for build automation)
-
-### Design Requirements
-
-Your design must include:
-- Reset synchronization logic
-- Status monitoring and error handling logic
 
 ## Step-by-Step Integration
 
@@ -104,9 +98,9 @@ If your platform is not listed, create a new profile in `config.json`:
 - `fclk_freq`: Transceiver DRP clock frequency in MHz
 - `rclk_freq`: Transceiver reference clock frequency in MHz
 - `transceiver.gt_loc`: Transceiver location (e.g., "X0Y8") 
-- `transceiver.rx_rclk_src`: RX reference clock source
-- `transceiver.tx_rclk_src`: TX reference clock source
-- `transceiver.line_rate_gbps`: Transceiver line rate in Gbps (e.g., "12.5")
+- `transceiver.rx_rclk_src`: RX reference clock source (e.g., "X0Y8 clk1+2" means using refclock 1 from the GT quad located 2 quads above X0Y8)
+- `transceiver.tx_rclk_src`: TX reference clock source (same format as RX)
+- `transceiver.line_rate_gbps`: Transceiver line rate in Gbps (e.g., "10.3125")
 - `synth`: Synthesis configuration (optional, for standalone testing)
 
 **Important:** Refer to your FPGA documentation for correct GT site assignments and available reference clock sources for your specific device and board.
@@ -118,9 +112,7 @@ If your platform is not listed, create a new profile in `config.json`:
 make generate-xci OPT_PROFILE=<your-profile>
 ```
 
-This generates:
-- Platform-specific XCI files needed by QECIPHY
-- Transceiver IP cores configured for your hardware platform
+This generates transceiver IP cores configured for your hardware platform.
 
 ### Step 4: (Optional) Create Standalone Test Design
 
@@ -194,14 +186,14 @@ QECIPHY #(
     .ARSTn      (aresetn),
     
     // TX Interface (from your design)
-    .TX_TDATA   (m_axis_tx_tdata),
-    .TX_TVALID  (m_axis_tx_tvalid),
-    .TX_TREADY  (m_axis_tx_tready),
+    .TX_TDATA   (qeciphy_tx_tdata),
+    .TX_TVALID  (qeciphy_tx_tvalid),
+    .TX_TREADY  (qeciphy_tx_tready),
     
     // RX Interface (to your design)
-    .RX_TDATA   (s_axis_rx_tdata),
-    .RX_TVALID  (s_axis_rx_tvalid), 
-    .RX_TREADY  (s_axis_rx_tready),
+    .RX_TDATA   (qeciphy_rx_tdata),
+    .RX_TVALID  (qeciphy_rx_tvalid), 
+    .RX_TREADY  (qeciphy_rx_tready),
     
     // Status and Control
     .STATUS     (qeciphy_status),
@@ -232,110 +224,122 @@ We recommend instantiating the IP with the name `i_QECIPHY` or `u_QECIPHY`. The 
 ### GTY Transceiver Constraints
 
 ```tcl
+# Reference clock
+create_clock -period <refclk_period> -name RCLK [get_ports <refclk_port>]
+
+# Free-running clock
+create_clock -period <freerun_clk_period> -name FCLK [get_ports <freerun_clk_port>]
+
+# AXI4 stream clock
+create_clock -period <axi_clk_period> -name ACLK [get_ports <axi_clk_port>]
+
 # Create generated clocks for GT wrapper clocks
 create_generated_clock -name rx_clk    [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTY_transceiver.i_BUFG_rx_clk/O}]
-create_generated_clock -name gt_rx_clk [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper*channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST/RXOUTCLK}]
+create_generated_clock -name rx_clk_2x [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTY_transceiver.i_BUFG_gt_rx_clk/O}]
 create_generated_clock -name tx_clk    [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTY_transceiver.i_BUFG_tx_clk/O}]
-create_generated_clock -name gt_tx_clk [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper*channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST/TXOUTCLK}]
+create_generated_clock -name tx_clk_2x [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTY_transceiver.i_BUFG_gt_tx_clk/O}]
 
 # Set asynchronous clock groups
-set_clock_groups -asynchronous -group [get_clocks RCLK] -group [get_clocks {rx_clk gt_rx_clk}] -group [get_clocks {tx_clk gt_tx_clk}]
+# Optionally include ACLK if needed
+set_clock_groups -asynchronous -group [get_clocks RCLK] -group [get_clocks FCLK] -group [get_clocks {rx_clk rx_clk_2x}] -group [get_clocks {tx_clk tx_clk_2x}]
 
 # Clock delay groups for timing closure
-set_property CLOCK_DELAY_GROUP rx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gt_rx_clk}]
-set_property CLOCK_DELAY_GROUP tx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gt_tx_clk}]
+set_property CLOCK_DELAY_GROUP rx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk_o || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk_2x_o}]
+set_property CLOCK_DELAY_GROUP tx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk_o || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk_2x_o}]
 
 # Multicycle paths for GT wrapper internal timing
-set_multicycle_path 2 -setup -end -from [get_clocks rx_clk] -to [get_clocks gt_rx_clk]
-set_multicycle_path 1 -hold  -end -from [get_clocks rx_clk] -to [get_clocks gt_rx_clk]
-set_multicycle_path 2 -setup -start -from [get_clocks gt_rx_clk] -to [get_clocks rx_clk]
-set_multicycle_path 1 -hold  -start -from [get_clocks gt_rx_clk] -to [get_clocks rx_clk]
-set_multicycle_path 2 -setup -end -from [get_clocks tx_clk] -to [get_clocks gt_tx_clk]
-set_multicycle_path 1 -hold  -end -from [get_clocks tx_clk] -to [get_clocks gt_tx_clk]
-set_multicycle_path 2 -setup -start -from [get_clocks gt_tx_clk] -to [get_clocks tx_clk]
-set_multicycle_path 1 -hold  -start -from [get_clocks gt_tx_clk] -to [get_clocks tx_clk]
+set_multicycle_path 2 -setup -end -from [get_clocks rx_clk] -to [get_clocks rx_clk_2x]
+set_multicycle_path 1 -hold  -end -from [get_clocks rx_clk] -to [get_clocks rx_clk_2x]
+set_multicycle_path 2 -setup -start -from [get_clocks rx_clk_2x] -to [get_clocks rx_clk]
+set_multicycle_path 1 -hold  -start -from [get_clocks rx_clk_2x] -to [get_clocks rx_clk]
+set_multicycle_path 2 -setup -end -from [get_clocks tx_clk] -to [get_clocks tx_clk_2x]
+set_multicycle_path 1 -hold  -end -from [get_clocks tx_clk] -to [get_clocks tx_clk_2x]
+set_multicycle_path 2 -setup -start -from [get_clocks tx_clk_2x] -to [get_clocks tx_clk]
+set_multicycle_path 1 -hold  -start -from [get_clocks tx_clk_2x] -to [get_clocks tx_clk]
 ```
 
 ### GTH Transceiver Constraints
 
 ```tcl
+# Reference clock
+create_clock -period <refclk_period> -name RCLK [get_ports <refclk_port>]
+
+# Free-running clock
+create_clock -period <freerun_clk_period> -name FCLK [get_ports <freerun_clk_port>]
+
+# AXI4 stream clock
+create_clock -period <axi_clk_period> -name ACLK [get_ports <axi_clk_port>]
+
 # Create generated clocks for GT wrapper clocks
 create_generated_clock -name rx_clk    [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTH_transceiver.i_BUFG_rx_clk/O}]
-create_generated_clock -name gt_rx_clk [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper*channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/RXOUTCLK}]
+create_generated_clock -name rx_clk_2x [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTH_transceiver.i_BUFG_gt_rx_clk/O}]
 create_generated_clock -name tx_clk    [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTH_transceiver.i_BUFG_tx_clk/O}]
-create_generated_clock -name gt_tx_clk [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper*channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK}]
+create_generated_clock -name tx_clk_2x [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gen_GTH_transceiver.i_BUFG_gt_tx_clk/O}]
 
 # Set asynchronous clock groups
-set_clock_groups -asynchronous -group [get_clocks RCLK] -group [get_clocks {rx_clk gt_rx_clk}] -group [get_clocks {tx_clk gt_tx_clk}]
+# Optionally include ACLK if needed
+set_clock_groups -asynchronous -group [get_clocks RCLK] -group [get_clocks FCLK] -group [get_clocks {rx_clk rx_clk_2x}] -group [get_clocks {tx_clk tx_clk_2x}]
 
 # Clock delay groups for timing closure
-set_property CLOCK_DELAY_GROUP rx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gt_rx_clk}]
-set_property CLOCK_DELAY_GROUP tx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gt_tx_clk}]
+set_property CLOCK_DELAY_GROUP rx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk_o || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk_2x_o}]
+set_property CLOCK_DELAY_GROUP tx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk_o || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk_2x_o}]
 
 # Multicycle paths for GT wrapper internal timing
-set_multicycle_path 2 -setup -end -from [get_clocks rx_clk] -to [get_clocks gt_rx_clk]
-set_multicycle_path 1 -hold  -end -from [get_clocks rx_clk] -to [get_clocks gt_rx_clk]
-set_multicycle_path 2 -setup -start -from [get_clocks gt_rx_clk] -to [get_clocks rx_clk]
-set_multicycle_path 1 -hold  -start -from [get_clocks gt_rx_clk] -to [get_clocks rx_clk]
-set_multicycle_path 2 -setup -end -from [get_clocks tx_clk] -to [get_clocks gt_tx_clk]
-set_multicycle_path 1 -hold  -end -from [get_clocks tx_clk] -to [get_clocks gt_tx_clk]
-set_multicycle_path 2 -setup -start -from [get_clocks gt_tx_clk] -to [get_clocks tx_clk]
-set_multicycle_path 1 -hold  -start -from [get_clocks gt_tx_clk] -to [get_clocks tx_clk]
+set_multicycle_path 2 -setup -end -from [get_clocks rx_clk] -to [get_clocks rx_clk_2x]
+set_multicycle_path 1 -hold  -end -from [get_clocks rx_clk] -to [get_clocks rx_clk_2x]
+set_multicycle_path 2 -setup -start -from [get_clocks rx_clk_2x] -to [get_clocks rx_clk]
+set_multicycle_path 1 -hold  -start -from [get_clocks rx_clk_2x] -to [get_clocks rx_clk]
+set_multicycle_path 2 -setup -end -from [get_clocks tx_clk] -to [get_clocks tx_clk_2x]
+set_multicycle_path 1 -hold  -end -from [get_clocks tx_clk] -to [get_clocks tx_clk_2x]
+set_multicycle_path 2 -setup -start -from [get_clocks tx_clk_2x] -to [get_clocks tx_clk]
+set_multicycle_path 1 -hold  -start -from [get_clocks tx_clk_2x] -to [get_clocks tx_clk]
 ```
 
 ### GTX Transceiver Constraints
 
 ```tcl
+# Reference clock
+create_clock -period <refclk_period> -name RCLK [get_ports <refclk_port>]
+
+# Free-running clock
+create_clock -period <freerun_clk_period> -name FCLK [get_ports <freerun_clk_port>]
+
+# AXI4 stream clock
+create_clock -period <axi_clk_period> -name ACLK [get_ports <axi_clk_port>]
+
 # Create generated clocks from MMCM outputs
 create_generated_clock -name rx_clk    [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_rx_clks*inst/mmcm_adv_inst/CLKOUT0}]
-create_generated_clock -name gt_rx_clk [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_rx_clks*inst/mmcm_adv_inst/CLKOUT1}]
+create_generated_clock -name rx_clk_2x [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_rx_clks*inst/mmcm_adv_inst/CLKOUT1}]
 create_generated_clock -name tx_clk    [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_tx_clks*inst/mmcm_adv_inst/CLKOUT0}]
-create_generated_clock -name gt_tx_clk [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_tx_clks*inst/mmcm_adv_inst/CLKOUT1}]
+create_generated_clock -name tx_clk_2x [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_tx_clks*inst/mmcm_adv_inst/CLKOUT1}]
 
 # Set asynchronous clock groups
-set_clock_groups -asynchronous -group [get_clocks RCLK] -group [get_clocks {rx_clk gt_rx_clk}] -group [get_clocks {tx_clk gt_tx_clk}]
+# Optionally include ACLK if needed
+set_clock_groups -asynchronous -group [get_clocks RCLK] -group [get_clocks FCLK] -group [get_clocks {rx_clk rx_clk_2x}] -group [get_clocks {tx_clk tx_clk_2x}]
 
 # Clock delay groups for timing closure
 set_property CLOCK_DELAY_GROUP rx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_rx_clks/inst/clk_out || NAME =~ *QECIPHY*i_rx_clks/inst/clk_out_2x}]
 set_property CLOCK_DELAY_GROUP tx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_tx_clks/inst/clk_out || NAME =~ *QECIPHY*i_tx_clks/inst/clk_out_2x}]
 
 # Multicycle paths for clock domain timing
-set_multicycle_path 2 -setup -end -from [get_clocks rx_clk] -to [get_clocks gt_rx_clk]
-set_multicycle_path 1 -hold  -end -from [get_clocks rx_clk] -to [get_clocks gt_rx_clk]
-set_multicycle_path 2 -setup -start -from [get_clocks gt_rx_clk] -to [get_clocks rx_clk]
-set_multicycle_path 1 -hold  -start -from [get_clocks gt_rx_clk] -to [get_clocks rx_clk]
-set_multicycle_path 2 -setup -end -from [get_clocks tx_clk] -to [get_clocks gt_tx_clk]
-set_multicycle_path 1 -hold  -end -from [get_clocks tx_clk] -to [get_clocks gt_tx_clk]
-set_multicycle_path 2 -setup -start -from [get_clocks gt_tx_clk] -to [get_clocks tx_clk]
-set_multicycle_path 1 -hold  -start -from [get_clocks gt_tx_clk] -to [get_clocks tx_clk]
+set_multicycle_path 2 -setup -end -from [get_clocks rx_clk] -to [get_clocks rx_clk_2x]
+set_multicycle_path 1 -hold  -end -from [get_clocks rx_clk] -to [get_clocks rx_clk_2x]
+set_multicycle_path 2 -setup -start -from [get_clocks rx_clk_2x] -to [get_clocks rx_clk]
+set_multicycle_path 1 -hold  -start -from [get_clocks rx_clk_2x] -to [get_clocks rx_clk]
+set_multicycle_path 2 -setup -end -from [get_clocks tx_clk] -to [get_clocks tx_clk_2x]
+set_multicycle_path 1 -hold  -end -from [get_clocks tx_clk] -to [get_clocks tx_clk_2x]
+set_multicycle_path 2 -setup -start -from [get_clocks tx_clk_2x] -to [get_clocks tx_clk]
+set_multicycle_path 1 -hold  -start -from [get_clocks tx_clk_2x] -to [get_clocks tx_clk]
 
 # GT location constraint (replace 'location' with actual GT site)
 set_property LOC {location} [get_cells -hierarchical -filter {lib_cell =~ GTXE2_CHANNEL && NAME =~ *QECIPHY*}]
-```
-
-### Additional User Clocks
-
-You must also define your user clocks:
-
-```tcl
-# Your reference clock (adjust period based on your frequency)
-create_clock -period 6.400 -name RCLK [get_ports your_refclk_port]
-
-# Your free-running clock (adjust period based on your frequency) 
-create_clock -period 6.400 -name FCLK [get_ports your_freerun_clk_port]
-
-# Your AXI stream clock
-create_clock -period 4.000 -name ACLK [get_ports your_axi_clk_port]
-
-# Optional: Set user clocks as asynchronous (QECIPHY handles all CDC internally)
-set_clock_groups -asynchronous -group [get_clocks RCLK] -group [get_clocks FCLK] -group [get_clocks ACLK]
 ```
 
 ## Data Path Integration Examples
 
 ### Reset Synchronization
 
-The `ARSTn` input requires a properly synchronized reset signal. The following example shows how to synchronize an external asynchronous reset (`async_rst_n`) to the AXI clock domain to create `aresetn` that is asynchronously deasserted and synchronously asserted:
+The `ARSTn` input requires a properly synchronized reset signal. The following example shows how to synchronize an external asynchronous reset (`async_rst_n`) to the AXI clock domain to create `aresetn` that can be asynchronously asserted but is synchronously de-asserted.
 
 ```systemverilog
 logic [1:0] aresetn_sync;
@@ -355,68 +359,66 @@ end
 ### TX Data Path Example
 
 ```systemverilog
-assign busy = (m_axis_tx_tvalid & !m_axis_tx_tready);
+// From your application logic
+logic [63:0] user_tdata;
+logic        user_tvalid;
+logic        user_tready;
 
-// Your application logic generates data
-always_ff @(posedge axi_clk) begin
-    if (!aresetn) begin
-        m_axis_tx_tvalid <= 1'b0;
-        m_axis_tx_tdata  <= 64'h0;
-    end else if (data_available && !busy) begin
-        m_axis_tx_tvalid <= 1'b1;
-        m_axis_tx_tdata  <= application_data;
-    end else if (m_axis_tx_tready) begin
-        m_axis_tx_tvalid <= 1'b0;
-    end
-end
+// QECIPHY TX interface signals
+logic [63:0] qeciphy_tx_tdata;
+logic        qeciphy_tx_tvalid;
+logic        qeciphy_tx_tready;
+
+// Connect user logic to QECIPHY TX interface
+assign qeciphy_tx_tdata  = user_tdata;
+assign qeciphy_tx_tvalid = user_tvalid;
+assign user_tready       = qeciphy_tx_tready;
 ```
 
 ### RX Data Path Example
 
 ```systemverilog
-// Your application logic receives data
-always_ff @(posedge axi_clk) begin
-    if (!aresetn) begin
-        s_axis_rx_tready <= 1'b1;  // Always ready to receive
-    end else if (s_axis_rx_tvalid && s_axis_rx_tready) begin
-        // Process received data
-        process_received_data(s_axis_rx_tdata);
-    end
-end
+// QECIPHY RX interface signals
+logic [63:0] qeciphy_rx_tdata;
+logic        qeciphy_rx_tvalid;
+logic        qeciphy_rx_tready;
+
+// To your application logic
+logic [63:0] user_rx_tdata;
+logic        user_rx_tvalid;
+
+// Connect QECIPHY RX interface to user logic
+assign user_rx_tdata  = qeciphy_rx_tdata;
+assign user_rx_tvalid = qeciphy_rx_tvalid;
+assign qeciphy_rx_tready = 1'b1; // Always ready to accept data
 ```
 
 ### Status Monitoring Implementation
 
 ```systemverilog
-// Status bit definitions
-typedef enum logic [3:0] {
-    STATUS_RESET          = 4'h0,  // PHY controller in reset
-    STATUS_WAIT_FOR_RESET = 4'h1,  // Waiting for reset completion
-    STATUS_LINK_TRAINING  = 4'h2,  // Link training in progress
-    STATUS_RX_LOCKED      = 4'h3,  // Receiver locked to data pattern
-    STATUS_LINK_READY     = 4'h4,  // Ready for data transfer
-    STATUS_FAULT_FATAL    = 4'h5,  // Fatal fault detected
-    STATUS_SLEEP          = 4'h6,  // Sleep state (power management)
-    STATUS_WAIT_POWERDOWN = 4'h7   // Waiting for power down
-} qeciphy_status_t;
+`include "/path/to/qeciphy_pkg.sv"
+...
+import qeciphy_pkg::*;
 
-// Monitor link status
+// Status and Error signals from QECIPHY
+logic [3:0] qeciphy_status;
+logic [3:0] qeciphy_ecode;
+logic       qeciphy_link_ready;
+logic       qeciphy_fault_fatal;
+
+// Status monitoring enums
+qeciphy_status_t qeciphy_status_enum;
+qeciphy_error_t  qeciphy_ecode_enum;
+
+// Convert STATUS and ECODE to enums
+qeciphy_status_enum = qeciphy_status_t'(qeciphy_status);
+
 always_ff @(posedge axi_clk) begin
-    case (qeciphy_status)
-        STATUS_LINK_READY: begin
-            // Link is ready for data transfer
-            link_ready <= 1'b1;
-        end
-        STATUS_FAULT_FATAL: begin
-            // Handle error condition
-            link_ready <= 1'b0;
-            // Check ECODE for specific error type
-        end
-        default: begin
-            // Link not ready yet
-            link_ready <= 1'b0;
-        end
-    endcase
+    if (aresetn == 1'b0) begin
+        qeciphy_ecode_enum <= NO_ERROR;
+    end else if (qeciphy_fault_fatal) begin
+        qeciphy_ecode_enum = qeciphy_error_t'(qeciphy_ecode);
+    end
 end
 ```
 
@@ -425,49 +427,49 @@ Note: If the QECIPHY enters FAULT-FATAL state, please reset the IP to get out of
 ## Interface Details
 
 ### Clocking and Reset
-- **RCLK**: Reference clock for transceivers (e.g., 156.25 MHz)
-- **FCLK**: Free-running clock (e.g., 100 MHz)
+- **RCLK**: Reference clock for transceivers
+- **FCLK**: Free-running clock
 - **ACLK**: AXI4-Stream clock for TX/RX interfaces
-- **ARSTn**: Active LOW asynchronous reset input, synchronized internally
+- **ARSTn**: Active LOW reset, asynchronously asserted, synchronously de-asserted to ACLK domain
 
-**Note:** RCLK, FCLK and ACLK can all be asynchronous to each other.
+**Note:** RCLK, FCLK and ACLK can all be asynchronous to each other. QECIPHY handles clock domain crossing internally.
 
 ### AXI4-Stream Protocol
 
 QECIPHY uses standard AXI4-Stream protocol with 64-bit data width:
 
 **Transmit Channel:**
-- **TX_TDATA[63:0]**: Data payload (8 bytes per transfer)
-- **TX_TVALID**: Source indicates valid data
-- **TX_TREADY**: Destination can accept data
+- **TX_TDATA[63:0]**: Data payload from the user logic
+- **TX_TVALID**: User indicates valid data
+- **TX_TREADY**: QECIPHY can accept data
 
 **Receive Channel:**
-- **RX_TDATA[63:0]**: Data payload (8 bytes per transfer)
-- **RX_TVALID**: Source indicates valid data
-- **RX_TREADY**: Destination can accept data
+- **RX_TDATA[63:0]**: Data payload to the user logic
+- **RX_TVALID**: QECIPHY indicates valid data
+- **RX_TREADY**: User can accept data
 
-**Important Note**: The QECIPHY does not need to support backpressure. User logic should always be able to consume RX data. Design your receive path accordingly.
+**Important Note**: The backpressure support in QECIPHY is minimal. User logic should always be able to consume RX data. Design your receive path accordingly.
 
 ### Status and Error Codes
 
 #### STATUS[3:0] Values
-- `4'h0`: RESET - PHY controller in reset
+- `4'h0`: RESET - In reset
 - `4'h1`: WAIT-FOR-RESET - Waiting for reset completion
 - `4'h2`: LINK-TRAINING - Link training in progress  
 - `4'h3`: RX-LOCKED - Receiver locked to data pattern
 - `4'h4`: LINK-READY - Ready for data transfer
 - `4'h5`: FAULT-FATAL - Fatal fault detected
-- `4'h6`: SLEEP - Sleep state (power management)
-- `4'h7`: WAIT-FOR-POWERDOWN - Waiting for power down
 
 #### ECODE[3:0] Values
-- `4'h0`: OK - No error
-- `4'h1`: FAP-MISSING - Frame Alignment Packet missing
-- `4'h2`: CRC-ERROR - CRC validation failed
+- `4'h0`: NO-ERROR - No error
+- `4'h1`: FAW-ERROR - Frame Alignment Word missing
+- `4'h2`: CRC-ERROR - CRC error detected
+- `4'h3`: TX-FIFO-OVERFLOW - Transmit FIFO overflow
+- `4'h4`: RX-FIFO-OVERFLOW - Receive FIFO overflow
 
 ## Support
 
 For additional support, please refer to:
 - [README.md](README.md) - Project overview and quick start
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
+- [docs/architecture.md](docs/architecture.md) - Detailed architecture description
 - [GitHub Issues](https://github.com/riverlane/qeciphy/issues) - Report issues or ask questions
