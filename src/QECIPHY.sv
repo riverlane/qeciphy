@@ -91,6 +91,7 @@ module QECIPHY #(
    logic        tx_clk;  // TX clock
    logic        tx_ch_enc_tready;  // TX channel encoder AXIS tready
    logic [63:0] gt_tx_tdata;  // TX data from channel encoder
+   logic        gt_tx_tdata_isfaw;  // TX data is FAW indicator from channel encoder
    logic        rx_clk;  // RX clock
    logic        rx_fifo_ren;  // RX FIFO read enable
    logic        rx_fifo_empty;  // RX FIFO empty flag
@@ -209,15 +210,16 @@ module QECIPHY #(
 
    // TX Channel Encoder: FIFO Data -> Encoded SERDES Data (+ FAW + CRC + IDLE Words)
    qeciphy_tx_channelencoder i_qeciphy_tx_channelencoder (
-       .clk_i          (tx_clk),               // TX clock
-       .rst_n_i        (tx_datapath_rst_n),    // TX datapath reset
-       .s_axis_tdata_i (tx_fifo_rdata),        // Data from TX FIFO
-       .s_axis_tvalid_i(~tx_fifo_empty),       // Valid when TX FIFO not empty
-       .s_axis_tready_o(tx_ch_enc_tready),     // Ready to accept data
-       .m_axis_tdata_o (gt_tx_tdata),          // Encoded data to qeciphy_serdes
-       .link_enable_i  (tx_link_enable_tclk),  // Link enable from qeciphy_controller
-       .data_enable_i  (tx_data_enable_tclk),  // User data enable from qeciphy_controller
-       .rx_rdy_i       (rx_rdy_tclk)           // RX ready status from qeciphy_rx_channeldecoder
+       .clk_i               (tx_clk),               // TX clock
+       .rst_n_i             (tx_datapath_rst_n),    // TX datapath reset
+       .s_axis_tdata_i      (tx_fifo_rdata),        // Data from TX FIFO
+       .s_axis_tvalid_i     (~tx_fifo_empty),       // Valid when TX FIFO not empty
+       .s_axis_tready_o     (tx_ch_enc_tready),     // Ready to accept data
+       .m_axis_tdata_o      (gt_tx_tdata),          // Encoded data to qeciphy_serdes
+       .m_axis_tdata_isfaw_o(gt_tx_tdata_isfaw),    // Encoded data is FAW indicator to qeciphy_serdes
+       .link_enable_i       (tx_link_enable_tclk),  // Link enable from qeciphy_controller
+       .data_enable_i       (tx_data_enable_tclk),  // User data enable from qeciphy_controller
+       .rx_rdy_i            (rx_rdy_tclk)           // RX ready status from qeciphy_rx_channeldecoder
    );
 
    // =========================================================================
@@ -283,6 +285,7 @@ module QECIPHY #(
        .tx_clk_o           (tx_clk),              // TX clock output
        .tx_datapath_rst_n_i(tx_datapath_rst_n),   // TX datapath reset input from qeciphy_resetcontroller
        .tx_tdata_i         (gt_tx_tdata),         // 64 bit TX data input from qeciphy_tx_channelencoder
+       .tx_tdata_isfaw_i   (gt_tx_tdata_isfaw),   // TX data is FAW indicator from qeciphy_tx_channelencoder
        .gt_tx_rst_done_o   (gt_tx_rst_done_tclk), // TX reset completion to qeciphy_resetcontroller
 
        // RX Interface

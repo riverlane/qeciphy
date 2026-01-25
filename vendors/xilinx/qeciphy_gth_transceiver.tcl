@@ -69,8 +69,16 @@ set ip_obj [create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -
 # Set IP parameters
 set_property -dict [list \
   CONFIG.CHANNEL_ENABLE               $GT_LOC \
-  CONFIG.ENABLE_OPTIONAL_PORTS        {qpll0lock_out rxsliderdy_out} \
+  CONFIG.ENABLE_OPTIONAL_PORTS        {qpll0lock_out rxcommadeten_in rxmcommaalignen_in rxpcommaalignen_in rxbyteisaligned_out rxbyterealign_out rxcommadet_out} \
   CONFIG.FREERUN_FREQUENCY            $FCLK_FREQ \
+  CONFIG.RX_COMMA_PRESET {K28.5} \
+  CONFIG.RX_COMMA_P_ENABLE {true} \
+  CONFIG.RX_COMMA_M_ENABLE {true} \
+  CONFIG.RX_COMMA_P_VAL {0101111100} \
+  CONFIG.RX_COMMA_M_VAL {1010000011} \
+  CONFIG.RX_COMMA_MASK {1111111111} \
+  CONFIG.RX_COMMA_DOUBLE_ENABLE {false} \
+  CONFIG.RX_COMMA_VALID_ONLY {0} \
   CONFIG.RX_COMMA_ALIGN_WORD          {4} \
   CONFIG.RX_COMMA_SHOW_REALIGN_ENABLE {false} \
   CONFIG.RX_DATA_DECODING             {8B10B} \
@@ -78,7 +86,7 @@ set_property -dict [list \
   CONFIG.RX_MASTER_CHANNEL            $GT_LOC \
   CONFIG.RX_REFCLK_FREQUENCY          $RCLK_FREQ \
   CONFIG.RX_REFCLK_SOURCE             $RX_RCLK_SRC \
-  CONFIG.RX_SLIDE_MODE                {PMA} \
+  CONFIG.RX_SLIDE_MODE                {OFF} \
   CONFIG.TX_DATA_ENCODING             {8B10B} \
   CONFIG.TX_LINE_RATE                 $LINE_RATE_GBPS \
   CONFIG.TX_MASTER_CHANNEL            $GT_LOC \

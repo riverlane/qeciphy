@@ -66,9 +66,9 @@ set_property -dict [list \
   CONFIG.gt0_val_align_comma_double {false} \
   CONFIG.gt0_val_align_comma_enable {1111111111} \
   CONFIG.gt0_val_align_comma_word {Four_Byte_Boundaries} \
-  CONFIG.gt0_val_align_mcomma_det {false} \
+  CONFIG.gt0_val_align_mcomma_det {true} \
   CONFIG.gt0_val_align_mcomma_value {1010000011} \
-  CONFIG.gt0_val_align_pcomma_det {false} \
+  CONFIG.gt0_val_align_pcomma_det {true} \
   CONFIG.gt0_val_align_pcomma_value {0101111100} \
   CONFIG.gt0_val_cb {false} \
   CONFIG.gt0_val_cc {false} \
@@ -105,21 +105,21 @@ set_property -dict [list \
   CONFIG.gt0_val_port_phystatus {false} \
   CONFIG.gt0_val_port_rxbufreset {false} \
   CONFIG.gt0_val_port_rxbufstatus {false} \
-  CONFIG.gt0_val_port_rxbyteisaligned {false} \
-  CONFIG.gt0_val_port_rxbyterealign {false} \
+  CONFIG.gt0_val_port_rxbyteisaligned {true} \
+  CONFIG.gt0_val_port_rxbyterealign {true} \
   CONFIG.gt0_val_port_rxcdrhold {false} \
   CONFIG.gt0_val_port_rxchariscomma {false} \
   CONFIG.gt0_val_port_rxcharisk {true} \
-  CONFIG.gt0_val_port_rxcommadet {false} \
+  CONFIG.gt0_val_port_rxcommadet {true} \
   CONFIG.gt0_val_port_rxdfereset {true} \
   CONFIG.gt0_val_port_rxlpmen {false} \
-  CONFIG.gt0_val_port_rxmcommaalignen {false} \
-  CONFIG.gt0_val_port_rxpcommaalignen {false} \
+  CONFIG.gt0_val_port_rxmcommaalignen {true} \
+  CONFIG.gt0_val_port_rxpcommaalignen {true} \
   CONFIG.gt0_val_port_rxpcsreset {false} \
   CONFIG.gt0_val_port_rxpmareset {true} \
   CONFIG.gt0_val_port_rxpolarity {false} \
   CONFIG.gt0_val_port_rxrate {false} \
-  CONFIG.gt0_val_port_rxslide {true} \
+  CONFIG.gt0_val_port_rxslide {false} \
   CONFIG.gt0_val_port_rxstatus {false} \
   CONFIG.gt0_val_port_rxvalid {false} \
   CONFIG.gt0_val_port_tx8b10bbypass {false} \

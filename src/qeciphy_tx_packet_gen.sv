@@ -29,18 +29,19 @@
 `include "qeciphy_pkg.sv"
 
 module qeciphy_tx_packet_gen (
-    input  logic        clk_i,            // Clock input
-    input  logic        rst_n_i,          // Active-low reset
-    input  logic        faw_boundary_i,   // FAW boundary
-    input  logic        crc_boundary_i,   // CRC boundary
-    input  logic [63:0] s_axis_tdata_i,   // Input user data stream
-    input  logic        s_axis_tvalid_i,  // Input data valid signal
-    output logic        s_axis_tready_o,  // Ready to accept input data
-    output logic [63:0] m_axis_tdata_o,   // Output data stream
-    input  logic        tx_off_i,         // Transmission off (forces idle words)
-    input  logic        tx_idle_i,        // Transmission idle state
-    input  logic        tx_active_i,      // Transmission active state
-    input  logic        rx_rdy_i          // Receiver ready status to transmit
+    input  logic        clk_i,                 // Clock input
+    input  logic        rst_n_i,               // Active-low reset
+    input  logic        faw_boundary_i,        // FAW boundary
+    input  logic        crc_boundary_i,        // CRC boundary
+    input  logic [63:0] s_axis_tdata_i,        // Input user data stream
+    input  logic        s_axis_tvalid_i,       // Input data valid signal
+    output logic        s_axis_tready_o,       // Ready to accept input data
+    output logic [63:0] m_axis_tdata_o,        // Output data stream
+    output logic        m_axis_tdata_isfaw_o,  // Output indicates if m_axis_tdata is FAW
+    input  logic        tx_off_i,              // Transmission off (forces idle words)
+    input  logic        tx_idle_i,             // Transmission idle state
+    input  logic        tx_active_i,           // Transmission active state
+    input  logic        rx_rdy_i               // Receiver ready status to transmit
 );
 
    import qeciphy_pkg::*;
@@ -48,6 +49,9 @@ module qeciphy_tx_packet_gen (
    // 3-stage data pipeline for packet generation
    logic            [63:0] tdata_pipe                                                                      [0:2];  // Pipeline data registers [stage0, stage1, stage2]
    logic            [63:0] tdata_pipe_nxt                                                                  [0:2];  // Next values for pipeline data
+
+   // 3 stage pipeline to track if data is FAW
+   logic                   tdata_isfaw_pipe                                                                [0:2];
 
    // Valid bit tracking for data segments  
    logic            [ 5:0] data_valid_mask;  // Bitmask tracking which data segments contain valid data
@@ -81,6 +85,9 @@ module qeciphy_tx_packet_gen (
 
    // Output from final pipeline stage
    assign m_axis_tdata_o = tdata_pipe[2];
+
+   // Indicate if output data is FAW
+   assign m_axis_tdata_isfaw_o = tdata_isfaw_pipe[2];
 
    // Enable boundary characters during active or idle transmission states
    assign boundary_chars_enable = tx_active_i || tx_idle_i;
@@ -166,6 +173,25 @@ module qeciphy_tx_packet_gen (
          tdata_pipe[2] <= 64'd0;
       end else begin
          tdata_pipe[2] <= tdata_pipe_nxt[2];
+      end
+   end
+
+   // Track if current data is FAW through the pipeline
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         tdata_isfaw_pipe[0] <= 1'b0;
+      end else begin
+         tdata_isfaw_pipe[0] <= boundary_chars_enable && faw_boundary_i;
+      end
+   end
+
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         tdata_isfaw_pipe[1] <= 1'b0;
+         tdata_isfaw_pipe[2] <= 1'b0;
+      end else begin
+         tdata_isfaw_pipe[1] <= tdata_isfaw_pipe[0];
+         tdata_isfaw_pipe[2] <= tdata_isfaw_pipe[1];
       end
    end
 
