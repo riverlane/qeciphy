@@ -28,7 +28,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 - **Functionality Verified**: Verified using SV-UVM testbench end-to-end. Formal verification of most modules.
 - **Multi-Platform Simulation**: Supports simulation on multiple platforms (XSim, VCS)
 
-> *Bottom Line: You only need to send valid data packets from one FPGA and receive valid data packets on the other - no need to add headers, manage link state, or handle physical layer protocols.*
+> *You only need to send valid data packets from one FPGA and receive valid data packets on the other - no need to add headers, manage link state, or handle physical layer protocols.*
 
 ## Quick Start
 
