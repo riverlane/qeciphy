@@ -30,7 +30,7 @@ Once both receivers on each side of the link have achieved frame synchronization
 
 If any fatal errors occur during the establishment process or during normal operation, the link immediately transitions to a fault state and remains there until the entire IP is reset.
 
-### 4. Frame Alignment Word (FAW) Structure
+### 3. Frame Alignment Word (FAW) Structure
 
 FAWs are 64-bit packets with the following structure:
 
@@ -46,7 +46,7 @@ Bits [7:0]:   byte_comma = 0xBC
 - **Alignment Patterns**: Two alignment sequences (0xBC, 0xCB) enable byte and word alignment detection
 - **Status Information**: `rx_rdy` bit communicates local receiver status to remote transmitter
 
-### 5. Validation Word Structure
+### 4. Validation Word Structure
 
 Validation Words are 64-bit CRC packets with the following structure:
 
@@ -60,12 +60,12 @@ Bits [7:0]:   crcvw (CRC8-SMBUS protecting the valids field)
 ```
 
 **Key Features**:
-- **Frequency**: Inserted every 7 clock cycles (14.3% overhead)
+- **Frequency**: Inserted every 7 clock cycles (14.06% overhead)
 - **Multi-Channel Protection**: Three separate CRC16 calculations protect different data word pairs
 - **Valid Data Tracking**: 6-bit mask tracks which of the 6 data words between CRC packets contain actual user data (vs. idle)
 - **Meta-CRC**: CRC8 protects the validity mask itself from corruption
 
-### 6. Transmission Timing and Overhead
+### 5. Transmission Timing and Overhead
 
 The protocol operates with deterministic timing:
 

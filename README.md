@@ -220,7 +220,7 @@ make formal OPT_TOP=<module_name>
 make formal OPT_TOP=<module_name> OPT_MODE=gui
 ```
 
-> *If you are a desiger interested in using the formal verification framework in this repo, please refer to the [Formal Verification Guide](docs/formal_verification_guide.md).*
+> *If you are a designer interested in using the formal verification framework in this repo, please refer to the [Formal Verification Guide](docs/formal_verification_guide.md).*
 
 ## Performance
 

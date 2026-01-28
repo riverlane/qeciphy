@@ -414,10 +414,10 @@ qeciphy_error_t  qeciphy_ecode_enum;
 qeciphy_status_enum = qeciphy_status_t'(qeciphy_status);
 
 always_ff @(posedge axi_clk) begin
-    if (aresetn == 1'b0) begin
+    if (!aresetn) begin
         qeciphy_ecode_enum <= NO_ERROR;
     end else if (qeciphy_fault_fatal) begin
-        qeciphy_ecode_enum = qeciphy_error_t'(qeciphy_ecode);
+        qeciphy_ecode_enum <= qeciphy_error_t'(qeciphy_ecode);
     end
 end
 ```

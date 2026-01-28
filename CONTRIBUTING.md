@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to QECIPHY! 
 
-Before you start, please read through this guide to understand our contribution process, coding standards, and how to set up your development environment. Also please speak to the [maintainers](MAINTAINERS.md) if you plan to work on a large feature or change.
+Before you start, please read through this guide to understand our contribution process, coding standards, and how to set up your development environment. Please also speak to the [maintainers](MAINTAINERS.md) if you plan to work on a large feature or change.
 
 ## Code of Conduct
 
