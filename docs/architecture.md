@@ -6,6 +6,75 @@ QECIPHY is a high-speed serial communication protocol designed for reliable data
 
 The aim of this module is to hide the complexity of high-speed serial communication using transceiver primitives and provide a simple interface for users to transmit and receive data across FPGAs with low latency, high reliability and minimal configuration.
 
+## Working Principle
+
+### 1. Protocol Overview
+
+QECIPHY implements a frame-based protocol with periodic overhead insertion for link maintenance and data integrity verification. The protocol operates on 64-bit data words transmitted at the GT transceiver rate and includes three types of packets:
+
+**Frame Alignment Words (FAW)**: Synchronization patterns inserted every 64 clock cycles to maintain frame alignment between transmitter and receiver. They carry link status information and contain distinctive bit patterns (`0xBC` and `0xCB`) for alignment detection.
+
+**Validation Words (CRC)**: Data integrity packets inserted every 7 clock cycles containing CRC checksums calculated over the previous data segments. These enable real-time error detection and reporting.
+
+**User Data/Idle Words**: Actual payload data from user logic or idle patterns when no data is available.
+
+### 2. Link Establishment Procedure
+
+Once QECIPHY comes out of reset, the transmitter immediately begins sending boundary words (Frame Alignment Words and Validation Words) to help the remote receiver achieve synchronization. No user data is accepted during this initial phase.
+
+On the receiver side, the incoming serial data stream first undergoes byte alignment. The byte alignment process finds the distinctive comma patterns (0xBC) embedded in the Frame Alignment Words. Once byte alignment is achieved, the word aligner combines the 32-bit words from the transceiver into properly framed 64-bit words by testing different combinations and selecting the one that shows valid FAW patterns.
+
+With the word aligned, the receiver begins processing the data stream to detect Frame Alignment Words. The receiver searches for seven consecutive valid FAWs to ensure stable frame synchronization before declaring itself locked. During this process, the transmitter continues sending boundary patterns and monitors the FAW packets from the remote side to determine when the remote receiver has also achieved lock.
+
+Once both receivers on each side of the link have achieved frame synchronization, the transmitter enables user data transmission. At this point, the link becomes fully operational and can accept user data through the AXI4-Stream interface. The transmitter multiplexes user data with the required boundary words while the receiver filters out protocol overhead and delivers only valid user data to the output interface.
+
+If any fatal errors occur during the establishment process or during normal operation, the link immediately transitions to a fault state and remains there until the entire IP is reset.
+
+### 4. Frame Alignment Word (FAW) Structure
+
+FAWs are 64-bit packets with the following structure:
+
+```
+Bits [63:40]: rx_rdy (1) + reserved (23) 
+Bits [39:32]: word_alignment_marker = 0xCB
+Bits [31:8]:  reserved (24)
+Bits [7:0]:   byte_comma = 0xBC
+```
+
+**Key Features**:
+- **Frequency**: Inserted every 64 clock cycles (1.56% overhead)
+- **Alignment Patterns**: Two alignment sequences (0xBC, 0xCB) enable byte and word alignment detection
+- **Status Information**: `rx_rdy` bit communicates local receiver status to remote transmitter
+
+### 5. Validation Word Structure
+
+Validation Words are 64-bit CRC packets with the following structure:
+
+```
+Bits [63:48]: crc45 (CRC16-IBM3740 for data words 4-5)
+Bits [47:32]: crc23 (CRC16-IBM3740 for data words 2-3)  
+Bits [31:16]: crc01 (CRC16-IBM3740 for data words 0-1)
+Bits [15:14]: reserved (2)
+Bits [13:8]:  valids (6-bit mask indicating which data segments contain valid user data)
+Bits [7:0]:   crcvw (CRC8-SMBUS protecting the valids field)
+```
+
+**Key Features**:
+- **Frequency**: Inserted every 7 clock cycles (14.3% overhead)
+- **Multi-Channel Protection**: Three separate CRC16 calculations protect different data word pairs
+- **Valid Data Tracking**: 6-bit mask tracks which of the 6 data words between CRC packets contain actual user data (vs. idle)
+- **Meta-CRC**: CRC8 protects the validity mask itself from corruption
+
+### 6. Transmission Timing and Overhead
+
+The protocol operates with deterministic timing:
+
+**Total Overhead**: ~15.6% (1.56% FAW + 14.06% CRC)
+- **Frame Period**: 64 clock cycles 
+- **CRC Period**: 7 clock cycles
+- **Frame Structure**: 1 FAW + 9 x (6 Data Words + 1 CRC) = 64 total cycles
+- **Data Opportunities**: 54 out of 64 cycles available for user data (remainder occupied by 1 FAW + 9 CRC words)
+
 ## Clock Domains
 
 **User Clocks:**
