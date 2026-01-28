@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to QECIPHY! 
 
-Please ensure you have read [README.md](README.md) and [INTEGRATION.md](INTEGRATION.md) before contributing.
+Before you start, please read through this guide to understand our contribution process, coding standards, and how to set up your development environment. Please also speak to the [maintainers](MAINTAINERS.md) if you plan to work on a large feature or change.
 
 ## Code of Conduct
 
@@ -16,7 +16,8 @@ make clean
 make lint
 make format
 make generate-xci OPT_PROFILE=zcu216
-make sim OPT_PROFILE=zcu216 OPT_TOOL=(xsim|vcs)
+make sim OPT_PROFILE=zcu216 OPT_TOOL=xsim
+make formal OPT_TOP=<module_name>
 make synth OPT_PROFILE=zcu216
 ```
 
@@ -26,36 +27,41 @@ make synth OPT_PROFILE=zcu216
 
 Include in your issue report:
 - Profile used 
-- Vivado version
+- Tool version
 - Complete error messages and reproduction steps
 
 ### Submitting Changes
 
-1. **Create a feature branch:**
+1. **Create a branch:**
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b <branch_name>
    ```
 
 2. **Make your changes** following the coding standards below.
 
 3. **Test your changes:**
    ```bash
-   make clean
+   make distclean
    make format
    make lint
-   make generate-xci OPT_PROFILE=zcu216
-   make sim OPT_PROFILE=zcu216 OPT_TOOL=(xsim|vcs)
-   make synth OPT_PROFILE=zcu216
-   # Test other profiles as needed
+   # Run simulations and synthesis for affected profiles
    ```
 
 4. **Commit your changes:**
    ```bash
    git add .
-   git commit -m "feat: add your feature description"
+   git commit -m "<Descriptive commit message>"
    ```
 
 5. **Push and create a pull request**
+    ```bash
+    git push origin <branch_name>
+    ```
+    Open a pull request on GitHub with a clear description of your changes.
+
+6. **Address feedback** from maintainers and reviewers.
+
+7. **Merge** your changes once approved and delete your branch.
 
 ## Coding Standards
 
@@ -63,13 +69,16 @@ Include in your issue report:
 
 - **Naming Convention:**
   - Modules: `snake_case` (e.g., `qeciphy_controller`)
-  - Signals: `snake_case` (e.g., `rx_data_valid`)
+  - Signals: `snake_case` with `_i/_o` suffixes for ports (e.g., `s_axis_tdata_i`, `m_axis_tvalid_o`)
   - Parameters: `UPPER_CASE` (e.g., `DATA_WIDTH`)
   - Constants: `UPPER_CASE` (e.g., `CRC_POLYNOMIAL`)
 
 - **File Organization:**
   - One module per file
   - Filename matches module name
+
+- **Combinational Logic Complexity:**
+  - The `D`/`CE` input of any flip-flop must not be driven by combinational logic that depends on more than 20 registered signals.
 
 ### Example Module Template:
 
@@ -80,12 +89,13 @@ module qeciphy_example #(
     parameter int DATA_WIDTH = 64,
     parameter int ADDR_WIDTH = 8
 ) (
-    input  logic                    clk,
-    input  logic                    rst_n,
-    input  logic [DATA_WIDTH-1:0]   data_in,
-    input  logic                    valid_in,
-    output logic [DATA_WIDTH-1:0]   data_out,
-    output logic                    valid_out
+    input  logic                    clk_i,
+    input  logic                    rst_n_i,
+    input  logic [DATA_WIDTH-1:0]   s_axis_tdata_i,
+    input  logic                    s_axis_tvalid_i,
+    output logic                    s_axis_tready_o,
+    output logic [DATA_WIDTH-1:0]   m_axis_tdata_o,
+    output logic                    m_axis_tvalid_o
 );
 
     // Implementation here
@@ -108,6 +118,7 @@ Update documentation when contributing:
 
 - **README.md** for new features
 - **INTEGRATION.md** for new platform support  
+- **docs/architecture.md** for architectural changes
 - **This file** for new development processes
 
 ## License
