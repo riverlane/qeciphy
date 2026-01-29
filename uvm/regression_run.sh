@@ -5,6 +5,24 @@ SUMMARY_FILE="uvm_regression_logs/summary.txt"
 : > "$SUMMARY_FILE"  # Empty the summary file at start
 INPUT_FILE="uvm/regression_list.txt"
 PROFILES=("zcu216" "zcu106" "kasliSoC")
+# Mapping function for technology type
+get_tech_type() {
+    local profile="$1"
+    case "$profile" in
+        zcu216)
+            echo "GTY"
+            ;;
+        zcu106)
+            echo "GTH"
+            ;;
+        kasliSoC)
+            echo "GTX"
+            ;;
+        *)
+            echo "UNKNOWN"
+            ;;
+    esac
+}
 for profile in "${PROFILES[@]}"; do
     echo "Cleaning previous builds..."
     make distclean
@@ -46,19 +64,14 @@ for profile in "${PROFILES[@]}"; do
              echo "${TEST_NAME}_${SEED}_$profile passed"
                 PASS=$((PASS+1))
          fi
-         # Fun emoji or ASCII-style header
-         if [ "$FAIL" -eq 0 ]; then
-             STATUS_EMOJI="🎉"
-             MSG="All tests passed! Great job! 🚀"
-         else
-             STATUS_EMOJI="💥"
-             MSG="Some tests failed! Don't give up! 😤"
-         fi
     done < "$INPUT_FILE"
+    # Get the technology type for the profile
+    TECH_TYPE=$(get_tech_type "$profile")
     # Write profile summary to the file
     {
         echo "========================================"
         echo "Profile: $profile"
+        echo "Technology: $TECH_TYPE"
         echo "----------------------------------------"
         for result in "${PROFILE_RESULTS[@]}"; do
             echo "$result"
@@ -66,9 +79,6 @@ for profile in "${PROFILES[@]}"; do
         echo ""
         echo "Total Passed: $PASS"
         echo "Total Failed: $FAIL"
-        echo "========================================"
-        echo ""
-        echo -e "### $MSG"
         echo "========================================"
         echo ""
     } >> "$SUMMARY_FILE"
