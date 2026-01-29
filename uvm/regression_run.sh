@@ -1,7 +1,7 @@
 
 #!/bin/bash
 mkdir -p uvm_regression_logs
-SUMMARY_FILE="uvm_regression_logs/summary.txt"
+SUMMARY_FILE="uvm_regression_logs/summary.md"
 : > "$SUMMARY_FILE"  # Empty the summary file at start
 INPUT_FILE="uvm/regression_list.txt"
 PROFILES=("zcu216" "zcu106" "kasliSoC")
@@ -44,71 +44,64 @@ for profile in "${PROFILES[@]}"; do
         
         # Generate random seed
         SEED=$RANDOM
+        LOG_FILE="${TEST_NAME}_${SEED}_$profile.log"
+        LOG_PATH="uvm_regression_logs/$LOG_FILE"
         
         echo "Running: OPT_TEST=$TEST_NAME 
                        OPT_ARGS=\"$OPT_ARGS_FORMATTED\"  
                        OPT_SEED=$SEED 
-                       LOG = ${TEST_NAME}_${SEED}_$profile.log "
+                       LOG = $LOG_FILE "
         # Execute the command
-        ./simv -q OPT_ARGS=$OPT_ARGS_FORMATTED +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$TEST_NAME -l uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log +ntb_random_seed=${SEED} -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/${TEST_NAME}_${SEED}_$profile_cov.vdb[...] > /dev/null 2>&1
+        ./simv -q OPT_ARGS=$OPT_ARGS_FORMATTED +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=$TEST_NAME -l $LOG_PATH +ntb_random_seed=${SEED} -cm line+cond+tgl+fsm+branch+assert +enable_coverage=1 -cm_dir coverage/${TEST_NAME}_${SEED}_$profile_cov.vdb[...] > /dev/null 2>&1
         # check the log for pass/fail
-         if [[ ! -f "uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log" ]]; then
+        if [[ ! -f "$LOG_PATH" ]]; then
             echo "Log file not found! Test $TEST_NAME may have failed to run."
             exit 1
-         fi
+        fi
 
-         if grep -q "***FAILED***" "uvm_regression_logs/${TEST_NAME}_${SEED}_$profile.log"; then
-             echo "${TEST_NAME}_${SEED}_$profile failed"
-             FAIL=$((FAIL+1))
-         else
-             echo "${TEST_NAME}_${SEED}_$profile passed"
-                PASS=$((PASS+1))
-         fi
+        if grep -q "***FAILED***" "$LOG_PATH"; then
+            echo "${TEST_NAME}_${SEED}_$profile failed"
+            PROFILE_RESULTS+=("| $TEST_NAME | FAILED |")
+            FAIL=$((FAIL+1))
+        else
+            echo "${TEST_NAME}_${SEED}_$profile passed"
+            PROFILE_RESULTS+=("| $TEST_NAME | PASSED |")
+            PASS=$((PASS+1))
+        fi
     done < "$INPUT_FILE"
-    # Get the technology type for the profile
-    TECH_TYPE=$(get_tech_type "$profile")
-    f [[ $FAIL -gt 0 ]]; then
-        EMOJI="🚨😞🚨"
-        HEADER="Sad Regression Summary: \`$profile\`"
-        IMG_URL="https://media.giphy.com/media/ARSp9T7wwxNcs/giphy.gif"  # Sad Pikachu GIF
+    # Fun emoji or ASCII-style header
+    if [ "$FAIL" -eq 0 ]; then
+        STATUS_EMOJI="🎉"
+        MSG="All tests passed! Great job! 🚀"
     else
-        EMOJI="🎉"
-        HEADER="Regression Summary: \`$profile\`"
-        IMG_URL="https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif"  # Party GIF
+        STATUS_EMOJI="💥"
+        MSG="Some tests failed! Don't give up! 😤"
     fi
 
+    TECH_TYPE=$(get_tech_type "$profile")
+
+    # Write profile summary (Markdown) to the file
     {
+        echo "## Profile: \`$profile\`"
+        echo "**Technology:** \`$TECH_TYPE\`"
         echo ""
-        echo "<div align='center'>"
+        echo "### Test Results"
         echo ""
-        echo "# $EMOJI **$HEADER** $EMOJI"
-        echo ""
-        echo "<img src='https://img.shields.io/badge/TECHNOLOGY-$TECH_TYPE-blueviolet?style=for-the-badge&logo=github' alt='Tech Type Badge'>"
-        echo ""
-        echo "</div>"
-        echo ""
-        echo "---"
-        echo ""
-        echo "|  Test Run  |  Result  |"
-        echo "|:----------:|:--------:|"
+        echo "| Test name | Status |"
+        echo "|-----------|--------|"
         for result in "${PROFILE_RESULTS[@]}"; do
             echo "$result"
         done
         echo ""
+        echo "**Total Passed:** $PASS  "
+        echo "**Total Failed:** $FAIL"
+        echo ""
+        echo "### $STATUS_EMOJI $MSG"
+        echo ""
         echo "---"
         echo ""
-        echo "<div align='center'>"
-        echo "<img src='https://img.shields.io/badge/TOTAL--PASSED-$PASS-brightgreen?style=for-the-badge&logo=github'>&nbsp;"
-        echo "<img src='https://img.shields.io/badge/TOTAL--FAILED-$FAIL-red?style=for-the-badge&logo=github'>"
-        echo "</div>"
-        echo ""
-        echo "<div align='center'>"
-        echo "![Sad Pikachu]($IMG_URL)"
-        echo "</div>"
-        echo ""
-        echo "<hr style='border: 1px dashed orange'>"
-        echo ""
     } >> "$SUMMARY_FILE"
+
     cat "$SUMMARY_FILE"
     echo " $profile:FAILED_TESTS: $FAIL
           PASSED_TESTS: $PASS"
