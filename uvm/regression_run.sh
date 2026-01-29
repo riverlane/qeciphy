@@ -67,22 +67,48 @@ for profile in "${PROFILES[@]}"; do
     done < "$INPUT_FILE"
     # Get the technology type for the profile
     TECH_TYPE=$(get_tech_type "$profile")
-    # Write profile summary to the file
+    f [[ $FAIL -gt 0 ]]; then
+        EMOJI="🚨😞🚨"
+        HEADER="Sad Regression Summary: \`$profile\`"
+        IMG_URL="https://media.giphy.com/media/ARSp9T7wwxNcs/giphy.gif"  # Sad Pikachu GIF
+    else
+        EMOJI="🎉"
+        HEADER="Regression Summary: \`$profile\`"
+        IMG_URL="https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif"  # Party GIF
+    fi
+
     {
-        echo "========================================"
-        echo "Profile: $profile"
-        echo "Technology: $TECH_TYPE"
-        echo "----------------------------------------"
+        echo ""
+        echo "<div align='center'>"
+        echo ""
+        echo "# $EMOJI **$HEADER** $EMOJI"
+        echo ""
+        echo "<img src='https://img.shields.io/badge/TECHNOLOGY-$TECH_TYPE-blueviolet?style=for-the-badge&logo=github' alt='Tech Type Badge'>"
+        echo ""
+        echo "</div>"
+        echo ""
+        echo "---"
+        echo ""
+        echo "|  Test Run  |  Result  |"
+        echo "|:----------:|:--------:|"
         for result in "${PROFILE_RESULTS[@]}"; do
             echo "$result"
         done
         echo ""
-        echo "Total Passed: $PASS"
-        echo "Total Failed: $FAIL"
-        echo "========================================"
+        echo "---"
+        echo ""
+        echo "<div align='center'>"
+        echo "<img src='https://img.shields.io/badge/TOTAL--PASSED-$PASS-brightgreen?style=for-the-badge&logo=github'>&nbsp;"
+        echo "<img src='https://img.shields.io/badge/TOTAL--FAILED-$FAIL-red?style=for-the-badge&logo=github'>"
+        echo "</div>"
+        echo ""
+        echo "<div align='center'>"
+        echo "![Sad Pikachu]($IMG_URL)"
+        echo "</div>"
+        echo ""
+        echo "<hr style='border: 1px dashed orange'>"
         echo ""
     } >> "$SUMMARY_FILE"
-    # Optionally print the summary at the end for CI logs
     cat "$SUMMARY_FILE"
     echo " $profile:FAILED_TESTS: $FAIL
           PASSED_TESTS: $PASS"
