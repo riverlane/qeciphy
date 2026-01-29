@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-LICENSE
+// SPDX-License-Identifier: BSD-2-Clause
 // -----------------------------------------------------------------------------
 // File        : qeciphy_gty_transceiver.sv
 // Description : Lint stub for Xilinx GTY transceiver module.

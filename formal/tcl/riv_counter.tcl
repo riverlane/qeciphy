@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-LICENSE
+# SPDX-License-Identifier: BSD-2-Clause
 # Copyright (c) 2025 Riverlane Ltd.
 # Original authors: Alex Crownshaw
 

@@ -4,7 +4,7 @@
 
 QECIPHY is a physical layer implementation according to the [QECi (Quantum Error Correction interface) open standard](https://www.riverlane.com/get-qec-ready/qeci) designed for FPGA-to-FPGA communication. Originally designed for quantum error correction systems, QECIPHY is a lightweight IP that exposes a simple AXI4-Stream based interface, significantly simplifying high-speed FPGA-to-FPGA communication for any application.
 
-[![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-BSD--2--Clause-blue.svg)](LICENSE)
 [![Vivado](https://img.shields.io/badge/Vivado-2024%2B-orange.svg)]()
 [![SystemVerilog](https://img.shields.io/badge/HDL-SystemVerilog-green.svg)]()
 
