@@ -83,7 +83,7 @@ Include in your issue report:
 ### Example Module Template:
 
 ```systemverilog
-// SPDX-License-Identifier: LicenseRef-LICENSE
+// SPDX-License-Identifier: BSD-2-Clause
 
 module qeciphy_example #(
     parameter int DATA_WIDTH = 64,

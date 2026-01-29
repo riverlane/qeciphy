@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-LICENSE
+// SPDX-License-Identifier: BSD-2-Clause
 // -----------------------------------------------------------------------------
 // File        : qeciphy_clk_mmcm.sv
 // Description : Lint stub for Xilinx clocking wizard module.

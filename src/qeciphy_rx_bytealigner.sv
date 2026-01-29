@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-LICENSE
+// SPDX-License-Identifier: BSD-2-Clause
 // Copyright (c) 2024-2026 Riverlane Ltd.
 // Original authors: Kauser Johar
 
