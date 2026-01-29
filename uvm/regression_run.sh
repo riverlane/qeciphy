@@ -33,6 +33,7 @@ for profile in "${PROFILES[@]}"; do
     make uvm-vcs-compile-sim OPT_PROFILE=$profile
     PASS=0
     FAIL=0
+    PROFILE_RESULTS=()
     while IFS=',' read -r TEST_NAME OPT_ARGS; do
         # Construct from TEST_NAME (replace _test with _uvmtb)
         OPT_TEST="${TEST_NAME/_test}"
@@ -82,8 +83,7 @@ for profile in "${PROFILES[@]}"; do
 
     # Write profile summary (Markdown) to the file
     {
-        echo "## Profile: \`$profile\`"
-        echo "**Technology:** \`$TECH_TYPE\`"
+        echo "## Profile:  \`$TECH_TYPE\`"
         echo ""
         echo "### Test Results"
         echo ""
