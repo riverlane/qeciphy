@@ -14,14 +14,14 @@ module qeciphy_gt_wrapper #(
     output logic        tx_clk_o,
     output logic        tx_clk_2x_o,
     input  logic [31:0] tx_tdata_i,
+    input  logic [ 3:0] tx_tdata_charisk_i,
     output logic        gt_tx_rst_done_o,
 
     output logic        rx_clk_o,
     output logic        rx_clk_2x_o,
     output logic [31:0] rx_tdata_o,
     output logic        gt_rx_rst_done_o,
-    output logic        rx_slide_rdy_o,
-    input  logic        rx_slide_i,
+    output logic        rx_byte_aligned_o,
 
     // GT differential signals
     input  logic gt_rx_p_i,
@@ -36,6 +36,88 @@ module qeciphy_gt_wrapper #(
 
    logic rxoutclk;
    logic txoutclk;
+
+   logic rxcommadeten;
+   logic rxpcommaalignen;
+   logic rxmcommaalignen;
+   logic rxbyteisaligned;
+   logic rxbyterealign;
+   logic rxcommadet;
+   logic rx_comma_align_en;
+
+   logic rx_byte_aligned;
+   logic rx_datapath_resetn;
+
+   logic gt_tx_rst_done;
+   logic gt_tx_rst_done_reg;
+   logic gt_rx_rst_done;
+   logic gt_rx_rst_done_reg;
+
+   // Assign outputs
+   assign rx_byte_aligned_o = rx_byte_aligned;
+   assign gt_tx_rst_done_o  = gt_tx_rst_done_reg;
+   assign gt_rx_rst_done_o  = gt_rx_rst_done_reg;
+
+   // Capture gt_tx_rst_done in its own clock domain to cleanup any potential glitches
+   always_ff @(posedge tx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         gt_tx_rst_done_reg <= '0;
+      end else begin
+         gt_tx_rst_done_reg <= gt_tx_rst_done;
+      end
+   end
+
+   // Capture gt_rx_rst_done in its own clock domain to cleanup any potential glitches
+   always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         gt_rx_rst_done_reg <= '0;
+      end else begin
+         gt_rx_rst_done_reg <= gt_rx_rst_done;
+      end
+   end
+
+   // Comma detect enable logic
+   always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         rxcommadeten <= 1'b0;
+      end else if (gt_rx_rst_done_reg) begin
+         rxcommadeten <= 1'b1;
+      end else begin
+         rxcommadeten <= 1'b0;
+      end
+   end
+
+   // Comma align enable signals
+   assign rxpcommaalignen = rx_comma_align_en;
+   assign rxmcommaalignen = rx_comma_align_en;
+
+   // Comma align enable logic
+   always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         rx_comma_align_en <= 1'b0;
+      end else if (rx_byte_aligned) begin
+         rx_comma_align_en <= 1'b0;
+      end else if (gt_rx_rst_done_reg) begin
+         rx_comma_align_en <= 1'b1;
+      end else begin
+         rx_comma_align_en <= 1'b0;
+      end
+   end
+
+   // Monitor rx_tdata to ensure comma alignment is done
+   // Otherwise, reset the rx datapath and try again
+   qeciphy_rx_comma_detect #(
+       .TX_PATTERN_LENGTH(128),
+       .MAX_REVIEWS(1024),
+       .MAX_RETRIES(32)
+   ) i_qeciphy_rx_comma_detect (
+       .clk_i(rx_clk_2x_o),
+       .rst_n_i(gt_rx_rst_done_reg),
+       .comma_realign_i(rxbyterealign),
+       .tdata_i(rx_tdata_o),
+       .align_done_o(rx_byte_aligned),
+       .rx_datapath_resetn_o(rx_datapath_resetn)
+   );
 
    // -------------------------------------------------------------
    // GTY transceiver instantiation
@@ -52,18 +134,21 @@ module qeciphy_gt_wrapper #(
          assign userclk_tx_reset = ~txpmaresetdone;
          assign userclk_rx_reset = ~rxpmaresetdone;
 
+         //debug
+         logic cdr_stable;
+
          qeciphy_gty_transceiver transceiver (
              .gtwiz_userclk_tx_active_in        (~userclk_tx_reset),
              .gtwiz_userclk_rx_active_in        (~userclk_rx_reset),
              .gtwiz_reset_clk_freerun_in        (f_clk_i),
              .gtwiz_reset_all_in                (~gt_rst_n_i),
              .gtwiz_reset_tx_pll_and_datapath_in(~gt_rst_n_i),
-             .gtwiz_reset_tx_datapath_in        (1'b0),
+             .gtwiz_reset_tx_datapath_in        (~gt_rst_n_i),
              .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
-             .gtwiz_reset_rx_datapath_in        (1'b0),
-             .gtwiz_reset_rx_cdr_stable_out     (),
-             .gtwiz_reset_tx_done_out           (gt_tx_rst_done_o),
-             .gtwiz_reset_rx_done_out           (gt_rx_rst_done_o),
+             .gtwiz_reset_rx_datapath_in        (~rx_datapath_resetn),
+             .gtwiz_reset_rx_cdr_stable_out     (cdr_stable),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
              .gtwiz_userdata_tx_in              (tx_tdata_i),
              .gtwiz_userdata_rx_out             (rx_tdata_o),
              .gtrefclk00_in                     (gt_ref_clk_i),
@@ -80,7 +165,7 @@ module qeciphy_gt_wrapper #(
              .tx8b10ben_in                      (1'b1),
              .txctrl0_in                        (16'd0),
              .txctrl1_in                        (16'd0),
-             .txctrl2_in                        (8'd0),
+             .txctrl2_in                        ({4'h0, tx_tdata_charisk_i}),
              .txusrclk_in                       (tx_clk_2x_o),
              .txusrclk2_in                      (tx_clk_2x_o),
              .gtpowergood_out                   (gt_power_good_o),
@@ -92,8 +177,12 @@ module qeciphy_gt_wrapper #(
              .rxpmaresetdone_out                (rxpmaresetdone),
              .txoutclk_out                      (txoutclk),
              .txpmaresetdone_out                (txpmaresetdone),
-             .rxsliderdy_out                    (rx_slide_rdy_o),
-             .rxslide_in                        (rx_slide_i)
+             .rxcommadeten_in                   (rxcommadeten),
+             .rxpcommaalignen_in                (rxpcommaalignen),
+             .rxmcommaalignen_in                (rxmcommaalignen),
+             .rxbyteisaligned_out               (rxbyteisaligned),
+             .rxbyterealign_out                 (rxbyterealign),
+             .rxcommadet_out                    (rxcommadet)
          );
 
          // -------------------------------------------------------------
@@ -162,18 +251,21 @@ module qeciphy_gt_wrapper #(
          assign userclk_tx_reset = ~txpmaresetdone;
          assign userclk_rx_reset = ~rxpmaresetdone;
 
+         //debug
+         logic cdr_stable;
+
          qeciphy_gth_transceiver transceiver (
              .gtwiz_userclk_tx_active_in        (~userclk_tx_reset),
              .gtwiz_userclk_rx_active_in        (~userclk_rx_reset),
              .gtwiz_reset_clk_freerun_in        (f_clk_i),
              .gtwiz_reset_all_in                (~gt_rst_n_i),
              .gtwiz_reset_tx_pll_and_datapath_in(~gt_rst_n_i),
-             .gtwiz_reset_tx_datapath_in        (1'b0),
+             .gtwiz_reset_tx_datapath_in        (~gt_rst_n_i),
              .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
-             .gtwiz_reset_rx_datapath_in        (1'b0),
-             .gtwiz_reset_rx_cdr_stable_out     (),
-             .gtwiz_reset_tx_done_out           (gt_tx_rst_done_o),
-             .gtwiz_reset_rx_done_out           (gt_rx_rst_done_o),
+             .gtwiz_reset_rx_datapath_in        (~rx_datapath_resetn),
+             .gtwiz_reset_rx_cdr_stable_out     (cdr_stable),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
              .gtwiz_userdata_tx_in              (tx_tdata_i),
              .gtwiz_userdata_rx_out             (rx_tdata_o),
              .gtrefclk00_in                     (gt_ref_clk_i),
@@ -190,7 +282,7 @@ module qeciphy_gt_wrapper #(
              .tx8b10ben_in                      (1'b1),
              .txctrl0_in                        (16'd0),
              .txctrl1_in                        (16'd0),
-             .txctrl2_in                        (8'd0),
+             .txctrl2_in                        ({4'h0, tx_tdata_charisk_i}),
              .txusrclk_in                       (tx_clk_2x_o),
              .txusrclk2_in                      (tx_clk_2x_o),
              .gtpowergood_out                   (gt_power_good_o),
@@ -202,8 +294,12 @@ module qeciphy_gt_wrapper #(
              .rxpmaresetdone_out                (rxpmaresetdone),
              .txoutclk_out                      (txoutclk),
              .txpmaresetdone_out                (txpmaresetdone),
-             .rxsliderdy_out                    (rx_slide_rdy_o),
-             .rxslide_in                        (rx_slide_i)
+             .rxcommadeten_in                   (rxcommadeten),
+             .rxpcommaalignen_in                (rxpcommaalignen),
+             .rxmcommaalignen_in                (rxmcommaalignen),
+             .rxbyteisaligned_out               (rxbyteisaligned),
+             .rxbyterealign_out                 (rxbyterealign),
+             .rxcommadet_out                    (rxcommadet)
          );
 
          // -------------------------------------------------------------
@@ -284,8 +380,8 @@ module qeciphy_gt_wrapper #(
              .soft_reset_tx_in           (1'b0),                // input wire soft_reset_tx_in
              .soft_reset_rx_in           (1'b0),                // input wire soft_reset_rx_in
              .dont_reset_on_data_error_in(1'b1),                // input wire dont_reset_on_data_error_in
-             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done_o),    // output wire gt0_tx_fsm_reset_done_out
-             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done_o),    // output wire gt0_rx_fsm_reset_done_out
+             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done),      // output wire gt0_tx_fsm_reset_done_out
+             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done),      // output wire gt0_rx_fsm_reset_done_out
              .gt0_data_valid_in          (rxpmaresetdone),      // input wire gt0_data_valid_in
              .gt0_drpaddr_in             (9'h00),               // input wire [8:0] gt0_drpaddr_in
              .gt0_drpclk_in              (f_clk_i),             // input wire gt0_drpclk_in
@@ -314,7 +410,6 @@ module qeciphy_gt_wrapper #(
              .gt0_rxoutclkfabric_out     (),                    // output wire gt0_rxoutclkfabric_out
              .gt0_gtrxreset_in           (~gt_rst_n_i),         // input wire gt0_gtrxreset_in
              .gt0_rxpmareset_in          (~gt_rst_n_i),         // input wire gt0_rxpmareset_in
-             .gt0_rxslide_in             (rx_slide_i),          // input wire gt0_rxslide_in
              .gt0_rxcharisk_out          (),                    // output wire [3:0] gt0_rxcharisk_out
              .gt0_rxresetdone_out        (rxpmaresetdone),      // output wire gt0_rxresetdone_out
              .gt0_gttxreset_in           (~gt_rst_n_i),         // input wire gt0_gttxreset_in
@@ -327,14 +422,19 @@ module qeciphy_gt_wrapper #(
              .gt0_txoutclk_out           (txoutclk),            // output wire gt0_txoutclk_out
              .gt0_txoutclkfabric_out     (),                    // output wire gt0_txoutclkfabric_out
              .gt0_txoutclkpcs_out        (),                    // output wire gt0_txoutclkpcs_out
-             .gt0_txcharisk_in           (4'h0),                // input wire [3:0] gt0_txcharisk_in
+             .gt0_txcharisk_in           (tx_tdata_charisk_i),  // input wire [3:0] gt0_txcharisk_in
              .gt0_txpmareset_in          (~gt_rst_n_i),         // input wire gt0_txpmareset_in
              .gt0_txresetdone_out        (),                    // output wire gt0_txresetdone_out
              .gt0_qplllock_in            (qplllock_out),        // input wire gt0_qplllock_in
              .gt0_qpllrefclklost_in      (qpllrefclklost_out),  // input wire gt0_qpllrefclklost_in
              .gt0_qpllreset_out          (qpllreset_in),        // output wire gt0_qpllreset_out
              .gt0_qplloutclk_in          (qplloutclk_out),      // input wire gt0_qplloutclk_in
-             .gt0_qplloutrefclk_in       (qplloutrefclk_out)    // input wire gt0_qplloutrefclk_in
+             .gt0_qplloutrefclk_in       (qplloutrefclk_out),   // input wire gt0_qplloutrefclk_in
+             .gt0_rxpcommaalignen_in     (rxpcommaalignen),
+             .gt0_rxmcommaalignen_in     (rxmcommaalignen),
+             .gt0_rxbyteisaligned_out    (rxbyteisaligned),
+             .gt0_rxbyterealign_out      (rxbyterealign),
+             .gt0_rxcommadet_out         (rxcommadet)
          );
 
          // GTX transceiver does not have RXSLIDERDY
