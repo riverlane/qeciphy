@@ -437,8 +437,6 @@ module qeciphy_gt_wrapper #(
              .gt0_rxcommadet_out         (rxcommadet)
          );
 
-         // GTX transceiver does not have RXSLIDERDY
-         assign rx_slide_rdy_o = 1'b1;
          // GTX transceiver does not have gt_power_good
          assign gt_power_good_o = 1'b1;
 

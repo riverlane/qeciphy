@@ -45,7 +45,6 @@ module qeciphy_gtx_transceiver (
     output        gt0_rxoutclkfabric_out,
     input         gt0_gtrxreset_in,
     input         gt0_rxpmareset_in,
-    input         gt0_rxslide_in,
     output [ 3:0] gt0_rxcharisk_out,
     output        gt0_rxresetdone_out,
     input         gt0_gttxreset_in,
@@ -65,7 +64,12 @@ module qeciphy_gtx_transceiver (
     input         gt0_qpllrefclklost_in,
     output        gt0_qpllreset_out,
     input         gt0_qplloutclk_in,
-    input         gt0_qplloutrefclk_in
+    input         gt0_qplloutrefclk_in,
+    input         gt0_rxpcommaalignen_in, 
+    input         gt0_rxmcommaalignen_in, 
+    output        gt0_rxbyteisaligned_out,
+    output        gt0_rxbyterealign_out,  
+    output        gt0_rxcommadet_out     
 );
 
 endmodule

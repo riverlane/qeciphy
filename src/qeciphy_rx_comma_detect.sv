@@ -299,7 +299,7 @@ module qeciphy_rx_comma_detect #(
       end
    end
 
-   assign rx_align_boundary = (rx_boundary_count_q == (TX_PATTERN_LENGTH - 1));
+   assign rx_align_boundary = (rx_boundary_count_q == RX_ALIGN_COUNTER_WIDTH'(TX_PATTERN_LENGTH - 1));
 
    assign rx_align_check_fail_d = fsm_review & ((data_slot_q ^ is_data_zero) | (crc1_slot_q ^ is_crc1) | (crc2_slot_q ^ is_crc2) | (faw_1_slot_q ^ is_faw1) | (faw_2_slot_q ^ is_faw2));
 
@@ -321,7 +321,7 @@ module qeciphy_rx_comma_detect #(
       end
    end
 
-   assign rx_align_matched_count_max_d = (rx_align_matched_count_q == (MAX_REVIEWS));
+   assign rx_align_matched_count_max_d = (rx_align_matched_count_q == REVIEW_COUNTER_WIDTH'(MAX_REVIEWS));
 
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) begin
@@ -344,7 +344,7 @@ module qeciphy_rx_comma_detect #(
       end
    end
 
-   assign retries_count_max_d = retries_count_q == (MAX_RETRIES - 1);
+   assign retries_count_max_d = retries_count_q == RETRIES_COUNTER_WIDTH'(MAX_RETRIES - 1);
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) begin
          retries_count_max_q <= '0;
