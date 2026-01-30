@@ -19,8 +19,8 @@ jobs:
         if: always()
         run: |
           echo '## UVM Regression Pass/Fail Summary' >> $GITHUB_STEP_SUMMARY
-          if [ -f uvm_regression_logs/summary.txt ]; then
-            cat uvm_regression_logs/summary.txt >> $GITHUB_STEP_SUMMARY
+          if [ -f uvm_regression_logs/summary.md ]; then
+            cat uvm_regression_logs/summary.md >> $GITHUB_STEP_SUMMARY
           else
-            echo "No summary.txt file found." >> $GITHUB_STEP_SUMMARY
+            echo "No summary.md file found." >> $GITHUB_STEP_SUMMARY
           fi
