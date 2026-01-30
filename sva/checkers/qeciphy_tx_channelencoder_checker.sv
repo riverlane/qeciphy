@@ -9,6 +9,7 @@ module qeciphy_tx_channelencoder_checker (
     input logic        s_axis_tvalid_i,
     input logic        s_axis_tready_o,
     input logic [63:0] m_axis_tdata_o,
+    input logic        m_axis_tdata_isfaw_o,
     input logic        link_enable_i,
     input logic        data_enable_i,
     input logic        rx_rdy_i

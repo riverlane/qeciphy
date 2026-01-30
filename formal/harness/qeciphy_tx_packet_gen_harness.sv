@@ -12,6 +12,7 @@ module qeciphy_tx_packet_gen_harness;
    logic        s_axis_tvalid_i;
    logic        s_axis_tready_o;
    logic [63:0] m_axis_tdata_o;
+   logic        m_axis_tdata_isfaw_o;
    logic        tx_off_i;
    logic        tx_idle_i;
    logic        tx_active_i;

@@ -33,6 +33,7 @@ module qeciphy_serdes #(
     output logic        tx_clk_o,             // TX clock output (GT generated)
     input  logic        tx_datapath_rst_n_i,  // TX datapath reset (active-low)
     input  logic [63:0] tx_tdata_i,           // 64-bit TX data
+    input  logic        tx_tdata_isfaw_i,     // TX data is FAW indicator
     output logic        gt_tx_rst_done_o,     // GT TX reset completion status
 
     // RX Interface
@@ -52,13 +53,12 @@ module qeciphy_serdes #(
    // RX Path Signals
    logic        rx_clk_2x;  // 2x RX clock from GT
    logic [31:0] rx_tdata_32b;  // 32-bit RX data from GT
-   logic        rx_slide_rdy;  // GT slide ready signal
-   logic        rx_slide;  // Slide request to GT for byte alignment
    logic        rx_byte_aligned;  // Byte alignment completion status
    logic        rx_word_aligned;  // Word alignment completion status
 
    // TX Path Signals  
    logic [31:0] tx_tdata_32b;  // 32-bit TX data to GT
+   logic [ 3:0] tx_tdata_charisk;  // 32-bit TX data character/isK indicators
    logic        tx_clk_2x;  // 2x TX clock from GT
 
    // Output Assignments
@@ -69,27 +69,12 @@ module qeciphy_serdes #(
    // =========================================================================
 
    qeciphy_tx_64b_to_32b i_tx_64b_to_32b (
-       .clk_i      (tx_clk_2x),            // 2x TX clock for 32-bit data serialization
-       .rst_n_i    (tx_datapath_rst_n_i),  // TX datapath reset
-       .tdata_64b_i(tx_tdata_i),           // 64-bit input
-       .tdata_32b_o(tx_tdata_32b)          // 32-bit output to GT
-   );
-
-   // =========================================================================
-   // RX Data Path Stage 1: Byte Alignment
-   // =========================================================================
-
-   qeciphy_rx_bytealigner #(
-       .RX_DATA_WIDTH    (32),  // 32-bit data width from GT
-       .TX_PATTERN_LENGTH(128)  // COMMA character comes every 128 words
-   ) i_rx_bytealigner (
-       .clk_i       (rx_clk_2x),            // 2x RX clock for 32-bit data processing
-       .rst_n_i     (rx_datapath_rst_n_i),  // RX datapath reset
-       .slide_rdy_i (rx_slide_rdy),         // GT slide ready signal
-       .tdata_i     (rx_tdata_32b),         // 32-bit data from GT for comma detection
-       .slide_o     (rx_slide),             // Slide request to GT
-       .align_done_o(rx_byte_aligned),      // Byte alignment completion flag
-       .align_fail_o()
+       .clk_i              (tx_clk_2x),            // 2x TX clock for 32-bit data serialization
+       .rst_n_i            (tx_datapath_rst_n_i),  // TX datapath reset
+       .tdata_64b_i        (tx_tdata_i),           // 64-bit input
+       .tdata_64b_isfaw_i  (tx_tdata_isfaw_i),     // 64-bit input is FAW indicator
+       .tdata_32b_o        (tx_tdata_32b),         // 32-bit output to GT
+       .tdata_32b_charisk_o(tx_tdata_charisk)      // 32-bit output character/isK indicators
    );
 
    // =========================================================================
@@ -120,18 +105,18 @@ module qeciphy_serdes #(
        .gt_power_good_o(gt_power_good_o), // GT power status output
 
        // TX Interface
-       .tx_clk_o        (tx_clk_o),         // TX 1x clock output
-       .tx_clk_2x_o     (tx_clk_2x),        // TX 2x clock output
-       .tx_tdata_i      (tx_tdata_32b),     // 32-bit TX data input
-       .gt_tx_rst_done_o(gt_tx_rst_done_o), // TX reset completion
+       .tx_clk_o          (tx_clk_o),          // TX 1x clock output
+       .tx_clk_2x_o       (tx_clk_2x),         // TX 2x clock output
+       .tx_tdata_i        (tx_tdata_32b),      // 32-bit TX data input
+       .tx_tdata_charisk_i(tx_tdata_charisk),  // TX data character/isK indicators
+       .gt_tx_rst_done_o  (gt_tx_rst_done_o),  // TX reset completion
 
        // RX Interface  
-       .rx_clk_o        (rx_clk_o),          // RX 1x clock output
-       .rx_clk_2x_o     (rx_clk_2x),         // RX 2x clock output
-       .rx_tdata_o      (rx_tdata_32b),      // 32-bit RX data output
-       .gt_rx_rst_done_o(gt_rx_rst_done_o),  // RX reset completion
-       .rx_slide_rdy_o  (rx_slide_rdy),      // Slide ready status
-       .rx_slide_i      (rx_slide),          // Slide request input
+       .rx_clk_o         (rx_clk_o),          // RX 1x clock output
+       .rx_clk_2x_o      (rx_clk_2x),         // RX 2x clock output
+       .rx_tdata_o       (rx_tdata_32b),      // 32-bit RX data output
+       .gt_rx_rst_done_o (gt_rx_rst_done_o),  // RX reset completion
+       .rx_byte_aligned_o(rx_byte_aligned),   // RX byte aligned status to start word alignment
 
        // GT differential signals
        .gt_rx_p_i(gt_rx_p_i),  // GT RX differential positive

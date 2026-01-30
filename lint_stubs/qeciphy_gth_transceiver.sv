@@ -31,8 +31,6 @@ module qeciphy_gth_transceiver (
     input gthrxn_in,
     input gthrxp_in,
     input rx8b10ben_in,
-    input rxslide_in,
-    output rxsliderdy_out,
     input rxusrclk_in,
     input rxusrclk2_in,
     input tx8b10ben_in,
@@ -51,7 +49,13 @@ module qeciphy_gth_transceiver (
     output rxoutclk_out,
     output rxpmaresetdone_out,
     output txoutclk_out,
-    output txpmaresetdone_out
+    output txpmaresetdone_out,
+    input rxcommadeten_in,
+    input rxpcommaalignen_in,
+    input rxmcommaalignen_in,
+    output rxbyteisaligned_out,
+    output rxbyterealign_out,
+    output rxcommadet_out
 );
 
 endmodule
