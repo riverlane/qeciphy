@@ -108,7 +108,7 @@ module qeciphy_gt_wrapper #(
    // Otherwise, reset the rx datapath and try again
    qeciphy_rx_comma_detect #(
        .TX_PATTERN_LENGTH(128),
-       .MAX_REVIEWS(1024),
+       .MAX_REVIEWS(128),
        .MAX_RETRIES(32)
    ) i_qeciphy_rx_comma_detect (
        .clk_i(rx_clk_2x_o),
