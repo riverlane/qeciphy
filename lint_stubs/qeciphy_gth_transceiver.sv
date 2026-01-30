@@ -50,12 +50,12 @@ module qeciphy_gth_transceiver (
     output rxpmaresetdone_out,
     output txoutclk_out,
     output txpmaresetdone_out,
-    input rxcommadeten_in,    
-    input rxpcommaalignen_in, 
-    input rxmcommaalignen_in, 
+    input rxcommadeten_in,
+    input rxpcommaalignen_in,
+    input rxmcommaalignen_in,
     output rxbyteisaligned_out,
-    output rxbyterealign_out,  
-    output rxcommadet_out     
+    output rxbyterealign_out,
+    output rxcommadet_out
 );
 
 endmodule
