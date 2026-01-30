@@ -19,15 +19,16 @@
 //------------------------------------------------------------------------------
 
 module qeciphy_tx_channelencoder (
-    input  logic        clk_i,            // Clock input
-    input  logic        rst_n_i,          // Active-low reset
-    input  logic [63:0] s_axis_tdata_i,   // Input user data stream
-    input  logic        s_axis_tvalid_i,  // Input data valid signal
-    output logic        s_axis_tready_o,  // Ready to accept input data
-    output logic [63:0] m_axis_tdata_o,   // Output data stream
-    input  logic        link_enable_i,    // Link enable control
-    input  logic        data_enable_i,    // Data transmission enable
-    input  logic        rx_rdy_i          // Receiver ready status for FAW packets
+    input  logic        clk_i,                 // Clock input
+    input  logic        rst_n_i,               // Active-low reset
+    input  logic [63:0] s_axis_tdata_i,        // Input user data stream
+    input  logic        s_axis_tvalid_i,       // Input data valid signal
+    output logic        s_axis_tready_o,       // Ready to accept input data
+    output logic [63:0] m_axis_tdata_o,        // Output data stream
+    output logic        m_axis_tdata_isfaw_o,  // Output indicates if m_axis_tdata is FAW
+    input  logic        link_enable_i,         // Link enable control
+    input  logic        data_enable_i,         // Data transmission enable
+    input  logic        rx_rdy_i               // Receiver ready status for FAW packets
 );
 
    logic faw_boundary;  // FAW boundary timing signal from qeciphy_tx_boundary_gen
@@ -66,18 +67,19 @@ module qeciphy_tx_channelencoder (
    // TX Packet Generator Instance
    //--------------------------------------------------------------------------
    qeciphy_tx_packet_gen tx_packet_gen_inst (
-       .clk_i          (clk_i),            // Clock input
-       .rst_n_i        (rst_n_i),          // Active-low reset
-       .faw_boundary_i (faw_boundary),     // FAW boundary timing from qeciphy_tx_boundary_gen
-       .crc_boundary_i (crc_boundary),     // CRC boundary timing from qeciphy_tx_boundary_gen
-       .s_axis_tdata_i (s_axis_tdata_i),   // Input user data stream
-       .s_axis_tvalid_i(s_axis_tvalid_i),  // Input data valid signal
-       .s_axis_tready_o(s_axis_tready_o),  // Ready to accept input data output
-       .m_axis_tdata_o (m_axis_tdata_o),   // Output data stream
-       .tx_off_i       (tx_off),           // TX off state from qeciphy_tx_controller
-       .tx_idle_i      (tx_idle),          // TX idle state from qeciphy_tx_controller
-       .tx_active_i    (tx_active),        // TX active state from qeciphy_tx_controller
-       .rx_rdy_i       (rx_rdy_i)          // Receiver ready status for FAW packets
+       .clk_i               (clk_i),                 // Clock input
+       .rst_n_i             (rst_n_i),               // Active-low reset
+       .faw_boundary_i      (faw_boundary),          // FAW boundary timing from qeciphy_tx_boundary_gen
+       .crc_boundary_i      (crc_boundary),          // CRC boundary timing from qeciphy_tx_boundary_gen
+       .s_axis_tdata_i      (s_axis_tdata_i),        // Input user data stream
+       .s_axis_tvalid_i     (s_axis_tvalid_i),       // Input data valid signal
+       .s_axis_tready_o     (s_axis_tready_o),       // Ready to accept input data output
+       .m_axis_tdata_o      (m_axis_tdata_o),        // Output data stream
+       .m_axis_tdata_isfaw_o(m_axis_tdata_isfaw_o),  // Output indicates if m_axis_tdata is FAW
+       .tx_off_i            (tx_off),                // TX off state from qeciphy_tx_controller
+       .tx_idle_i           (tx_idle),               // TX idle state from qeciphy_tx_controller
+       .tx_active_i         (tx_active),             // TX active state from qeciphy_tx_controller
+       .rx_rdy_i            (rx_rdy_i)               // Receiver ready status for FAW packets
    );
 
 endmodule  // qeciphy_tx_channelencoder

@@ -10,6 +10,7 @@ module qeciphy_tx_channelencoder_harness;
    logic s_axis_tvalid_i;
    logic s_axis_tready_o;
    logic [63:0] m_axis_tdata_o;
+   logic m_axis_tdata_isfaw_o;
    logic link_enable_i;
    logic data_enable_i;
    logic rx_rdy_i;
