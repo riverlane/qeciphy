@@ -70,7 +70,7 @@
         "gt_loc": "X0Y0",
         "rx_rclk_src": "REFCLK1_Q0",
         "tx_rclk_src": "REFCLK1_Q0",
-        "line_rate_gbps": "10.3125"
+        "line_rate_gbps": "6.25"
       },
       "synth": {
         "top": "qeciphy_syn_wrapper",
