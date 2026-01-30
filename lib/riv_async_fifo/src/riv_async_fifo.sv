@@ -144,10 +144,24 @@ module riv_async_fifo #(
    // Output signal generation
    // -------------------------------------------------------------
 
-   assign full = (waddr == (raddr_wr - ADDR_WIDTH'(1'b1)));
+   assign full  = (waddr == (raddr_wr - ADDR_WIDTH'(1'b1)));
    assign empty = (waddr_rd == raddr);
-   assign overflow = wen && full;
-   assign underflow = ren && empty;
+
+   always_ff @(posedge wclk) begin
+      if (~wrst_n) begin
+         overflow <= 1'b0;
+      end else begin
+         overflow <= wen && full;
+      end
+   end
+
+   always_ff @(posedge rclk) begin
+      if (~rrst_n) begin
+         underflow <= 1'b0;
+      end else begin
+         underflow <= ren && empty;
+      end
+   end
 
 endmodule  // riv_async_fifo
 
