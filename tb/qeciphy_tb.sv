@@ -35,7 +35,6 @@ module qeciphy_tb;
    localparam real FCLK_PERIOD_NS = (`GT_TYPE == "GTX") ? 8.0 : (`GT_TYPE == "GTH") ? 6.4 : 6.4;
 
    localparam real ACLK_PERIOD_NS = 4.0;  // >= 156.25 MHz
-   localparam real QPLL_PERIOD_NS = 0.08;
 
    localparam int MAX_CYCLES = 32'h0002_0000;
    localparam int MAX_SLIDE = 40;
@@ -70,7 +69,6 @@ module qeciphy_tb;
    axis_t                           axis_rx          [                  0:1];
 
    logic            [         31:0] cycle_cnt;
-   logic                            qpllclk;
 
    //----------------------------------------
    // TB storage
@@ -112,8 +110,6 @@ module qeciphy_tb;
       rclk[1] = 1'b0;
       fclk[1] = 1'b0;
       aclk[1] = 1'b0;
-
-      qpllclk = 1'b0;
    end
 
    always #(RCLK_PERIOD_NS / 2.0) rclk[0] = ~rclk[0];
@@ -123,8 +119,6 @@ module qeciphy_tb;
    always #(RCLK_PERIOD_NS / 2.0) rclk[1] = ~rclk[1];
    always #(FCLK_PERIOD_NS / 2.0) fclk[1] = ~fclk[1];
    always #(ACLK_PERIOD_NS / 2.0) aclk[1] = ~aclk[1];
-
-   always #(QPLL_PERIOD_NS / 2.0) qpllclk = ~qpllclk;
 
    // Resets: assert at t=0, deassert after some cycles
    initial begin
@@ -180,47 +174,10 @@ module qeciphy_tb;
    // High-speed serial connectivity
    //----------------------------------------
 
-   generate
-      if (`GT_TYPE == "GTX") begin : gen_gtx_links
-         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
-         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
-
-         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
-         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
-         always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
-         end
-      end else if (`GT_TYPE == "GTY") begin : gen_gty_links
-         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
-         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
-
-         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
-         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
-
-         always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
-         end
-      end else if (`GT_TYPE == "GTH") begin : gen_gth_links
-         assign gt_rx_n[0] = dut1_txn[BIT_SLIDE-1];
-         assign gt_rx_p[0] = dut1_txp[BIT_SLIDE-1];
-
-         assign gt_rx_n[1] = dut0_txn[BIT_SLIDE-1];
-         assign gt_rx_p[1] = dut0_txp[BIT_SLIDE-1];
-
-         always_ff @(posedge qpllclk) begin
-            dut1_txn <= {dut1_txn[MAX_SLIDE-2:0], gt_tx_n[1]};
-            dut1_txp <= {dut1_txp[MAX_SLIDE-2:0], gt_tx_p[1]};
-            dut0_txn <= {dut0_txn[MAX_SLIDE-2:0], gt_tx_n[0]};
-            dut0_txp <= {dut0_txp[MAX_SLIDE-2:0], gt_tx_p[0]};
-         end
-      end
-   endgenerate
+   assign gt_rx_p[0] = gt_tx_p[1];
+   assign gt_rx_n[0] = gt_tx_n[1];
+   assign gt_rx_p[1] = gt_tx_p[0];
+   assign gt_rx_n[1] = gt_tx_n[0];
 
    //----------------------------------------
    // Capture RX data
