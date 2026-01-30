@@ -61,11 +61,11 @@ for profile in "${PROFILES[@]}"; do
         fi
 
         if grep -q "***FAILED***" "$LOG_PATH"; then
-            echo "${TEST_NAME}_${SEED}_$profile failed"
+            echo "LOG_FILE failed"
             PROFILE_RESULTS+=("| $TEST_NAME | $OPT_ARGS_FORMATTED | FAILED |")
             FAIL=$((FAIL+1))
         else
-            echo "${TEST_NAME}_${SEED}_$profile passed"
+            echo "$LOG_FILE passed"
             PROFILE_RESULTS+=("| $TEST_NAME | $OPT_ARGS_FORMATTED | PASSED |")
             PASS=$((PASS+1))
         fi
