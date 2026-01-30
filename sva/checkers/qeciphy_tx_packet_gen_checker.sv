@@ -11,6 +11,7 @@ module qeciphy_tx_packet_gen_checker (
     input logic        s_axis_tvalid_i,
     input logic        s_axis_tready_o,
     input logic [63:0] m_axis_tdata_o,
+    input logic        m_axis_tdata_isfaw_o,
     input logic        tx_off_i,
     input logic        tx_idle_i,
     input logic        tx_active_i,
