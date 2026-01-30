@@ -20,13 +20,16 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 - **Universal Compatibility**: Supports any Xilinx FPGA with GTX, GTH, or GTY transceivers
 - **Latency**: ~150-200ns latency at 12.5 Gbps line rate
 - **Programmable Line Rate**: Configurable transceiver line rates for different bandwidth requirements
+- **Programmable Clock Sources**: Configurable reference clock sources for flexibility
 - **Open Standard**: Based on QECi Specification - an open standard
 - **Clock Recovery**: Recovers clock from incoming data stream automatically
 - **Frame Alignment**: Automatic byte and word boundary detection
 - **Error Detection**: CRC-16 for data packets, CRC-8 for control packets
 - **Link Management**: Automatic link training and status monitoring
 - **Functionality Verified**: Verified using SV-UVM testbench end-to-end. Formal verification of most modules.
+- **Hardware Tested**: Successfully tested on multiple FPGA development boards
 - **Multi-Platform Simulation**: Supports simulation on multiple platforms (XSim, VCS)
+- **LICENSE**: BSD 2-Clause License
 
 > *You only need to send valid data packets from one FPGA and receive valid data packets on the other - no need to add headers, manage link state, or handle physical layer protocols.*
 

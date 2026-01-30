@@ -204,14 +204,16 @@ RX Boundary Gen -> RX Monitor -> User Data
 
 #### 5.1 RX Byte Aligner
 
-The byte aligner (`qeciphy_rx_bytealigner.sv`) performs automatic byte alignment using slide control and comma detection (`0xBC` pattern every 128 32-bit words) through an 8-state FSM:
-1. **IDLE**: Wait for slide ready from GT
-2. **SLIDE0/SLIDE1**: Assert slide for 2 cycles
-3. **OFF**: Deassert slide for 32+ cycles (GT requirement)
-4. **CHECK**: Look for comma patterns; slide again if not found, otherwise proceed to REVIEW
-5. **REVIEW**: Verify pattern stability
-6. **DONE**: Alignment successful (sticky)
-7. **FAIL**: Alignment failed after max attempts, restart process
+The byte alignment process leverages the GT transceiver's native comma detection and alignment capabilities combined with pattern monitoring through the `qeciphy_rx_comma_detect.sv` module. The GT transceiver automatically handles comma realignment while the comma detect module verifies alignment success through pattern detection across a 6-state FSM:
+
+1. **IDLE**: Initial state, transitions to CHECK
+2. **CHECK**: Monitor for Frame Alignment Word patterns (`0xBC` byte comma)  
+3. **REVIEW**: Verify pattern consistency across multiple frame cycles
+4. **DONE**: Alignment successful and stable (sticky state)
+5. **FAIL**: Pattern verification failed, retry alignment process
+6. **RESET**: Maximum retries reached, reset RX datapath and restart
+
+The module monitors the expected protocol pattern (FAW, CRC, and data word positions) over configurable review cycles to ensure stable byte alignment before declaring success.
 
 #### 5.2 RX Word Aligner
 
