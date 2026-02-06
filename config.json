@@ -10,21 +10,9 @@
       "rclk_freq": "156.25",
       "transceiver": {
         "gt_loc": "X0Y0",
-        "rx_rclk_src": "X0Y0",
-        "tx_rclk_src": "X0Y0"
-      },
-      "synth": {
-        "top": "qeciphy_syn_wrapper",
-        "filelists": [
-          "example_designs/deltaflow/src.f"
-        ],
-        "constraints": [
-          "example_designs/deltaflow/syn/constraints.xdc"
-        ],
-        "pre_setup_hooks": [
-          "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
-          "example_designs/vendors/xilinx/qeciphy_vio.tcl"
-        ]
+        "rx_rclk_src": "X0Y0 clk0",
+        "tx_rclk_src": "X0Y0 clk0",
+        "line_rate_gbps": "10.3125"
       }
     },
     "zcu216": {
