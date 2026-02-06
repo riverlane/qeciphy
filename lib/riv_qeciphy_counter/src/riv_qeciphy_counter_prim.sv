@@ -13,7 +13,7 @@
 // - Loading zero keeps 'done' high (no counting needed)
 //------------------------------------------------------------------------------
 
-module riv_counter_prim (
+module riv_qeciphy_counter_prim (
     input  logic       clk,     // Clock
     input  logic       rst_n,   // Active-low reset
     input  logic [3:0] value,   // Initial value to load

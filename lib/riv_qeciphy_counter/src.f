@@ -1,0 +1,2 @@
+src/riv_qeciphy_counter_prim.sv
+src/riv_qeciphy_counter.sv
