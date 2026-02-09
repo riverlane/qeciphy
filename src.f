@@ -1,3 +1,7 @@
++incdir+${DFMODULE_HOME}/qeciphy/src/
++incdir+${DFMODULE_HOME}/qeciphy/lib/riv_async_fifo/src/
++incdir+${DFMODULE_HOME}/qeciphy/lib/riv_synchronizer_2ff/src/
++incdir+${DFMODULE_HOME}/qeciphy/lib/riv_qeciphy_counter/src/
 -F lib/riv_async_fifo/src.f
 -F lib/riv_synchronizer_2ff/src.f
 -F lib/riv_qeciphy_counter/src.f

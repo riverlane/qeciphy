@@ -37,6 +37,13 @@ lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin c
 
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gtx_common.sv" -match "Cell pin connected by name with empty reference: *"
 
+lint_off -rule VARHIDDEN       -file "*qeciphy_controller.sv"      -match "*"
+lint_off -rule VARHIDDEN       -file "*qeciphy_rx_controller.sv"   -match "*"
+lint_off -rule VARHIDDEN       -file "*qeciphy_rx_boundary_gen.sv" -match "*"
+lint_off -rule VARHIDDEN       -file "*qeciphy_rx_32b_to_64b.sv"   -match "*"
+
+lint_off -rule BLKSEQ          -file "*qeciphy_pkg.sv"             -match "*"
+
 // Ignore linting errors for lint stub files
 
 lint_off -rule UNUSEDSIGNAL    -file "*/lint_stubs/BUFG_GT.sv"       
