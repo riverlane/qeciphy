@@ -60,6 +60,7 @@ set ip_obj [create_ip -name gtwizard -vendor xilinx.com -library ip -version 3.6
 
 # Set IP parameters (customize as needed)
 set_property -dict [list \
+  CONFIG.gt_type {GTX} \
   CONFIG.advanced_clocking {false} \
   CONFIG.gt0_usesharedlogic {0} \
   CONFIG.gt0_val {true} \
@@ -180,7 +181,6 @@ set_property -dict [list \
   CONFIG.gt3_val_rx_refclk $RX_RCLK_SRC \
   CONFIG.gt3_val_tx_refclk $TX_RCLK_SRC \
   CONFIG.gt_val_drp {false} \
-  CONFIG.gt_val_drp_clock [format "%.3f" $FCLK_FREQ] \
   CONFIG.gt_val_rx_pll {QPLL} \
   CONFIG.gt_val_tx_pll {QPLL} \
   CONFIG.identical_protocol_file {Start_from_scratch} \

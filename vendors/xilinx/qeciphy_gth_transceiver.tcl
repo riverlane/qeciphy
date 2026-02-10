@@ -23,11 +23,6 @@ set RX_RCLK_SRC     [lindex $::argv 5]
 set TX_RCLK_SRC     [lindex $::argv 6]
 set LINE_RATE_GBPS  [lindex $::argv 7]
 
-# Derive TXPROGDIV frequency in MHz:
-#   F_progdiv = LineRate(Gbps) * 1000 / 40 (bits per internal clock @ 8b/10b, 32-bit user)
-set TXPROGDIV_FREQ_VAL [expr {double($LINE_RATE_GBPS) * 1000.0 / 40.0}]
-set TXPROGDIV_FREQ_VAL [format "%.3f" $TXPROGDIV_FREQ_VAL]
-
 puts "INFO: Using part number: $part_number"
 puts "INFO: Output directory: $output_dir"
 puts "INFO: GT Location: $GT_LOC"
@@ -36,7 +31,6 @@ puts "INFO: Reference clock frequency: $RCLK_FREQ"
 puts "INFO: RX reference clock source: $RX_RCLK_SRC"
 puts "INFO: TX reference clock source: $TX_RCLK_SRC"
 puts "INFO: Line rate: $LINE_RATE_GBPS Gbps"
-puts "INFO: TXPROGDIV frequency (derived): $TXPROGDIV_FREQ_VAL MHz"
 
 # Create project in output directory
 # Clean output_dir if exists (delete all files in output_dir)
@@ -68,6 +62,7 @@ set ip_obj [create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -
 
 # Set IP parameters
 set_property -dict [list \
+  CONFIG.GT_TYPE {GTH} \
   CONFIG.CHANNEL_ENABLE               $GT_LOC \
   CONFIG.ENABLE_OPTIONAL_PORTS        {qpll0lock_out rxcommadeten_in rxmcommaalignen_in rxpcommaalignen_in rxbyteisaligned_out rxbyterealign_out rxcommadet_out} \
   CONFIG.FREERUN_FREQUENCY            $FCLK_FREQ \
@@ -92,7 +87,6 @@ set_property -dict [list \
   CONFIG.TX_MASTER_CHANNEL            $GT_LOC \
   CONFIG.TX_REFCLK_FREQUENCY          $RCLK_FREQ \
   CONFIG.TX_REFCLK_SOURCE             $TX_RCLK_SRC \
-  CONFIG.TXPROGDIV_FREQ_VAL           $TXPROGDIV_FREQ_VAL \
 ] [get_ips $ip_name]
 
 puts "INFO: IP core '$ip_name' generated successfully"
