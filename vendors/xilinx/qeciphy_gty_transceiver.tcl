@@ -68,6 +68,7 @@ set ip_obj [create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -
 
 # Set IP parameters
 set_property -dict [list \
+  CONFIG.GT_TYPE {GTY} \
   CONFIG.CHANNEL_ENABLE $GT_LOC \
   CONFIG.ENABLE_OPTIONAL_PORTS {qpll0lock_out rxcommadeten_in rxmcommaalignen_in rxpcommaalignen_in rxbyteisaligned_out rxbyterealign_out rxcommadet_out} \
   CONFIG.FREERUN_FREQUENCY $FCLK_FREQ \

@@ -60,6 +60,7 @@ set ip_obj [create_ip -name gtwizard -vendor xilinx.com -library ip -version 3.6
 
 # Set IP parameters (customize as needed)
 set_property -dict [list \
+  CONFIG.gt_type {GTX} \
   CONFIG.advanced_clocking {false} \
   CONFIG.gt0_usesharedlogic {0} \
   CONFIG.gt0_val {true} \
