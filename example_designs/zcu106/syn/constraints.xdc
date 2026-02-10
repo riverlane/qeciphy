@@ -11,8 +11,8 @@ create_generated_clock -name tx_clk    [get_pins -hierarchical -filter {NAME =~ 
 create_generated_clock -name gt_tx_clk [get_pins -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper*channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK}]
 
 set_clock_groups -asynchronous -group [get_clocks gt_refclk] -group [get_clocks {rx_clk gt_rx_clk}] -group [get_clocks {tx_clk gt_tx_clk}]
-set_property CLOCK_DELAY_GROUP rx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gt_rx_clk}]
-set_property CLOCK_DELAY_GROUP tx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/gt_tx_clk}]
+set_property CLOCK_DELAY_GROUP rx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk_o || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/rx_clk_2x_o}]
+set_property CLOCK_DELAY_GROUP tx_clk_dly_grp [get_nets -hierarchical -filter {NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk_o || NAME =~ *QECIPHY*i_qeciphy_gt_wrapper/tx_clk_2x_o}]
 
 #Define multicycle path between sync clocks
 set_multicycle_path 2 -setup -end -from [get_clocks rx_clk] -to [get_clocks gt_rx_clk]
