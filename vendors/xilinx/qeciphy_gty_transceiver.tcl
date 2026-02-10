@@ -24,11 +24,6 @@ set RX_RCLK_SRC   [lindex $::argv 5]
 set TX_RCLK_SRC   [lindex $::argv 6]
 set LINE_RATE_GBPS [lindex $::argv 7]
 
-# Derive TXPROGDIV frequency in MHz:
-#   F_progdiv = LineRate(Gbps) * 1000 / 40 (bits per internal clock @ 8b/10b, 32-bit user)
-set TXPROGDIV_FREQ_VAL [expr {double($LINE_RATE_GBPS) * 1000.0 / 40.0}]
-set TXPROGDIV_FREQ_VAL [format "%.3f" $TXPROGDIV_FREQ_VAL]
-
 puts "INFO: Using part number: $part_number"
 puts "INFO: Output directory: $output_dir"
 puts "INFO: GT Location: $GT_LOC"
@@ -37,7 +32,6 @@ puts "INFO: Reference clock frequency: $RCLK_FREQ"
 puts "INFO: RX reference clock source: $RX_RCLK_SRC"
 puts "INFO: TX reference clock source: $TX_RCLK_SRC"
 puts "INFO: Line rate: $LINE_RATE_GBPS Gbps"
-puts "INFO: TXPROGDIV frequency (derived): $TXPROGDIV_FREQ_VAL MHz"
 
 # Create project in output directory
 if { [file exists $output_dir] } {
@@ -100,7 +94,6 @@ set_property -dict [list \
   CONFIG.RX_REFCLK_FREQUENCY $RCLK_FREQ \
   CONFIG.RX_REFCLK_SOURCE $RX_RCLK_SRC \
   CONFIG.RX_USER_DATA_WIDTH {32} \
-  CONFIG.TXPROGDIV_FREQ_VAL $TXPROGDIV_FREQ_VAL \
   CONFIG.TX_BUFFER_MODE {1} \
   CONFIG.TX_DATA_ENCODING {8B10B} \
   CONFIG.TX_INT_DATA_WIDTH {40} \
