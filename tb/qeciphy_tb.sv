@@ -5,7 +5,7 @@
 `timescale 1ns / 1ps `default_nettype none
 
 `include "../src/qeciphy_pkg.sv"
-`include "qeciphy_sim_cfg_pkg.sv"
+`include "../tb/qeciphy_sim_cfg_pkg.sv"
 
 module qeciphy_tb;
 
