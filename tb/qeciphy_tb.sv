@@ -49,41 +49,41 @@ module qeciphy_tb;
    // Signals
    //----------------------------------------
 
-   logic                            rclk             [                  0:1];
-   logic                            fclk             [                  0:1];
-   logic                            aclk             [                  0:1];
-   logic                            arstn            [                  0:1];
+   logic                   rclk             [                  0:1];
+   logic                   fclk             [                  0:1];
+   logic                   aclk             [                  0:1];
+   logic                   arstn            [                  0:1];
 
-   qeciphy_status_t                 status           [                  0:1];
-   qeciphy_error_t                  ecode            [                  0:1];
+   qeciphy_status_t        status           [                  0:1];
+   qeciphy_error_t         ecode            [                  0:1];
 
-   axis_t                           axis_tx          [                  0:1];
-   axis_t                           axis_rx          [                  0:1];
+   axis_t                  axis_tx          [                  0:1];
+   axis_t                  axis_rx          [                  0:1];
 
-   logic            [         31:0] cycle_cnt;
+   logic            [31:0] cycle_cnt;
 
    //----------------------------------------
    // TB storage
    //----------------------------------------
 
-   logic            [         63:0] tx0_test_data    [0:TEST_SEQUENCE_LEN-1];
-   logic            [         63:0] tx1_test_data    [0:TEST_SEQUENCE_LEN-1];
-   logic            [         63:0] rx0_captured_data[0:TEST_SEQUENCE_LEN-1];
-   logic            [         63:0] rx1_captured_data[0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] tx0_test_data    [0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] tx1_test_data    [0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] rx0_captured_data[0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] rx1_captured_data[0:TEST_SEQUENCE_LEN-1];
 
-   int                              rx0_idx;
-   int                              rx1_idx;
-   int                              tx0_idx;
-   int                              tx1_idx;
+   int                     rx0_idx;
+   int                     rx1_idx;
+   int                     tx0_idx;
+   int                     tx1_idx;
 
-   logic                            rx0_capture_done;
-   logic                            rx1_capture_done;
+   logic                   rx0_capture_done;
+   logic                   rx1_capture_done;
 
    // GT differential signals
-   logic                            gt_tx_p          [                  0:1];
-   logic                            gt_tx_n          [                  0:1];
-   logic                            gt_rx_p          [                  0:1];
-   logic                            gt_rx_n          [                  0:1];
+   logic                   gt_tx_p          [                  0:1];
+   logic                   gt_tx_n          [                  0:1];
+   logic                   gt_rx_p          [                  0:1];
+   logic                   gt_rx_n          [                  0:1];
 
    //----------------------------------------
    // Clocks & reset
