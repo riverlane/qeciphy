@@ -22,7 +22,7 @@
 // indicating the entire counter has reached zero.
 //------------------------------------------------------------------------------
 
-module riv_qeciphy_counter #(
+module riv_counter #(
     parameter WIDTH = 16,
     localparam N_PRIM = (WIDTH + 3) / 4,    // Number of 4-bit primitives needed
     localparam PADDED_WIDTH = N_PRIM * 4     // Actual width used internally
@@ -59,7 +59,7 @@ module riv_qeciphy_counter #(
    // Instantiate the 4-bit counter primitives
    generate
       for (genvar i = 0; i < N_PRIM; i++) begin : gen_counter_prim
-         riv_qeciphy_counter_prim i_riv_qeciphy_counter_prim (
+         riv_counter_prim i_riv_counter_prim (
              .clk   (clk),
              .rst_n (rst_n),
              .value (padded_value[i*4+3:i*4+0]),  // 4-bit slice of padded input

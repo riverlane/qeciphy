@@ -1,10 +1,10 @@
 +incdir+src/
 +incdir+lib/riv_async_fifo/src/
 +incdir+lib/riv_synchronizer_2ff/src/
-+incdir+lib/riv_qeciphy_counter/src/
++incdir+lib/riv_counter/src/
 -F lib/riv_async_fifo/src.f
 -F lib/riv_synchronizer_2ff/src.f
--F lib/riv_qeciphy_counter/src.f
+-F lib/riv_counter/src.f
 src/qeciphy_pkg.sv
 src/qeciphy_gtx_common.sv
 src/qeciphy_crc_compute.sv
