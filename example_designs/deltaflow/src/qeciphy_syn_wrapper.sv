@@ -1,12 +1,17 @@
-// SPDX-License-Identifier: LicenseRef-LICENSE
+// SPDX-License-Identifier: BSD-2-Clause
 // Copyright (c) 2025 Riverlane Ltd.
-// Original authors: Aniket Datta, Gargi Sunil
+// Original authors: Dogancan Davutoglu, Gargi Sunil, Aniket Datta
 
 module qeciphy_syn_wrapper (
     input  logic       gt_refclk_in_p,
     input  logic       gt_refclk_in_n,
-    output logic [3:0] SFP_tx_enable,
-    output logic [2:0] led
+    input  logic       clk_freerun_p,
+    input  logic       clk_freerun_n,
+    input  logic       gt_rx_p,
+    input  logic       gt_rx_n,
+    output logic       gt_tx_p,
+    output logic       gt_tx_n,
+    output logic [1:0] led
 );
 
    // Signal declarations
@@ -21,10 +26,6 @@ module qeciphy_syn_wrapper (
    logic [63:0] RX_TDATA;
    logic        RX_TVALID;
    logic        RX_TREADY;
-   logic        PSTATE;
-   logic        PREQ;
-   logic        PACCEPT;
-   logic        PACTIVE;
    logic [ 3:0] STATUS;
    logic [ 3:0] ECODE;
    logic [ 4:0] rst_counter;
@@ -39,49 +40,39 @@ module qeciphy_syn_wrapper (
    logic        RXDATA_error;
    logic        RXDATA_error_nxt;
 
-   assign SFP_tx_enable = sfp_enable;
-
-   // Refer: https://docs.amd.com/r/en-US/ug974-vivado-ultrascale-libraries/IBUFDS_GTE4
-   IBUFDS_GTE4 #(
-       .REFCLK_EN_TX_PATH(1'b0),
-       .REFCLK_HROW_CK_SEL(2'b00),
-       .REFCLK_ICNTL_RX(2'b00)
-   ) i_buff_gtrefclk (
+   IBUFDS_GTE2 i_buff_gtrefclk (
        .O    (RCLK),
-       .ODIV2(clk_freerun),
+       .ODIV2(),
        .CEB  (1'b0),
        .I    (gt_refclk_in_p),
        .IB   (gt_refclk_in_n)
    );
 
-   BUFG_GT i_buff_fclk (
-       .O      (FCLK),
-       .CE     (1'b1),
-       .CEMASK (1'b1),
-       .CLR    (1'b0),
-       .CLRMASK(1'b1),
-       .DIV    (3'b000),
-       .I      (clk_freerun)
+   IBUFDS i_ibufds_freerun (
+       .O (clk_freerun),
+       .I (clk_freerun_p),
+       .IB(clk_freerun_n)
+   );
+
+   BUFG i_buff_fclk (
+       .O(FCLK),
+       .I(clk_freerun)
    );
 
    qeciphy_rx_ila i_rx_ila (
        .clk   (ACLK),
        .probe0(RX_TDATA),
        .probe1(RX_TVALID),
-       .probe2(PACCEPT),
-       .probe3(PACTIVE),
-       .probe4(STATUS),
-       .probe5(ECODE),
-       .probe6(sfp_enable),
-       .probe7(RXDATA_error)
+       .probe2(STATUS),
+       .probe3(ECODE),
+       .probe4(sfp_enable),
+       .probe5(RXDATA_error)
    );
 
    qeciphy_vio i_vio (
        .clk       (ACLK),
        .probe_out0(rst_n_async),
-       .probe_out1(PSTATE),
-       .probe_out2(PREQ),
-       .probe_out3(sfp_enable)
+       .probe_out1(sfp_enable)
    );
 
    // Generate 16 cycle reset that de-asserts synchronously
@@ -108,7 +99,6 @@ module qeciphy_syn_wrapper (
    // For debugging
    assign led[0] = (STATUS == 4'b0100) ? 1'b1 : 1'b0;
    assign led[1] = (ECODE == 4'b0000) ? 1'b1 : 1'b0;
-   assign led[2] = ~RXDATA_error;
 
    // Drive the transmitter QECI-PHY TX data pins
    always_ff @(posedge FCLK or negedge ARSTn) begin
@@ -139,7 +129,7 @@ module qeciphy_syn_wrapper (
    end
 
    QECIPHY #(
-       .GT_TYPE("GTY")
+       .GT_TYPE("GTX")
    ) i_QECIPHY (
        .RCLK     (RCLK),
        .FCLK     (FCLK),
@@ -151,12 +141,12 @@ module qeciphy_syn_wrapper (
        .RX_TDATA (RX_TDATA),
        .RX_TVALID(RX_TVALID),
        .RX_TREADY(RX_TREADY),
-       .PSTATE   (PSTATE),
-       .PREQ     (PREQ),
-       .PACCEPT  (PACCEPT),
-       .PACTIVE  (PACTIVE),
        .STATUS   (STATUS),
-       .ECODE    (ECODE)
+       .ECODE    (ECODE),
+       .GT_RX_P  (gt_rx_p),
+       .GT_RX_N  (gt_rx_n),
+       .GT_TX_P  (gt_tx_p),
+       .GT_TX_N  (gt_tx_n)
    );
 
 endmodule
