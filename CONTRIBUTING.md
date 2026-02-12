@@ -15,7 +15,7 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 make clean
 make lint
 make format
-make generate-xci OPT_PROFILE=zcu216
+make render-design OPT_PROFILE=zcu216
 make sim OPT_PROFILE=zcu216 OPT_TOOL=xsim
 make formal OPT_TOP=<module_name>
 make synth OPT_PROFILE=zcu216

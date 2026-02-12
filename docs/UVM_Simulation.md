@@ -65,7 +65,7 @@ Below is the description of the optional run time arguments used in the tests.
 
 To run the UVM testbench there are 2 steps to be followed:
 1. Generate simulation files for the required transceiver (GTY, or GTH, or GTX). This is done using the following command  
-*   `make generate-xci OPT_PROFILE=<opt_profile> OPT_SIM_FILES=true`  
+*   `make render-design OPT_PROFILE=<opt_profile> OPT_SIM_FILES=true`  
 *   OPT_PROFILE must be chosen from the profiles avaliable in `config.json` 
 Note* - Make sure Vivado is loaded in the environment. This is needed to generate the simulation files. 
       
