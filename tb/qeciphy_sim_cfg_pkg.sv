@@ -7,8 +7,8 @@
 
 package qeciphy_sim_cfg_pkg;
 
-   localparam real QECIPHY_RCLK_PERIOD_NS = 6.4;
-   localparam real QECIPHY_FCLK_PERIOD_NS = 6.4;
+   localparam real QECIPHY_RCLK_PERIOD_NS = 6.40000000000000000000;
+   localparam real QECIPHY_FCLK_PERIOD_NS = 6.40000000000000000000;
 
 endpackage : qeciphy_sim_cfg_pkg
 `endif
