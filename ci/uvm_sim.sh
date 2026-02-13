@@ -23,7 +23,7 @@ for profile in "${PROFILES[@]}"; do
     make distclean
     
     echo "Generating XCI cores for $profile..."
-    make generate-xci OPT_PROFILE=$profile OPT_SIM_FILES=true
+    make render-design OPT_PROFILE=$profile OPT_SIM_FILES=true
     SEED=$RANDOM
 
     echo "Running UVM VCS simulation for $profile..."
