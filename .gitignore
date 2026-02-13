@@ -21,3 +21,6 @@ signal.rc
 simv.vdb/
 verdiLog/
 .certitudeGUI/
+*.xml
+*.fsdb
+vc_hdrs.h
