@@ -35,8 +35,6 @@ module qeciphy_rx_32b_to_64b (
     output logic        aligned_o     // Alignment status output
 );
 
-   import qeciphy_pkg::*;
-
    // State Machine Definition
    typedef enum bit [3:0] {
       RESET             = 4'b0001,  // Initial reset state
@@ -121,8 +119,8 @@ module qeciphy_rx_32b_to_64b (
       if (!rst_n_i) begin
          is_faw_q <= '0;
       end else begin
-         is_faw_q[0] <= is_faw(tdata_64b[0]);  // Check option 0 for FAW
-         is_faw_q[1] <= is_faw(tdata_64b[1]);  // Check option 1 for FAW
+         is_faw_q[0] <= qeciphy_pkg::is_faw(tdata_64b[0]);  // Check option 0 for FAW
+         is_faw_q[1] <= qeciphy_pkg::is_faw(tdata_64b[1]);  // Check option 1 for FAW
       end
    end
 

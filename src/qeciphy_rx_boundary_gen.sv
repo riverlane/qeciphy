@@ -34,8 +34,6 @@ module qeciphy_rx_boundary_gen (
     output logic        crc_boundary_o   // CRC boundary timing signal
 );
 
-   import qeciphy_pkg::*;
-
    // State machine for frame alignment and boundary generation
    typedef enum bit [7:0] {
       RESET              = 8'b00000001,  // Initial reset state
@@ -92,7 +90,7 @@ module qeciphy_rx_boundary_gen (
    assign in_crc_boundary_start_state = state[6];
 
    // Capture FAW detection result
-   assign faw_detected                = enable_i ? is_faw(tdata_i) : 1'b0;
+   assign faw_detected                = enable_i ? qeciphy_pkg::is_faw(tdata_i) : 1'b0;
 
    // Register FAW detection result
    always_ff @(posedge clk_i) begin
