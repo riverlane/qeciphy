@@ -134,9 +134,7 @@ module qeciphy_syn_wrapper (
       else RXDATA_error <= RXDATA_error_nxt;
    end
 
-   QECIPHY #(
-       .GT_TYPE("GTH")
-   ) i_QECIPHY (
+   QECIPHY i_QECIPHY (
        .RCLK     (RCLK),
        .FCLK     (FCLK),
        .ACLK     (ACLK),
