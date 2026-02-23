@@ -24,7 +24,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 - **Open Standard**: Based on QECi Specification - an open standard
 - **Clock Recovery**: Recovers clock from incoming data stream automatically
 - **Frame Alignment**: Automatic byte and word boundary detection
-- **Error Detection**: CRC-16 for data packets, CRC-8 for control packets
+- **Error Detection**: CRC-16 for data packets, CRC-8 for control packets (no FEC)
 - **Link Management**: Automatic link training and status monitoring
 - **Functionality Verified**: Verified using SV-UVM testbench end-to-end. Formal verification of most modules.
 - **Hardware Tested**: Successfully tested on multiple FPGA development boards
