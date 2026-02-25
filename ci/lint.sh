@@ -10,6 +10,9 @@ module purge
 echo "Loading Verilator..."
 module load verilator/verilator
 
+echo "Running render..."
+make render-design OPT_PROFILE=zcu216
+
 echo "Running lint..."
 make lint
 
