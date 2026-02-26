@@ -10,10 +10,26 @@ module purge
 echo "Loading Verilator..."
 module load verilator/verilator
 
-echo "Running render..."
-make render-design OPT_PROFILE=zcu216
+echo "Loading Vivado..."
+module load xilinx/vivado
 
-echo "Running lint..."
-make lint
+# Test all supported platforms
+PROFILES=("zcu216" "zcu106" "kasliSoC")
+
+for profile in "${PROFILES[@]}"; do
+    echo ""
+    echo "--- Testing profile: $profile ---"
+
+    echo "Cleaning previous builds..."
+    make distclean
+    
+    echo "Rendering design for $profile..."
+    make render-design OPT_PROFILE=$profile
+    
+    echo "Running lint for $profile..."
+    make lint
+    
+    echo "$profile linting completed successfully!"
+done
 
 echo "Linting completed successfully!"
