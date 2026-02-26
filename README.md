@@ -59,10 +59,11 @@ We provide three example profiles for different transceiver types:
 git clone https://github.com/riverlane/qeciphy.git
 cd qeciphy
 
-# Generate XCI cores for your platform
-make generate-xci OPT_PROFILE=zcu216     # GTY transceivers
-# make generate-xci OPT_PROFILE=zcu106   # GTH transceivers  
-# make generate-xci OPT_PROFILE=kasliSoC # GTX transceivers
+# Render design for your platform. 
+# This generates the required vendor specific IP cores and build/simulation configs.
+make render-design OPT_PROFILE=zcu216     # GTY transceivers
+# make render-design OPT_PROFILE=zcu106   # GTH transceivers  
+# make render-design OPT_PROFILE=kasliSoC # GTX transceivers
 
 # Run your first simulation
 make sim OPT_PROFILE=zcu216         # GTY transceivers
@@ -80,9 +81,7 @@ make synth OPT_PROFILE=zcu216       # GTY transceivers
 ## Interface
 
 ```systemverilog
-module QECIPHY #(
-    parameter GT_TYPE = "GTY"  // "GTX", "GTH", or "GTY"
-) (
+module QECIPHY (
     // Clocks and Reset
     input  logic        RCLK,       // GT Reference clock
     input  logic        FCLK,       // Free running clock
@@ -160,16 +159,16 @@ make lint
 make format
 ```
 
-### Vendor IP Generation
+### Rendering Design
 ```bash
-# Generate vendor IP cores
-make generate-xci OPT_PROFILE=<profile> 
+# Render design for your platform
+make render-design OPT_PROFILE=<profile> 
 
-# Generate vendor IP cores along with simulation files
-make generate-xci OPT_PROFILE=<profile> OPT_SIM_FILES=true
+# Render design along with simulation files
+make render-design OPT_PROFILE=<profile> OPT_SIM_FILES=true
 ```
 
-> *Always run `make generate-xci` before `make sim`, `make synth` or `make uvm-sim` to ensure the required vendor IP cores are generated. Specifically if you are simulating not using XSim, ensure to generate the simulation files by setting `OPT_SIM_FILES=true` while generating the XCI cores.*
+> *Always run `make render-design` before `make sim`, `make synth` or `make uvm-sim` to ensure the required vendor IP cores and configs for build/sim are generated. Specifically if you are simulating using a non-vendor specific tool, ensure to generate the simulation files by setting `OPT_SIM_FILES=true` while rendering the design.*
 
 ### Simulation
 ```bash

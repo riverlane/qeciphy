@@ -108,8 +108,8 @@ If your platform is not listed, create a new profile in `config.json`:
 ### Step 3: Generate Platform-Specific IP
 
 ```bash
-# Generate XCI cores for your profile
-make generate-xci OPT_PROFILE=<your-profile>
+# Render design for your platform (generates vendor specific IP cores and configs)
+make render-design OPT_PROFILE=<your-profile>
 ```
 
 This generates transceiver IP cores configured for your hardware platform.
@@ -176,9 +176,7 @@ Add all files listed in `src.f` and `xci.f` in your project.
 #### Instantiate QECIPHY Module
 
 ```systemverilog
-QECIPHY #(
-    .GT_TYPE("GTY")  // Change based on your platform
-) u_qeciphy (
+QECIPHY i_QECIPHY (
     // Clocks and Reset
     .RCLK       (gt_refclk),
     .FCLK       (freerun_clk), 

@@ -15,8 +15,8 @@ QECIPHY supports multiple simulation platforms to accommodate different developm
 
 ### XSim (Default)
 ```bash
-# Generate IP cores
-make generate-xci OPT_PROFILE=zcu216
+# Render design for your platform
+make render-design OPT_PROFILE=zcu216
 
 # Run simulation
 make sim OPT_PROFILE=zcu216 OPT_TOOL=xsim # Non-GUI mode
@@ -25,8 +25,8 @@ make sim OPT_PROFILE=zcu216 OPT_TOOL=xsim # Non-GUI mode
 
 ### VCS
 ```bash
-# Generate IP cores with corresponding simulation files
-make generate-xci OPT_PROFILE=zcu216 OPT_SIM_FILES=true
+# Render design for your platform with corresponding simulation files
+make render-design OPT_PROFILE=zcu216 OPT_SIM_FILES=true
 
 # Run VCS simulation
 make sim OPT_PROFILE=zcu216 OPT_TOOL=vcs # Non-GUI mode
@@ -55,8 +55,8 @@ When `OPT_SIM_FILES=true` is specified, the build system:
 3. Creates `generated_sim.f` file list for simulator consumption
 
 ```bash
-# Generate IP with simulation files
-make generate-xci OPT_PROFILE=<profile> OPT_SIM_FILES=true
+# Render design along with simulation files
+make render-design OPT_PROFILE=<profile> OPT_SIM_FILES=true
 
 # Generated files structure
 tb/generated_sim_files/

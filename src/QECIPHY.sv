@@ -26,9 +26,9 @@
 // - Hierarchical reset with proper sequencing across clock domains
 //------------------------------------------------------------------------------
 
-module QECIPHY #(
-    parameter GT_TYPE = "GTY"  // GT transceiver type: "GTX", "GTY", or "GTH"
-) (
+`include "qeciphy_build_cfg_pkg.sv"
+
+module QECIPHY (
     // =========================================================================
     // Clock and Reset Interface
     // =========================================================================
@@ -67,6 +67,8 @@ module QECIPHY #(
     output logic GT_TX_P,  // GT TX differential positive
     output logic GT_TX_N   // GT TX differential negative
 );
+
+   import qeciphy_build_cfg_pkg::*;
 
    // =========================================================================
    // Internal Signal Declarations
@@ -273,7 +275,7 @@ module QECIPHY #(
    // =========================================================================
 
    qeciphy_serdes #(
-       .GT_TYPE(GT_TYPE)  // GT primitive type selection
+       .GT_TYPE(QECIPHY_GT_TYPE)  // GT primitive type selection
    ) i_qeciphy_serdes (
        // GT Reference and Control
        .gt_ref_clk_i   (RCLK),               // GT reference clock

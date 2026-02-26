@@ -3,7 +3,7 @@
 -f verif_vip/riv_clk_rst_gen_vip/riv_clk_rst_gen_vip.f
 -f verif_vip/riv_diff_pair_connector_vip/riv_diff_pair_connector_vip.f
 
-
+tb/qeciphy_sim_cfg_pkg.sv
 -f uvm/qeciphy_env/qeciphy_env.f
 -f uvm/qeciphy_test/qeciphy_test.f
 -f uvm/qeciphy_uvmtb/qeciphy_uvmtb.f

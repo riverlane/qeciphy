@@ -21,7 +21,7 @@ for profile in "${PROFILES[@]}"; do
     make distclean
     
     echo "Generating XCI cores for $profile..."
-    make generate-xci OPT_PROFILE=$profile
+    make render-design OPT_PROFILE=$profile
     
     echo "Running synthesis for $profile..."
     make synth OPT_PROFILE=$profile

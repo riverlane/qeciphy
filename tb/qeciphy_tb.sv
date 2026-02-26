@@ -4,10 +4,13 @@
 
 `timescale 1ns / 1ps `default_nettype none
 
+`include "../src/qeciphy_pkg.sv"
+`include "../tb/qeciphy_sim_cfg_pkg.sv"
+
 module qeciphy_tb;
 
-   `include "../src/qeciphy_pkg.sv"
    import qeciphy_pkg::*;
+   import qeciphy_sim_cfg_pkg::*;
 
 `ifdef XSIM
    `include "all_bind.svh"
@@ -19,26 +22,15 @@ module qeciphy_tb;
    `define msg_info(_str) $display("INFO:  (%0.2fus) %s", $realtime/1000.0, ``_str)
    `define msg_fatal(_str) $display("FATAL: (%0.2fus) %s", $realtime/1000.0, ``_str)
 
-`ifndef GT_TYPE
-   `define GT_TYPE "GTY"
-`endif
-
    glbl glbl ();
 
    //----------------------------------------
    // Local parameters
    //----------------------------------------
 
-   // All periods in [ns]
-   localparam real RCLK_PERIOD_NS = (`GT_TYPE == "GTX") ? 8.0 : (`GT_TYPE == "GTH") ? 6.4 : 6.4;
-
-   localparam real FCLK_PERIOD_NS = (`GT_TYPE == "GTX") ? 8.0 : (`GT_TYPE == "GTH") ? 6.4 : 6.4;
-
    localparam real ACLK_PERIOD_NS = 4.0;  // >= 156.25 MHz
 
    localparam int MAX_CYCLES = 32'h0002_0000;
-   localparam int MAX_SLIDE = 40;
-   localparam int BIT_SLIDE = (`GT_TYPE == "GTX") ? 16 : (`GT_TYPE == "GTH") ? 3 : 9;
 
    localparam int TEST_SEQUENCE_LEN = 2048;
    localparam string TEST_DATASET = "random";  // "counter" or "random"
@@ -57,46 +49,41 @@ module qeciphy_tb;
    // Signals
    //----------------------------------------
 
-   logic                            rclk             [                  0:1];
-   logic                            fclk             [                  0:1];
-   logic                            aclk             [                  0:1];
-   logic                            arstn            [                  0:1];
+   logic                   rclk             [                  0:1];
+   logic                   fclk             [                  0:1];
+   logic                   aclk             [                  0:1];
+   logic                   arstn            [                  0:1];
 
-   qeciphy_status_t                 status           [                  0:1];
-   qeciphy_error_t                  ecode            [                  0:1];
+   qeciphy_status_t        status           [                  0:1];
+   qeciphy_error_t         ecode            [                  0:1];
 
-   axis_t                           axis_tx          [                  0:1];
-   axis_t                           axis_rx          [                  0:1];
+   axis_t                  axis_tx          [                  0:1];
+   axis_t                  axis_rx          [                  0:1];
 
-   logic            [         31:0] cycle_cnt;
+   logic            [31:0] cycle_cnt;
 
    //----------------------------------------
    // TB storage
    //----------------------------------------
 
-   logic            [         63:0] tx0_test_data    [0:TEST_SEQUENCE_LEN-1];
-   logic            [         63:0] tx1_test_data    [0:TEST_SEQUENCE_LEN-1];
-   logic            [         63:0] rx0_captured_data[0:TEST_SEQUENCE_LEN-1];
-   logic            [         63:0] rx1_captured_data[0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] tx0_test_data    [0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] tx1_test_data    [0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] rx0_captured_data[0:TEST_SEQUENCE_LEN-1];
+   logic            [63:0] rx1_captured_data[0:TEST_SEQUENCE_LEN-1];
 
-   int                              rx0_idx;
-   int                              rx1_idx;
-   int                              tx0_idx;
-   int                              tx1_idx;
+   int                     rx0_idx;
+   int                     rx1_idx;
+   int                     tx0_idx;
+   int                     tx1_idx;
 
-   logic                            rx0_capture_done;
-   logic                            rx1_capture_done;
-
-   logic            [MAX_SLIDE-1:0] dut1_txn;
-   logic            [MAX_SLIDE-1:0] dut1_txp;
-   logic            [MAX_SLIDE-1:0] dut0_txn;
-   logic            [MAX_SLIDE-1:0] dut0_txp;
+   logic                   rx0_capture_done;
+   logic                   rx1_capture_done;
 
    // GT differential signals
-   logic                            gt_tx_p          [                  0:1];
-   logic                            gt_tx_n          [                  0:1];
-   logic                            gt_rx_p          [                  0:1];
-   logic                            gt_rx_n          [                  0:1];
+   logic                   gt_tx_p          [                  0:1];
+   logic                   gt_tx_n          [                  0:1];
+   logic                   gt_rx_p          [                  0:1];
+   logic                   gt_rx_n          [                  0:1];
 
    //----------------------------------------
    // Clocks & reset
@@ -112,12 +99,12 @@ module qeciphy_tb;
       aclk[1] = 1'b0;
    end
 
-   always #(RCLK_PERIOD_NS / 2.0) rclk[0] = ~rclk[0];
-   always #(FCLK_PERIOD_NS / 2.0) fclk[0] = ~fclk[0];
+   always #(QECIPHY_RCLK_PERIOD_NS / 2.0) rclk[0] = ~rclk[0];
+   always #(QECIPHY_FCLK_PERIOD_NS / 2.0) fclk[0] = ~fclk[0];
    always #(ACLK_PERIOD_NS / 2.0) aclk[0] = ~aclk[0];
 
-   always #(RCLK_PERIOD_NS / 2.0) rclk[1] = ~rclk[1];
-   always #(FCLK_PERIOD_NS / 2.0) fclk[1] = ~fclk[1];
+   always #(QECIPHY_RCLK_PERIOD_NS / 2.0) rclk[1] = ~rclk[1];
+   always #(QECIPHY_FCLK_PERIOD_NS / 2.0) fclk[1] = ~fclk[1];
    always #(ACLK_PERIOD_NS / 2.0) aclk[1] = ~aclk[1];
 
    // Resets: assert at t=0, deassert after some cycles
@@ -331,9 +318,7 @@ module qeciphy_tb;
    // DUTs
    //----------------------------------------
 
-   QECIPHY #(
-       .GT_TYPE(`GT_TYPE)
-   ) dut0 (
+   QECIPHY dut0 (
        .RCLK     (rclk[0]),
        .FCLK     (fclk[0]),
        .ACLK     (aclk[0]),
@@ -352,9 +337,7 @@ module qeciphy_tb;
        .GT_TX_N  (gt_tx_n[0])
    );
 
-   QECIPHY #(
-       .GT_TYPE(`GT_TYPE)
-   ) dut1 (
+   QECIPHY dut1 (
        .RCLK     (rclk[1]),
        .FCLK     (fclk[1]),
        .ACLK     (aclk[1]),
