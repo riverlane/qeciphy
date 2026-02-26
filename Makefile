@@ -271,7 +271,8 @@ clean:
 
 distclean: clean
 	@echo "INFO: Performing distclean"
-	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f 
+	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f
+	@rm -rf src/qeciphy_build_cfg_pkg.sv tb/qeciphy_sim_cfg_pkg.sv 
 
 
 # -------------------------------------------------------------
