@@ -18,4 +18,8 @@ module qeciphy_clk_mmcm (
     input  clk_in
 );
 
+   assign clk_out_2x = '0;
+   assign clk_out = '0;
+   assign input_clk_stopped = '0;
+
 endmodule

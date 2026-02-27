@@ -68,4 +68,14 @@ module GTXE2_COMMON #(
     input  logic        RCALENB
 );
 
+   assign DRPDO = '0;
+   assign DRPRDY = '0;
+   assign QPLLDMONITOR = '0;
+   assign QPLLOUTCLK = '0;
+   assign QPLLOUTREFCLK = '0;
+   assign REFCLKOUTMONITOR = '0;
+   assign QPLLFBCLKLOST = '0;
+   assign QPLLLOCK = '0;
+   assign QPLLREFCLKLOST = '0;
+
 endmodule

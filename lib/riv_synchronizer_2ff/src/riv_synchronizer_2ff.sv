@@ -5,7 +5,9 @@
 `ifndef RIV_SYNCHRONIZER_2FF_SV
 `define RIV_SYNCHRONIZER_2FF_SV
 
-module riv_synchronizer_2ff (
+module riv_synchronizer_2ff #(
+    parameter string RESET_TYPE = "SYNC"
+) (
     input logic src_in,  // signal to be synchronised
     input logic dst_clk,  // destination clock domain
     input logic dst_rst_n,  // destination domain active low reset
@@ -21,13 +23,25 @@ module riv_synchronizer_2ff (
    // Logic
    // -------------------------------------------------------------
 
-   always_ff @(posedge dst_clk or negedge dst_rst_n) begin
-      if (~dst_rst_n) begin
-         sync_stage_sf <= 2'h0;
-      end else begin
-         sync_stage_sf <= {sync_stage_sf[0], src_in};
+   generate
+      if (RESET_TYPE == "ASYNC") begin : gen_synchronizer_with_async_reset
+         always_ff @(posedge dst_clk or negedge dst_rst_n) begin
+            if (!dst_rst_n) begin
+               sync_stage_sf <= 2'h0;
+            end else begin
+               sync_stage_sf <= {sync_stage_sf[0], src_in};
+            end
+         end
+      end else begin : gen_synchronizer_with_sync_reset
+         always_ff @(posedge dst_clk) begin
+            if (!dst_rst_n) begin
+               sync_stage_sf <= 2'h0;
+            end else begin
+               sync_stage_sf <= {sync_stage_sf[0], src_in};
+            end
+         end
       end
-   end
+   endgenerate
 
    assign dst_out = sync_stage_sf[1];
 

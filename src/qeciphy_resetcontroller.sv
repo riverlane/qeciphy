@@ -30,10 +30,11 @@ module qeciphy_resetcontroller (
     // AXIS Clock Domain Interface (Primary Reset Control)
     // =========================================================================
     input  logic axis_clk_i,             // Primary AXIS clock
-    input  logic axis_rst_n_i,           // Master reset input (active-low)
+    input  logic async_rst_n_i,          // Master reset input (active-low)
     input  logic gt_power_good_i,        // GT power supply ready indicator
     input  logic gt_tx_rst_done_i,       // GT TX reset sequence complete
     input  logic gt_rx_rst_done_i,       // GT RX reset sequence complete
+    output logic axis_rst_n_o,           // async_rst_n_i reflected in AXIS domain
     output logic axis_datapath_rst_n_o,  // AXIS datapath reset output
     output logic rst_done_o,             // Reset sequence complete
 
@@ -41,21 +42,21 @@ module qeciphy_resetcontroller (
     // TX Clock Domain Interface
     // =========================================================================
     input  logic tx_clk_i,            // TX clock
-    output logic tx_rst_n_o,          // axis_rst_n_i reflected in TX domain
+    output logic tx_rst_n_o,          // async_rst_n_i reflected in TX domain
     output logic tx_datapath_rst_n_o, // TX datapath reset output
 
     // =========================================================================
     // RX Clock Domain Interface
     // =========================================================================
     input  logic rx_clk_i,            // RX clock
-    output logic rx_rst_n_o,          // axis_rst_n_i reflected in RX domain
+    output logic rx_rst_n_o,          // async_rst_n_i reflected in RX domain
     output logic rx_datapath_rst_n_o, // RX datapath reset output
 
     // =========================================================================
     // Fabric Clock Domain Interface
     // =========================================================================
     input  logic f_clk_i,    // Free-running clock
-    output logic f_rst_n_o,  // axis_rst_n_i reflected in free running domain
+    output logic f_rst_n_o,  // async_rst_n_i reflected in free running domain
     output logic gt_rst_n_o  // GT transceiver reset
 );
 
@@ -101,41 +102,59 @@ module qeciphy_resetcontroller (
    logic        gt_rst_state;
    logic        axis_datapath_rst_state;
 
-   // axis_rst_n_i reflected in other clock domains
+   // async_rst_n_i reflected in other clock domains
    logic        f_rst_n;
    logic        rx_rst_n;
    logic        tx_rst_n;
+   logic        axis_rst_n;
 
    // =========================================================================
    // Cross-Domain Reset Synchronization
    // =========================================================================
 
-   assign f_rst_n_o  = f_rst_n;
+   assign f_rst_n_o = f_rst_n;
    assign rx_rst_n_o = rx_rst_n;
    assign tx_rst_n_o = tx_rst_n;
+   assign axis_rst_n_o = axis_rst_n;
 
    // Synchronize reset release to fabric clock domain
-   riv_synchronizer_2ff i_fclk_rst_cdc (
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_fclk_rst_cdc (
        .src_in   (1'b1),
        .dst_clk  (f_clk_i),
-       .dst_rst_n(axis_rst_n_i),
+       .dst_rst_n(async_rst_n_i),
        .dst_out  (f_rst_n)
    );
 
    // Synchronize reset release to RX clock domain
-   riv_synchronizer_2ff i_rx_clk_rst_cdc (
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_rx_clk_rst_cdc (
        .src_in   (1'b1),
        .dst_clk  (rx_clk_i),
-       .dst_rst_n(axis_rst_n_i),
+       .dst_rst_n(async_rst_n_i),
        .dst_out  (rx_rst_n)
    );
 
    // Synchronize reset release to TX clock domain  
-   riv_synchronizer_2ff i_tx_clk_rst_cdc (
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_tx_clk_rst_cdc (
        .src_in   (1'b1),
        .dst_clk  (tx_clk_i),
-       .dst_rst_n(axis_rst_n_i),
+       .dst_rst_n(async_rst_n_i),
        .dst_out  (tx_rst_n)
+   );
+
+   // Synchronize reset release to AXIS clock domain
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_axis_clk_rst_cdc (
+       .src_in   (1'b1),
+       .dst_clk  (axis_clk_i),
+       .dst_rst_n(async_rst_n_i),
+       .dst_out  (axis_rst_n)
    );
 
    // =========================================================================
@@ -184,7 +203,7 @@ module qeciphy_resetcontroller (
    riv_synchronizer_2ff i_cdc_gt_delay_done (
        .src_in   (gt_delay_done_fclk),
        .dst_clk  (axis_clk_i),
-       .dst_rst_n(axis_rst_n_i),
+       .dst_rst_n(axis_rst_n),
        .dst_out  (gt_delay_done)
    );
 
@@ -195,7 +214,7 @@ module qeciphy_resetcontroller (
 
    // Datapath delay countdown counter
    always_ff @(posedge axis_clk_i) begin
-      if (!axis_rst_n_i) begin
+      if (!axis_rst_n) begin
          datapath_delay_counter <= 5'd31;
       end else if (in_datapath_delay_state) begin
          datapath_delay_counter <= datapath_delay_counter - 5'd1;
@@ -204,7 +223,7 @@ module qeciphy_resetcontroller (
 
    // Datapath delay completion
    always_ff @(posedge axis_clk_i) begin
-      if (!axis_rst_n_i) begin
+      if (!axis_rst_n) begin
          datapath_delay_done <= 1'b0;
       end else if (~|datapath_delay_counter) begin
          datapath_delay_done <= 1'b1;
@@ -217,7 +236,7 @@ module qeciphy_resetcontroller (
 
    // State register
    always_ff @(posedge axis_clk_i) begin
-      if (!axis_rst_n_i) begin
+      if (!axis_rst_n) begin
          state <= RESET;
       end else begin
          state <= state_nxt;

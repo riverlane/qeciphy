@@ -58,4 +58,26 @@ module qeciphy_gty_transceiver (
     output rxcommadet_out
 );
 
+   assign gtwiz_reset_rx_cdr_stable_out = '0;
+   assign gtwiz_reset_tx_done_out = '0;
+   assign gtwiz_reset_rx_done_out = '0;
+   assign gtwiz_userdata_rx_out = '0;
+   assign qpll0outclk_out = '0;
+   assign qpll0lock_out = '0;
+   assign qpll0outrefclk_out = '0;
+   assign gtpowergood_out = '0;
+   assign gtytxn_out = '0;
+   assign gtytxp_out = '0;
+   assign rxctrl0_out = '0;
+   assign rxctrl1_out = '0;
+   assign rxctrl2_out = '0;
+   assign rxctrl3_out = '0;
+   assign rxoutclk_out = '0;
+   assign rxpmaresetdone_out = '0;
+   assign txoutclk_out = '0;
+   assign txpmaresetdone_out = '0;
+   assign rxbyteisaligned_out = '0;
+   assign rxbyterealign_out = '0;
+   assign rxcommadet_out = '0;
+
 endmodule
