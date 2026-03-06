@@ -20,4 +20,6 @@ module BUFG_GT (
     output O
 );
 
+   assign O = '0;
+
 endmodule

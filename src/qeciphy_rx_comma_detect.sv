@@ -102,11 +102,6 @@ module qeciphy_rx_comma_detect #(
 
    logic [                       3:0] data_crc_slot_count_d;
    logic [                       3:0] data_crc_slot_count_q;
-   logic                              faw_1_slot;
-   logic                              faw_2_slot;
-   logic                              data_slot;
-   logic                              crc_1_slot;
-   logic                              crc_2_slot;
 
 
    logic [                       7:0] reset_delay_count_q;

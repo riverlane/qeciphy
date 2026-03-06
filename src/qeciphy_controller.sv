@@ -47,8 +47,6 @@ module qeciphy_controller (
     output logic       rx_enable_o        // Enable RX data processing
 );
 
-   import qeciphy_pkg::*;
-
    // =========================================================================
    // State Machine Definition
    // =========================================================================
@@ -68,9 +66,9 @@ module qeciphy_controller (
    } fsm_t;
 
    fsm_t state, state_nxt;  // Current and next state registers
-   qeciphy_status_t status;  // Mapped status output
-   logic            in_ready_state;  // Link ready flag
-   logic            in_fault_state;  // Fault state flag
+   qeciphy_pkg::qeciphy_status_t status;  // Mapped status output
+   logic                         in_ready_state;  // Link ready flag
+   logic                         in_fault_state;  // Fault state flag
 
    // =========================================================================
    // Control Signal Generation

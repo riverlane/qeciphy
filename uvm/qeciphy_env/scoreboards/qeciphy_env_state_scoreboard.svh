@@ -26,6 +26,7 @@ class qeciphy_env_state_scoreboard extends uvm_scoreboard;
    bit  m_dut_power_down_pending;
    bit  m_dut_cycle_pending;        // '1' during a DUT-initiated power-cycle (power-down then power-up).
    bit  m_tbphy_cycle_pending;      // '1' during a TB-Phy-initiated power-cycle (power-down then power-up).
+   int  m_reset_state_cycle_count; // Counter for number of cycles spent in PHY_RESET state.
 
    `uvm_component_utils_begin(qeciphy_env_state_scoreboard)
       `uvm_field_int(m_num_errors,            UVM_DEFAULT | UVM_UNSIGNED)
@@ -35,6 +36,7 @@ class qeciphy_env_state_scoreboard extends uvm_scoreboard;
       `uvm_field_int(m_requested_tbphy_state, UVM_DEFAULT | UVM_BIN)
       `uvm_field_int(m_dut_cycle_pending,     UVM_DEFAULT | UVM_BIN)
       `uvm_field_int(m_tbphy_cycle_pending,   UVM_DEFAULT | UVM_BIN)
+      `uvm_field_int(m_reset_state_cycle_count, UVM_DEFAULT | UVM_UNSIGNED)
    `uvm_component_utils_end
 
    
@@ -94,6 +96,7 @@ class qeciphy_env_state_scoreboard extends uvm_scoreboard;
          m_requested_tbphy_state = 1'b1;
          m_dut_cycle_pending     = 1'b0;
          m_tbphy_cycle_pending   = 1'b0;
+         m_reset_state_cycle_count = 1'b0;
 
          // Allow reset to take effect and then check that DUT is in reset until reset goes away (synchronously).
          #1.0ns
@@ -133,8 +136,8 @@ class qeciphy_env_state_scoreboard extends uvm_scoreboard;
       qeciphy_state_enum  prev_dut_status;
       bit                 fsm_error;
 
-      exp_dut_status  = PHY_WAIT_FOR_RESET;
-      prev_dut_status = PHY_WAIT_FOR_RESET;
+      exp_dut_status  = PHY_RESET;
+      prev_dut_status = PHY_RESET;
       fsm_error       = 1'b0;
       forever begin
 
@@ -173,12 +176,56 @@ class qeciphy_env_state_scoreboard extends uvm_scoreboard;
    //
    // Stay in RESET for only one clock and then transition to WAIT_FOR_RESET.
    //---------------------------------------------------------------------------------------------------------------------------------------
-   virtual function qeciphy_state_enum check_reset_state(output bit error = 1'b0);
+   //---------------------------------------------------------------------------------------------------------------------------------------
+// Function: check_reset_state
+//
+// Stay in RESET for 1-5 clocks and then transition to WAIT_FOR_RESET.
+//---------------------------------------------------------------------------------------------------------------------------------------
+virtual function qeciphy_state_enum check_reset_state(output bit error = 1'b0);
+   const string msg_id = {get_type_name(), ".check_reset_state"};
+   qeciphy_state_enum current_status;
 
-      error = ~check_status("DUT", PHY_WAIT_FOR_RESET);
+   current_status = get_status("DUT");
+   
+   if (current_status == PHY_RESET) begin
+      // Still in PHY_RESET, increment counter
+      m_reset_state_cycle_count++;
+      
+      // Check if we've exceeded maximum allowed cycles in RESET
+      if (m_reset_state_cycle_count > 5) begin
+         `uvm_error(msg_id, $sformatf("DUT stayed in PHY_RESET for %0d cycles (max allowed: 5)", 
+                                      m_reset_state_cycle_count))
+         error = 1'b1;
+      end
+      
+      return (PHY_RESET);
+   end
+   else if (current_status == PHY_WAIT_FOR_RESET) begin
+      // Transitioned to PHY_WAIT_FOR_RESET, check if cycle count is valid
+      if (m_reset_state_cycle_count < 1 || m_reset_state_cycle_count > 5) begin
+         `uvm_error(msg_id, $sformatf("DUT transitioned from PHY_RESET to PHY_WAIT_FOR_RESET after %0d cycles (expected: 1-5)", 
+                                      m_reset_state_cycle_count))
+         error = 1'b1;
+      end
+      else begin
+         `uvm_info(msg_id, $sformatf("DUT transitioned from PHY_RESET to PHY_WAIT_FOR_RESET after %0d cycles", 
+                                     m_reset_state_cycle_count), UVM_MEDIUM)
+      end
+      
+      // Reset counter for next time
+      m_reset_state_cycle_count = 0;
       return (PHY_WAIT_FOR_RESET);
+   end
+   else begin
+      // Invalid transition from PHY_RESET to something other than PHY_WAIT_FOR_RESET
+      `uvm_error(msg_id, $sformatf("DUT transitioned from PHY_RESET to invalid state %0s after %0d cycles", 
+                                   current_status.name(), m_reset_state_cycle_count))
+      error = 1'b1;
+      m_reset_state_cycle_count = 0;
+      return (current_status);
+   end
 
-   endfunction : check_reset_state
+endfunction : check_reset_state
    //---------------------------------------------------------------------------------------------------------------------------------------
 
 

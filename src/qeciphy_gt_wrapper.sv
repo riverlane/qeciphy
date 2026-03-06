@@ -3,7 +3,7 @@
 // Original authors: Dogancan Davutoglu, Aniket Datta
 
 module qeciphy_gt_wrapper #(
-    parameter GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH"
+    parameter string GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH"
 ) (
     input logic gt_ref_clk_i,
 
@@ -37,7 +37,6 @@ module qeciphy_gt_wrapper #(
    logic rxoutclk;
    logic txoutclk;
 
-   logic rxcommadeten;
    logic rxpcommaalignen;
    logic rxmcommaalignen;
    logic rxbyteisaligned;
@@ -73,17 +72,6 @@ module qeciphy_gt_wrapper #(
          gt_rx_rst_done_reg <= '0;
       end else begin
          gt_rx_rst_done_reg <= gt_rx_rst_done;
-      end
-   end
-
-   // Comma detect enable logic
-   always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
-      if (!gt_rst_n_i) begin
-         rxcommadeten <= 1'b0;
-      end else if (gt_rx_rst_done_reg) begin
-         rxcommadeten <= 1'b1;
-      end else begin
-         rxcommadeten <= 1'b0;
       end
    end
 
@@ -131,6 +119,19 @@ module qeciphy_gt_wrapper #(
          logic rxpmaresetdone;
          logic userclk_tx_reset;
          logic userclk_rx_reset;
+         logic rxcommadeten;
+
+         // Comma detect enable logic
+         always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+            if (!gt_rst_n_i) begin
+               rxcommadeten <= 1'b0;
+            end else if (gt_rx_rst_done_reg) begin
+               rxcommadeten <= 1'b1;
+            end else begin
+               rxcommadeten <= 1'b0;
+            end
+         end
+
          assign userclk_tx_reset = ~txpmaresetdone;
          assign userclk_rx_reset = ~rxpmaresetdone;
 
@@ -248,6 +249,19 @@ module qeciphy_gt_wrapper #(
          logic rxpmaresetdone;
          logic userclk_tx_reset;
          logic userclk_rx_reset;
+         logic rxcommadeten;
+
+         // Comma detect enable logic
+         always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+            if (!gt_rst_n_i) begin
+               rxcommadeten <= 1'b0;
+            end else if (gt_rx_rst_done_reg) begin
+               rxcommadeten <= 1'b1;
+            end else begin
+               rxcommadeten <= 1'b0;
+            end
+         end
+
          assign userclk_tx_reset = ~txpmaresetdone;
          assign userclk_rx_reset = ~rxpmaresetdone;
 
@@ -376,60 +390,60 @@ module qeciphy_gt_wrapper #(
          logic rxpmaresetdone;
 
          qeciphy_gtx_transceiver transceiver (
-             .sysclk_in                  (f_clk_i),             // input wire sysclk_in
-             .soft_reset_tx_in           (1'b0),                // input wire soft_reset_tx_in
-             .soft_reset_rx_in           (1'b0),                // input wire soft_reset_rx_in
-             .dont_reset_on_data_error_in(1'b1),                // input wire dont_reset_on_data_error_in
-             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done),      // output wire gt0_tx_fsm_reset_done_out
-             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done),      // output wire gt0_rx_fsm_reset_done_out
-             .gt0_data_valid_in          (rxpmaresetdone),      // input wire gt0_data_valid_in
-             .gt0_drpaddr_in             (9'h00),               // input wire [8:0] gt0_drpaddr_in
-             .gt0_drpclk_in              (f_clk_i),             // input wire gt0_drpclk_in
-             .gt0_drpdi_in               (16'h0000),            // input wire [15:0] gt0_drpdi_in
-             .gt0_drpdo_out              (),                    // output wire [15:0] gt0_drpdo_out
-             .gt0_drpen_in               (1'b0),                // input wire gt0_drpen_in
-             .gt0_drprdy_out             (),                    // output wire gt0_drprdy_out
-             .gt0_drpwe_in               (1'b0),                // input wire gt0_drpwe_in
-             .gt0_dmonitorout_out        (),                    // output wire [7:0] gt0_dmonitorout_out
-             .gt0_loopback_in            (3'b000),              // input wire [2:0] gt0_loopback_in
-             .gt0_eyescanreset_in        (1'b0),                // input wire gt0_eyescanreset_in
-             .gt0_rxuserrdy_in           (1'b1),                // input wire gt0_rxuserrdy_in
-             .gt0_eyescandataerror_out   (),                    // output wire gt0_eyescandataerror_out
-             .gt0_eyescantrigger_in      (1'b0),                // input wire gt0_eyescantrigger_in
-             .gt0_rxusrclk_in            (rx_clk_2x_o),         // input wire gt0_rxusrclk_in
-             .gt0_rxusrclk2_in           (rx_clk_2x_o),         // input wire gt0_rxusrclk2_in
-             .gt0_rxdata_out             (rx_tdata_o),          // output wire [31:0] gt0_rxdata_out
-             .gt0_rxdisperr_out          (),                    // output wire [3:0] gt0_rxdisperr_out
-             .gt0_rxnotintable_out       (),                    // output wire [3:0] gt0_rxnotintable_out
-             .gt0_gtxrxp_in              (gt_rx_p_i),           // input wire gt0_gtxrxp_in
-             .gt0_gtxrxn_in              (gt_rx_n_i),           // input wire gt0_gtxrxn_in
-             .gt0_rxdfelpmreset_in       (1'b0),                // input wire gt0_rxdfelpmreset_in
-             .gt0_rxmonitorout_out       (),                    // output wire [6:0] gt0_rxmonitorout_out
-             .gt0_rxmonitorsel_in        (2'b00),               // input wire [1:0] gt0_rxmonitorsel_in
-             .gt0_rxoutclk_out           (rxoutclk),            // output wire gt0_rxoutclk_out
-             .gt0_rxoutclkfabric_out     (),                    // output wire gt0_rxoutclkfabric_out
-             .gt0_gtrxreset_in           (~gt_rst_n_i),         // input wire gt0_gtrxreset_in
-             .gt0_rxpmareset_in          (~gt_rst_n_i),         // input wire gt0_rxpmareset_in
-             .gt0_rxcharisk_out          (),                    // output wire [3:0] gt0_rxcharisk_out
-             .gt0_rxresetdone_out        (rxpmaresetdone),      // output wire gt0_rxresetdone_out
-             .gt0_gttxreset_in           (~gt_rst_n_i),         // input wire gt0_gttxreset_in
-             .gt0_txuserrdy_in           (1'b1),                // input wire gt0_txuserrdy_in
-             .gt0_txusrclk_in            (tx_clk_2x_o),         // input wire gt0_txusrclk_in
-             .gt0_txusrclk2_in           (tx_clk_2x_o),         // input wire gt0_txusrclk2_in
-             .gt0_txdata_in              (tx_tdata_i),          // input wire [31:0] gt0_txdata_in
-             .gt0_gtxtxn_out             (gt_tx_n_o),           // output wire gt0_gtxtxn_out
-             .gt0_gtxtxp_out             (gt_tx_p_o),           // output wire gt0_gtxtxp_out
-             .gt0_txoutclk_out           (txoutclk),            // output wire gt0_txoutclk_out
-             .gt0_txoutclkfabric_out     (),                    // output wire gt0_txoutclkfabric_out
-             .gt0_txoutclkpcs_out        (),                    // output wire gt0_txoutclkpcs_out
-             .gt0_txcharisk_in           (tx_tdata_charisk_i),  // input wire [3:0] gt0_txcharisk_in
-             .gt0_txpmareset_in          (~gt_rst_n_i),         // input wire gt0_txpmareset_in
-             .gt0_txresetdone_out        (),                    // output wire gt0_txresetdone_out
-             .gt0_qplllock_in            (qplllock_out),        // input wire gt0_qplllock_in
-             .gt0_qpllrefclklost_in      (qpllrefclklost_out),  // input wire gt0_qpllrefclklost_in
-             .gt0_qpllreset_out          (qpllreset_in),        // output wire gt0_qpllreset_out
-             .gt0_qplloutclk_in          (qplloutclk_out),      // input wire gt0_qplloutclk_in
-             .gt0_qplloutrefclk_in       (qplloutrefclk_out),   // input wire gt0_qplloutrefclk_in
+             .sysclk_in                  (f_clk_i),
+             .soft_reset_tx_in           (1'b0),
+             .soft_reset_rx_in           (~rx_datapath_resetn),
+             .dont_reset_on_data_error_in(1'b1),
+             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done),
+             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done),
+             .gt0_data_valid_in          (rxpmaresetdone),
+             .gt0_drpaddr_in             (9'h00),
+             .gt0_drpclk_in              (f_clk_i),
+             .gt0_drpdi_in               (16'h0000),
+             .gt0_drpdo_out              (),
+             .gt0_drpen_in               (1'b0),
+             .gt0_drprdy_out             (),
+             .gt0_drpwe_in               (1'b0),
+             .gt0_dmonitorout_out        (),
+             .gt0_loopback_in            (3'b000),
+             .gt0_eyescanreset_in        (1'b0),
+             .gt0_rxuserrdy_in           (1'b1),
+             .gt0_eyescandataerror_out   (),
+             .gt0_eyescantrigger_in      (1'b0),
+             .gt0_rxusrclk_in            (rx_clk_2x_o),
+             .gt0_rxusrclk2_in           (rx_clk_2x_o),
+             .gt0_rxdata_out             (rx_tdata_o),
+             .gt0_rxdisperr_out          (),
+             .gt0_rxnotintable_out       (),
+             .gt0_gtxrxp_in              (gt_rx_p_i),
+             .gt0_gtxrxn_in              (gt_rx_n_i),
+             .gt0_rxdfelpmreset_in       (1'b0),
+             .gt0_rxmonitorout_out       (),
+             .gt0_rxmonitorsel_in        (2'b00),
+             .gt0_rxoutclk_out           (rxoutclk),
+             .gt0_rxoutclkfabric_out     (),
+             .gt0_gtrxreset_in           (~gt_rst_n_i),
+             .gt0_rxpmareset_in          (~gt_rst_n_i),
+             .gt0_rxcharisk_out          (),
+             .gt0_rxresetdone_out        (rxpmaresetdone),
+             .gt0_gttxreset_in           (~gt_rst_n_i),
+             .gt0_txuserrdy_in           (1'b1),
+             .gt0_txusrclk_in            (tx_clk_2x_o),
+             .gt0_txusrclk2_in           (tx_clk_2x_o),
+             .gt0_txdata_in              (tx_tdata_i),
+             .gt0_gtxtxn_out             (gt_tx_n_o),
+             .gt0_gtxtxp_out             (gt_tx_p_o),
+             .gt0_txoutclk_out           (txoutclk),
+             .gt0_txoutclkfabric_out     (),
+             .gt0_txoutclkpcs_out        (),
+             .gt0_txcharisk_in           (tx_tdata_charisk_i),
+             .gt0_txpmareset_in          (~gt_rst_n_i),
+             .gt0_txresetdone_out        (),
+             .gt0_qplllock_in            (qplllock_out),
+             .gt0_qpllrefclklost_in      (qpllrefclklost_out),
+             .gt0_qpllreset_out          (qpllreset_in),
+             .gt0_qplloutclk_in          (qplloutclk_out),
+             .gt0_qplloutrefclk_in       (qplloutrefclk_out),
              .gt0_rxpcommaalignen_in     (rxpcommaalignen),
              .gt0_rxmcommaalignen_in     (rxmcommaalignen),
              .gt0_rxbyteisaligned_out    (rxbyteisaligned),

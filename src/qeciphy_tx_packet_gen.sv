@@ -44,41 +44,38 @@ module qeciphy_tx_packet_gen (
     input  logic        rx_rdy_i               // Receiver ready status to transmit
 );
 
-   import qeciphy_pkg::*;
-
    // 3-stage data pipeline for packet generation
-   logic            [63:0] tdata_pipe                                                                      [0:2];  // Pipeline data registers [stage0, stage1, stage2]
-   logic            [63:0] tdata_pipe_nxt                                                                  [0:2];  // Next values for pipeline data
+   logic                         [63:0] tdata_pipe                                                                      [0:2];  // Pipeline data registers [stage0, stage1, stage2]
+   logic                         [63:0] tdata_pipe_nxt                                                                  [0:2];  // Next values for pipeline data
 
    // 3 stage pipeline to track if data is FAW
-   logic                   tdata_isfaw_pipe                                                                [0:2];
+   logic                                tdata_isfaw_pipe                                                                [0:2];
 
    // Valid bit tracking for data segments  
-   logic            [ 5:0] data_valid_mask;  // Bitmask tracking which data segments contain valid data
-   logic            [ 2:0] valid_bit_ptr;  // Circular pointer to current valid bit position (0-5)
-   logic            [ 2:0] valid_bit_ptr_nxt;  // Next value for valid bit pointer
+   logic                         [ 5:0] data_valid_mask;  // Bitmask tracking which data segments contain valid data
+   logic                         [ 2:0] valid_bit_ptr;  // Circular pointer to current valid bit position (0-5)
+   logic                         [ 2:0] valid_bit_ptr_nxt;  // Next value for valid bit pointer
 
    // CRC computation results for different data lanes
-   logic            [15:0] crc01_calc;  // CRC result for data words 0-1
-   logic            [15:0] crc23_calc;  // CRC result for data words 2-3  
-   logic            [15:0] crc45_calc;  // CRC result for data words 4-5
-   logic            [ 7:0] crcvw_calc;  // CRC result for valid word field
-   logic                   crc_valid;  // CRC computation valid flag from qeciphy_crc_compute module
+   logic                         [15:0] crc01_calc;  // CRC result for data words 0-1
+   logic                         [15:0] crc23_calc;  // CRC result for data words 2-3  
+   logic                         [15:0] crc45_calc;  // CRC result for data words 4-5
+   logic                         [ 7:0] crcvw_calc;  // CRC result for valid word field
+   logic                                crc_valid;  // CRC computation valid flag from qeciphy_crc_compute module
 
    // Delayed boundary signals for pipeline synchronization
-   logic                   faw_boundary_q;  // Registered FAW boundary signal
-   logic                   crc_boundary_q;  // Registered CRC boundary signal
+   logic                                faw_boundary_q;  // Registered FAW boundary signal
+   logic                                crc_boundary_q;  // Registered CRC boundary signal
 
    // Control signals for packet generation modes
-   logic                   boundary_chars_enable;  // Enable boundary character insertion (FAW/CRC packets)
-   logic            [ 1:0] boundary_chars_enable_pipe;  // 2-stage pipeline of boundary enable signal
-   logic                   data_enable;  // Enable user data transmission
+   logic                                boundary_chars_enable;  // Enable boundary character insertion (FAW/CRC packets)
+   logic                         [ 1:0] boundary_chars_enable_pipe;  // 2-stage pipeline of boundary enable signal
+   logic                                data_enable;  // Enable user data transmission
 
    // Packet structure instances
-   qeciphy_faw_t           faw;  // Frame Alignment Word
-   qeciphy_vd_pkt_t        vd_pkt;  // Validation Word
-   qeciphy_vd_pkt_t        vd_pkt_pipe                                                                     [0:2];  // Validation Word pipeline 
-   qeciphy_vd_pkt_t        vd_pkt_pipe_nxt                                                                 [0:2];  // Next values for validation Word pipeline
+   qeciphy_pkg::qeciphy_faw_t           faw;  // Frame Alignment Word
+   qeciphy_pkg::qeciphy_vd_pkt_t        vd_pkt_pipe                                                                     [0:2];  // Validation Word pipeline 
+   qeciphy_pkg::qeciphy_vd_pkt_t        vd_pkt_pipe_nxt                                                                 [0:2];  // Next values for validation Word pipeline
 
    // Ready when active and not inserting boundary characters
    assign s_axis_tready_o = tx_active_i && !faw_boundary_i && !crc_boundary_i;
@@ -108,9 +105,9 @@ module qeciphy_tx_packet_gen (
    always_comb begin
       faw.rx_rdy         = rx_rdy_i;
       faw.reserved_62_40 = 23'h0;
-      faw.word_comma     = WORD_ALIGNMENT_COMMA;
+      faw.word_comma     = qeciphy_pkg::WORD_ALIGNMENT_COMMA;
       faw.reserved_31_8  = 24'h0;
-      faw.byte_comma     = BYTE_ALIGNMENT_COMMA;
+      faw.byte_comma     = qeciphy_pkg::BYTE_ALIGNMENT_COMMA;
    end
 
    // Build Validation Word with placeholder CRC values
@@ -128,8 +125,8 @@ module qeciphy_tx_packet_gen (
    assign tdata_pipe_nxt[0] = boundary_chars_enable ? 
                                (faw_boundary_i ? faw : 
                                (crc_boundary_i ? vd_pkt_pipe_nxt[0] : 
-                               (data_enable ? (s_axis_tvalid_i ? s_axis_tdata_i : IDLE_WORD) : IDLE_WORD))) 
-                               : IDLE_WORD;
+                               (data_enable ? (s_axis_tvalid_i ? s_axis_tdata_i : qeciphy_pkg::IDLE_WORD) : qeciphy_pkg::IDLE_WORD))) 
+                               : qeciphy_pkg::IDLE_WORD;
 
    // Register stage 0 data
    always_ff @(posedge clk_i) begin
@@ -151,7 +148,7 @@ module qeciphy_tx_packet_gen (
    end
 
    // Extract validation packet structure from stage 1
-   assign vd_pkt_pipe[1] = qeciphy_vd_pkt_t'(tdata_pipe[1]);
+   assign vd_pkt_pipe[1] = qeciphy_pkg::qeciphy_vd_pkt_t'(tdata_pipe[1]);
 
    // Build complete validation packet with computed CRC values
    always_comb begin

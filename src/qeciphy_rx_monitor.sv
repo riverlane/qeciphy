@@ -63,24 +63,22 @@ module qeciphy_rx_monitor (
     output logic        remote_rx_rdy_o
 );
 
-   import qeciphy_pkg::*;
+   qeciphy_pkg::qeciphy_faw_t        faw;  // Frame Alignment Word structure
 
-   qeciphy_faw_t        faw;  // Frame Alignment Word structure
+   logic                             faw_error;  // FAW validation error (sticky)
+   logic                             crc_error;  // CRC validation error (sticky)
+   logic                             remote_rx_rdy;  // Remote receiver ready status
+   logic                      [63:0] data_pipe                                                        [0:10];  // 11-stage data delay pipeline
+   logic                      [10:0] valid_pipe;  // Valid bit pipeline (synchronized with data)
+   logic                      [10:0] valid_pipe_nxt;  // Next state of valid pipeline
 
-   logic                faw_error;  // FAW validation error (sticky)
-   logic                crc_error;  // CRC validation error (sticky)
-   logic                remote_rx_rdy;  // Remote receiver ready status
-   logic         [63:0] data_pipe                                                        [0:10];  // 11-stage data delay pipeline
-   logic         [10:0] valid_pipe;  // Valid bit pipeline (synchronized with data)
-   logic         [10:0] valid_pipe_nxt;  // Next state of valid pipeline
-
-   logic         [15:0] crc01_calc;  // Calculated CRC01 value
-   logic         [15:0] crc23_calc;  // Calculated CRC23 value
-   logic         [15:0] crc45_calc;  // Calculated CRC45 value
-   logic         [ 7:0] crcvw_calc;  // Calculated CRC VW value
-   logic                crc_valid;  // Valid signal for the calulated CRCs
-   logic                crc_check_error;  // CRC check error from qeciophy_crc_check
-   logic                crc_check_done;  // CRC check done signal from qeciophy_crc_check
+   logic                      [15:0] crc01_calc;  // Calculated CRC01 value
+   logic                      [15:0] crc23_calc;  // Calculated CRC23 value
+   logic                      [15:0] crc45_calc;  // Calculated CRC45 value
+   logic                      [ 7:0] crcvw_calc;  // Calculated CRC VW value
+   logic                             crc_valid;  // Valid signal for the calulated CRCs
+   logic                             crc_check_error;  // CRC check error from qeciophy_crc_check
+   logic                             crc_check_done;  // CRC check done signal from qeciophy_crc_check
 
    // Output assignments from pipeline head and status signals
    assign faw_error_o     = faw_error;
@@ -95,13 +93,13 @@ module qeciphy_rx_monitor (
          faw_error <= 1'b0;
       end else if (!enable_i) begin
          faw_error <= 1'b0;  // Clear when disabled
-      end else if (faw_boundary_i && !is_faw(tdata_i)) begin
+      end else if (faw_boundary_i && !qeciphy_pkg::is_faw(tdata_i)) begin
          faw_error <= 1'b1;  // Set on invalid FAW
       end
    end
 
    // FAW structure extraction (valid only during faw_boundary_i)
-   assign faw = qeciphy_faw_t'(tdata_i);
+   assign faw = qeciphy_pkg::qeciphy_faw_t'(tdata_i);
 
    // Remote receiver ready extraction from FAW
    always_ff @(posedge clk_i) begin

@@ -1,59 +1,73 @@
 `verilator_config
 
+// These signals are intentionally brought to the modules to help future expansion even if they are currently unconnected 
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_cdc.sv"  -match "Signal is not used: 'f_clk_i'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_cdc.sv"  -match "Signal is not used: 'f_rst_n_i'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_tx_packet_gen.sv"  -match "Signal is not used: 'tx_off_i'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_serdes.sv"  -match "Signal is not used: 'rx_datapath_rst_n_i'"
+
+// Only checking remote_rx_rdy (bit 63) in this module 
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_rx_monitor.sv"  -match "Bits of signal are not used: 'faw'[62:0]"
+
+// Diagnostic signals kept in place although not used
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_wrapper.sv"  -match "Signal is not used: 'rxbyteisaligned'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_wrapper.sv"  -match "Signal is not used: 'rxcommadet'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_wrapper.sv"  -match "Signal is not used: 'cdr_stable'"
+
+// Currently unused as crc45_valid and crcvw_valid coincides, only one of them is used
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_crc_compute.sv" -match "Signal is not used: 'crc45_valid'"
+
+// Bits [15:8] in the validation word are not needed for CRC checking
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_crc_check.sv"   -match "Bits of signal are not used: 'vd_pkt'[15:8]"
+
 // These output pins were intentionally left unconnected
+
+// Async FIFO
+lint_off -rule PINCONNECTEMPTY -file "*QECIPHY.sv" -match "Cell pin connected by name with empty reference: 'underflow'"
+lint_off -rule PINCONNECTEMPTY -file "*QECIPHY.sv" -match "Cell pin connected by name with empty reference: 'rwcount'"
+lint_off -rule PINCONNECTEMPTY -file "*QECIPHY.sv" -match "Cell pin connected by name with empty reference: 'full'"
+lint_off -rule PINCONNECTEMPTY -file "*QECIPHY.sv" -match "Cell pin connected by name with empty reference: 'wwcount'"
+
+// GTY / GTH transceivers
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'qpll0lock_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'qpll0outclk_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'qpll0outrefclk_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'rxctrl0_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'rxctrl1_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'rxctrl2_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'rxctrl3_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gtwiz_reset_rx_cdr_stable_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'qpll0lock_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gtyrxn_in'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gtyrxp_in'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gtytxn_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gtytxp_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gthrxn_in'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gthrxp_in'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gthtxn_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gthtxp_out'"
+
+// GTX transceiver
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_drpdo_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_drprdy_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_dmonitorout_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_eyescandataerror_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_rxdisperr_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_rxnotintable_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_gtxrxp_in'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_gtxrxn_in'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_rxmonitorout_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_rxoutclkfabric_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_rxcharisk_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_gtxtxn_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_gtxtxp_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_txoutclkfabric_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_txoutclkpcs_out'"
-lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_rxresetdone_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_wrapper.sv" -match "Cell pin connected by name with empty reference: 'gt0_txresetdone_out'"
 
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gtx_common.sv" -match "Cell pin connected by name with empty reference: *"
 
 // Ignore linting errors for lint stub files
 
-lint_off -rule UNUSEDSIGNAL    -file "*/lint_stubs/BUFG_GT.sv"       
-lint_off -rule UNDRIVEN        -file "*/lint_stubs/BUFG_GT.sv"       
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/BUFG_GT.sv"           
 
-lint_off -rule UNUSEDPARAM     -file "*/lint_stubs/GTXE2_COMMON.sv"  
-lint_off -rule UNUSEDSIGNAL    -file "*/lint_stubs/GTXE2_COMMON.sv"  
-lint_off -rule UNDRIVEN        -file "*/lint_stubs/GTXE2_COMMON.sv"  
+lint_off -rule UNUSEDPARAM     -file "*lint_stubs/GTXE2_COMMON.sv"  
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/GTXE2_COMMON.sv"  
 
-lint_off -rule UNUSEDSIGNAL    -file "*/lint_stubs/qeciphy_clk_mmcm.sv"      
-lint_off -rule UNDRIVEN        -file "*/lint_stubs/qeciphy_clk_mmcm.sv"      
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/qeciphy_clk_mmcm.sv"       
 
-lint_off -rule UNUSEDSIGNAL    -file "*/lint_stubs/qeciphy_gtx_transceiver.sv"   
-lint_off -rule UNDRIVEN        -file "*/lint_stubs/qeciphy_gtx_transceiver.sv"   
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/qeciphy_gtx_transceiver.sv"   
 
-lint_off -rule UNUSEDSIGNAL    -file "*/lint_stubs/qeciphy_gth_transceiver.sv"   
-lint_off -rule UNDRIVEN        -file "*/lint_stubs/qeciphy_gth_transceiver.sv"   
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/qeciphy_gth_transceiver.sv"    
 
-lint_off -rule UNUSEDSIGNAL    -file "*/lint_stubs/qeciphy_gty_transceiver.sv"
-lint_off -rule UNDRIVEN        -file "*/lint_stubs/qeciphy_gty_transceiver.sv"
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/qeciphy_gty_transceiver.sv"
+
+// Ignore linting package files
+
+lint_off -file "*qeciphy_*pkg.sv"

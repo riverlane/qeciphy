@@ -68,8 +68,6 @@ module QECIPHY (
     output logic GT_TX_N   // GT TX differential negative
 );
 
-   import qeciphy_build_cfg_pkg::*;
-
    // =========================================================================
    // Internal Signal Declarations
    // =========================================================================
@@ -90,6 +88,7 @@ module QECIPHY (
    logic        tx_rst_n;  // ARSTn synchronized to TX clock
    logic        rx_rst_n;  // ARSTn synchronized to RX clock
    logic        gt_rst_n;  // GT reset
+   logic        axis_rst_n;  // ARSTn synchronized to AXI clock
    logic        tx_clk;  // TX clock
    logic        tx_ch_enc_tready;  // TX channel encoder AXIS tready
    logic [63:0] gt_tx_tdata;  // TX data from channel encoder
@@ -149,7 +148,7 @@ module QECIPHY (
 
    qeciphy_controller i_qeciphy_controller (
        .clk_i                (ACLK),                      // AXI clock
-       .rst_n_i              (ARSTn),                     // Master reset
+       .rst_n_i              (axis_rst_n),                // AXI clock domain reset
        .reset_done_i         (reset_done),                // Reset sequence complete from qeciphy_resetcontroller
        .rx_ready_i           (rx_rdy_aclk),               // Local RX ready from qeciphy_rx_channeldecoder
        .remote_rx_ready_i    (remote_rx_rdy_aclk),        // Remote RX ready from qeciphy_rx_channeldecoder
@@ -169,7 +168,7 @@ module QECIPHY (
 
    qeciphy_error_handler i_qeciphy_error_handler (
        .clk_i             (ACLK),                   // AXI clock
-       .rst_n_i           (ARSTn),                  // Master reset
+       .rst_n_i           (axis_rst_n),             // AXI clock domain reset
        .rx_fault_fatal_i  (rx_fault_fatal_aclk),    // RX fault fatal from qeciphy_rx_channeldecoder
        .rx_error_code_i   (rx_error_code),          // RX error code from qeciphy_rx_channeldecoder
        .tx_fifo_overflow_i(tx_fifo_overflow),       // TX FIFO overflow
@@ -275,7 +274,7 @@ module QECIPHY (
    // =========================================================================
 
    qeciphy_serdes #(
-       .GT_TYPE(QECIPHY_GT_TYPE)  // GT primitive type selection
+       .GT_TYPE(qeciphy_build_cfg_pkg::QECIPHY_GT_TYPE)  // GT primitive type selection
    ) i_qeciphy_serdes (
        // GT Reference and Control
        .gt_ref_clk_i   (RCLK),               // GT reference clock
@@ -335,7 +334,7 @@ module QECIPHY (
 
        // AXI Clock Domain Interface
        .axis_clk_i                (ACLK),                     // AXI clock
-       .axis_rst_n_i              (ARSTn),                    // AXI reset
+       .axis_rst_n_i              (axis_rst_n),               // AXI reset
        .rx_enable_aclk_i          (rx_enable_aclk),
        .tx_link_enable_aclk_i     (tx_link_enable_aclk),
        .tx_data_enable_aclk_i     (tx_data_enable_aclk),
@@ -356,10 +355,11 @@ module QECIPHY (
    qeciphy_resetcontroller i_qeciphy_resetcontroller (
        // Primary Control Interface (AXI Clock Domain)
        .axis_clk_i           (ACLK),                   // AXI clock
-       .axis_rst_n_i         (ARSTn),                  // Master reset
+       .async_rst_n_i        (ARSTn),                  // Master reset
        .gt_power_good_i      (gt_power_good_aclk),     // GT power good status from qeciphy_serdes
        .gt_tx_rst_done_i     (gt_tx_reset_done_aclk),  // GT TX reset completion from qeciphy_serdes
        .gt_rx_rst_done_i     (gt_rx_reset_done_aclk),  // GT RX reset completion from qeciphy_serdes
+       .axis_rst_n_o         (axis_rst_n),             // async_rst_n_i reflected in AXIS domain
        .axis_datapath_rst_n_o(axis_datapath_rst_n),    // AXI datapath reset output
        .rst_done_o           (reset_done),             // Reset sequence completion output to qeciphy_controller
 

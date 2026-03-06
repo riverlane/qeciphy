@@ -42,8 +42,6 @@ module qeciphy_rx_controller (
     output logic [3:0] rx_error_code_o    // RX error code output (sticky)
 );
 
-   import qeciphy_pkg::*;
-
    // State machine for RX subsystem control
    typedef enum logic [5:0] {
       RESET       = 6'b000001,  // Initial reset state
@@ -57,7 +55,7 @@ module qeciphy_rx_controller (
    logic in_training_ready_fault_state;  // Decodes TRAINING, READY or FAULT_FATAL state
    logic in_ready_state;  // Decodes READY state
    logic in_fault_state;  // Decodes FAULT_FATAL state
-   qeciphy_error_t error_code;  // Error code
+   qeciphy_pkg::qeciphy_error_t error_code;  // Error code
 
    // Output assignments from internal signals
    assign rx_rdy_o = in_ready_state;
@@ -96,13 +94,13 @@ module qeciphy_rx_controller (
    // Error code logic
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) begin
-         error_code <= NO_ERROR;  // Clear error code on reset
+         error_code <= qeciphy_pkg::NO_ERROR;  // Clear error code on reset
       end else if (!enable_i) begin
-         error_code <= NO_ERROR;  // Clear error code on disable
+         error_code <= qeciphy_pkg::NO_ERROR;  // Clear error code on disable
       end else if (in_ready_state && crc_err_i) begin
-         error_code <= CRC_ERROR;  // Set CRC error code
+         error_code <= qeciphy_pkg::CRC_ERROR;  // Set CRC error code
       end else if (in_ready_state && faw_err_i) begin
-         error_code <= FAW_ERROR;  // Set FAW error code
+         error_code <= qeciphy_pkg::FAW_ERROR;  // Set FAW error code
       end
    end
 

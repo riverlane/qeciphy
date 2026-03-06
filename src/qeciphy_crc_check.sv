@@ -33,20 +33,18 @@ module qeciphy_crc_check (
     output logic        check_done_o
 );
 
-   import qeciphy_pkg::*;
-
-   qeciphy_vd_pkt_t       vd_pkt;  // Validation packet format
-   logic                  crc01_byte_match                                     [0:1];  // Per-byte match results for CRC01
-   logic                  crc23_byte_match                                     [0:1];  // Per-byte match results for CRC23  
-   logic                  crc45_byte_match                                     [0:1];  // Per-byte match results for CRC45
-   logic                  crcvw_match;  // Match result for CRC validation word
-   logic            [1:0] valid_pipe;  // Valid signal pipeline for timing
-   logic                  crc_error;  // Internal error signal
+   qeciphy_pkg::qeciphy_vd_pkt_t       vd_pkt;  // Validation packet format
+   logic                               crc01_byte_match                                     [0:1];  // Per-byte match results for CRC01
+   logic                               crc23_byte_match                                     [0:1];  // Per-byte match results for CRC23  
+   logic                               crc45_byte_match                                     [0:1];  // Per-byte match results for CRC45
+   logic                               crcvw_match;  // Match result for CRC validation word
+   logic                         [1:0] valid_pipe;  // Valid signal pipeline for timing
+   logic                               crc_error;  // Internal error signal
 
    assign check_done_o = valid_pipe[1];  // Completion after pipeline delay
 
    // Valid signal pipeline
-   always_ff @(posedge clk_i or negedge rst_n_i) begin
+   always_ff @(posedge clk_i) begin
       if (!rst_n_i) valid_pipe <= 2'h0;
       else valid_pipe <= {valid_pipe[0], crc_valid_i};
    end
@@ -56,7 +54,7 @@ module qeciphy_crc_check (
       if (!rst_n_i) begin
          vd_pkt <= '0;
       end else if (crc_boundary_i) begin
-         vd_pkt <= qeciphy_vd_pkt_t'(tdata_i);  // Cast input data to validation packet type
+         vd_pkt <= qeciphy_pkg::qeciphy_vd_pkt_t'(tdata_i);  // Cast input data to validation packet type
       end
    end
 

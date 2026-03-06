@@ -281,7 +281,7 @@ distclean: clean
 
 verilator_lint:
 	@$(MAKE) check_verilator
-	@verilator --lint-only -sv -Isrc $(LINT_FILES) lint_waivers.vlt --top QECIPHY
+	@verilator --lint-only -sv -Wall lint_waivers.vlt -Isrc $(LINT_FILES) --top QECIPHY
 	
 verible_format:
 	@$(MAKE) check_verible
