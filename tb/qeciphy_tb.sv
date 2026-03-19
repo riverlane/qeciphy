@@ -28,12 +28,12 @@ module qeciphy_tb;
    // Local parameters
    //----------------------------------------
 
-   localparam real ACLK_PERIOD_NS = 4.0;  // >= 156.25 MHz
+   localparam real ACLK_PERIOD_NS = 4;  // >= 156.25 MHz
 
    localparam int MAX_CYCLES = 32'h0002_0000;
 
    localparam int TEST_SEQUENCE_LEN = 2048;
-   localparam string TEST_DATASET = "random";  // "counter" or "random"
+   localparam string TEST_DATASET = "counter";  // "counter" or "random"
 
    //----------------------------------------
    // Typedefs

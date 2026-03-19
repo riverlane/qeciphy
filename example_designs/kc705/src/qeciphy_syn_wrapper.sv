@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright (c) 2025 Riverlane Ltd.
-// Original authors: Aniket Datta, Gargi Sunil
+// Original authors: Dogancan Davutoglu, Gargi Sunil, Aniket Datta
 
 module qeciphy_syn_wrapper (
     input  logic       gt_refclk_in_p,
     input  logic       gt_refclk_in_n,
+    input  logic       clk_freerun_p,
+    input  logic       clk_freerun_n,
     input  logic       gt_rx_p,
     input  logic       gt_rx_n,
     output logic       gt_tx_p,
@@ -41,27 +43,23 @@ module qeciphy_syn_wrapper (
 
    assign SFP_tx_enable = sfp_enable[0];
 
-   // Refer: https://docs.amd.com/r/en-US/ug974-vivado-ultrascale-libraries/IBUFDS_GTE4
-   IBUFDS_GTE4 #(
-       .REFCLK_EN_TX_PATH(1'b0),
-       .REFCLK_HROW_CK_SEL(2'b00),
-       .REFCLK_ICNTL_RX(2'b00)
-   ) i_buff_gtrefclk (
+   IBUFDS_GTE2 i_buff_gtrefclk (
        .O    (RCLK),
-       .ODIV2(clk_freerun),
+       .ODIV2(),
        .CEB  (1'b0),
        .I    (gt_refclk_in_p),
        .IB   (gt_refclk_in_n)
    );
 
-   BUFG_GT i_buff_fclk (
-       .O      (FCLK),
-       .CE     (1'b1),
-       .CEMASK (1'b1),
-       .CLR    (1'b0),
-       .CLRMASK(1'b1),
-       .DIV    (3'b000),
-       .I      (clk_freerun)
+   IBUFDS i_ibufds_freerun (
+       .O (clk_freerun),
+       .I (clk_freerun_p),
+       .IB(clk_freerun_n)
+   );
+
+   BUFG i_buff_fclk (
+       .O(FCLK),
+       .I(clk_freerun)
    );
 
    qeciphy_rx_ila i_rx_ila (

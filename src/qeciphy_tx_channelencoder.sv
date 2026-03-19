@@ -28,7 +28,8 @@ module qeciphy_tx_channelencoder (
     output logic        m_axis_tdata_isfaw_o,  // Output indicates if m_axis_tdata is FAW
     input  logic        link_enable_i,         // Link enable control
     input  logic        data_enable_i,         // Data transmission enable
-    input  logic        rx_rdy_i               // Receiver ready status for FAW packets
+    input  logic        rx_rdy_i     ,         // Receiver ready status for FAW packets
+    output logic        tx_active_o            // Indicates if TX is active (user data + boundaries)
 );
 
    logic faw_boundary;  // FAW boundary timing signal from qeciphy_tx_boundary_gen
@@ -36,7 +37,6 @@ module qeciphy_tx_channelencoder (
    logic crc_boundary;  // CRC boundary timing signal from qeciphy_tx_boundary_gen
    logic tx_off;  // TX off state from qeciphy_tx_controller
    logic tx_idle;  // TX idle state from qeciphy_tx_controller
-   logic tx_active;  // TX active state from qeciphy_tx_controller
 
    //--------------------------------------------------------------------------
    // TX Controller Instance
@@ -49,7 +49,7 @@ module qeciphy_tx_channelencoder (
        .data_enable_i        (data_enable_i),        // External data enable input
        .tx_off_o             (tx_off),               // TX off state output
        .tx_idle_o            (tx_idle),              // TX idle state output
-       .tx_active_o          (tx_active)             // TX active state output
+       .tx_active_o          (tx_active_o)             // TX active state output
    );
 
    //--------------------------------------------------------------------------
@@ -78,7 +78,7 @@ module qeciphy_tx_channelencoder (
        .m_axis_tdata_isfaw_o(m_axis_tdata_isfaw_o),  // Output indicates if m_axis_tdata is FAW
        .tx_off_i            (tx_off),                // TX off state from qeciphy_tx_controller
        .tx_idle_i           (tx_idle),               // TX idle state from qeciphy_tx_controller
-       .tx_active_i         (tx_active),             // TX active state from qeciphy_tx_controller
+       .tx_active_i         (tx_active_o),             // TX active state from qeciphy_tx_controller
        .rx_rdy_i            (rx_rdy_i)               // Receiver ready status for FAW packets
    );
 

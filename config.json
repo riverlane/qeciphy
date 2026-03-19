@@ -63,14 +63,14 @@
         "part": "xc7k325tffg900-2",
         "vendor": "xilinx"
       },
-      "board": "xilinx.com:kc705:part0:2.6",
+      "board": "xilinx.com:kc705:part0:1.6",
       "variant": "GTX",
       "fclk_freq": "156.25",
       "rclk_freq": "156.25",
       "transceiver": {
         "gt_loc": "X0Y10",
-        "rx_rclk_src": "X0Y10 clk1",
-        "tx_rclk_src": "X0Y10 clk1",
+        "rx_rclk_src": "REFCLK1_Q0",
+        "tx_rclk_src": "REFCLK1_Q0",
         "line_rate_gbps": "10.3125"
       },
       "synth": {

@@ -18,8 +18,8 @@ module qeciphy_gtx_common #(
     input  logic       qpllreset_in
 );
 
-   localparam QPLL_FBDIV_IN = 10'b0101110000;
-   localparam QPLL_FBDIV_RATIO = 1'b1;
+   localparam QPLL_FBDIV_IN = 10'b0101000000;
+   localparam QPLL_FBDIV_RATIO = 1'b0;
 
    GTXE2_COMMON #(
        // Simulation attributes
