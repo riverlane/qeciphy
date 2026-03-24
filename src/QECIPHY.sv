@@ -142,6 +142,9 @@ module QECIPHY (
    logic        rx_enable_aclk;
    logic        rx_enable_rclk;
 
+   logic        tx_active_tclk;
+   logic        tx_active_aclk;
+
    // =========================================================================
    // Link State Machine Controller
    // =========================================================================
@@ -182,7 +185,7 @@ module QECIPHY (
    // =========================================================================
 
    // TX Interface Control Logic
-   assign TX_TREADY   = ~tx_fifo_full && tx_data_enable_aclk;  // Ready when FIFO space available and data enabled
+   assign TX_TREADY   = ~tx_fifo_full && tx_active_aclk;  // Ready when FIFO space available and data enabled
    assign tx_fifo_ren = ~tx_fifo_empty && tx_ch_enc_tready;  // Read when data available and encoder ready
    assign tx_fifo_wen = TX_TVALID && TX_TREADY;  // Write when user provides valid data and ready
 
@@ -220,7 +223,8 @@ module QECIPHY (
        .m_axis_tdata_isfaw_o(gt_tx_tdata_isfaw),    // Encoded data is FAW indicator to qeciphy_serdes
        .link_enable_i       (tx_link_enable_tclk),  // Link enable from qeciphy_controller
        .data_enable_i       (tx_data_enable_tclk),  // User data enable from qeciphy_controller
-       .rx_rdy_i            (rx_rdy_tclk)           // RX ready status from qeciphy_rx_channeldecoder
+       .rx_rdy_i            (rx_rdy_tclk),          // RX ready status from qeciphy_rx_channeldecoder
+       .tx_active_o         (tx_active_tclk)        // TX active status output to qeciphy_controller
    );
 
    // =========================================================================
@@ -323,6 +327,7 @@ module QECIPHY (
        .tx_clk_i             (tx_clk),               // TX clock
        .tx_rst_n_i           (tx_rst_n),             // TX reset (ARSTn synchronized to TX clock)
        .gt_tx_rst_done_tclk_i(gt_tx_rst_done_tclk),
+       .tx_active_tclk_i     (tx_active_tclk),
        .rx_rdy_tclk_o        (rx_rdy_tclk),
        .tx_link_enable_tclk_o(tx_link_enable_tclk),
        .tx_data_enable_tclk_o(tx_data_enable_tclk),
@@ -341,6 +346,7 @@ module QECIPHY (
        .gt_rx_rst_done_aclk_o     (gt_rx_reset_done_aclk),
        .gt_tx_rst_done_aclk_o     (gt_tx_reset_done_aclk),
        .gt_power_good_aclk_o      (gt_power_good_aclk),
+       .tx_active_aclk_o          (tx_active_aclk),
        .rx_fault_fatal_aclk_o     (rx_fault_fatal_aclk),
        .rx_rdy_aclk_o             (rx_rdy_aclk),
        .remote_rx_rdy_aclk_o      (remote_rx_rdy_aclk),
