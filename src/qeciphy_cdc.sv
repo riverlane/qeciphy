@@ -40,6 +40,7 @@ module qeciphy_cdc (
     input  logic tx_clk_i,               // TX clock
     input  logic tx_rst_n_i,             // TX domain active-low reset
     input  logic gt_tx_rst_done_tclk_i,  // GT TX reset completion
+    input  logic tx_active_tclk_i,       // TX active status
     output logic rx_rdy_tclk_o,          // RX ready status
     output logic tx_link_enable_tclk_o,  // TX link enable control
     output logic tx_data_enable_tclk_o,  // TX data enable control
@@ -62,6 +63,7 @@ module qeciphy_cdc (
     output logic gt_rx_rst_done_aclk_o,      // GT RX reset done status
     output logic gt_tx_rst_done_aclk_o,      // GT TX reset done status
     output logic gt_power_good_aclk_o,       // GT power good status
+    output logic tx_active_aclk_o,           // TX active status
     output logic rx_fault_fatal_aclk_o,      // RX fault status
     output logic rx_rdy_aclk_o,              // RX ready status
     output logic remote_rx_rdy_aclk_o,       // Remote RX ready status
@@ -163,6 +165,13 @@ module qeciphy_cdc (
        .dst_clk(axis_clk_i),
        .dst_rst_n(axis_rst_n_i),
        .dst_out(rx_datapath_aligned_aclk_o)
+   );
+
+   riv_synchronizer_2ff i_cdc_tx_active_aclk (
+       .src_in(tx_active_tclk_i),
+       .dst_clk(axis_clk_i),
+       .dst_rst_n(axis_rst_n_i),
+       .dst_out(tx_active_aclk_o)
    );
 
 endmodule
