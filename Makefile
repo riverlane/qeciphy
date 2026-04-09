@@ -7,7 +7,7 @@
 OPT_MODE?=batch
 OPT_PROFILE?=
 OPT_SIM_FILES  ?= false
-OPT_TOOL?=
+OPT_TOOL?=xsim
 OPT_TOP?=
 OPT_TEST?=
 OPT_ARGS?=0
