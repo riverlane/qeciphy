@@ -1,0 +1,14 @@
+
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_1/i_qeciphy_controller/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_1/i_qeciphy_serdes/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_1/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_1/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/u_word_aligner/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_1/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/u_8b10b_decoder_4x/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_1/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/u_8b10b_encoder_4x/*
+
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_2/i_qeciphy_controller/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_2/i_qeciphy_serdes/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_2/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_2/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/u_word_aligner/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_2/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/u_8b10b_decoder_4x/*
+log  /qeciphy_dual_sim_top_tb/qeciphy_dual_sim_top/i_QECIPHY_2/i_qeciphy_serdes/i_qeciphy_gt_wrapper/gen_altera/i_qeciphy_gt_altera/u_8b10b_encoder_4x/*
