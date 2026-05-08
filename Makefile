@@ -12,6 +12,8 @@ OPT_TOP?=
 OPT_TEST?=
 OPT_ARGS?=0
 OPT_SEED?=0
+OPT_QUARTUS_PROJECT ?= qeciphy_integration
+OPT_DEVICE          ?= AGIB027R31B1E1V
 
 # -------------------------------------------------------------
 # Utils
@@ -34,6 +36,7 @@ SYN_FILELIST := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE)
 XDC       := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).synth.constraints)
 PART      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).device.part)
 VENDOR    := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).device.vendor)
+FAMILY    := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).device.family 2>/dev/null || echo "")
 BOARD     := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).board 2>/dev/null || true)
 VARIANT   := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).variant)
 HOOKS     := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).synth.pre_setup_hooks)
@@ -92,7 +95,7 @@ help:
 	@echo "    - Run lint checks on the design using Verilator"
 	@echo ""
 	@echo "  synth"
-	@echo "    - Run design synthesis and implementation using Vivado"
+	@echo "    - Run design synthesis: Vivado (xilinx profiles) or Quartus (altera profiles)"
 	@echo "    - Required variables: OPT_PROFILE"
 	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
 	@echo ""
@@ -116,12 +119,11 @@ help:
 	@echo "    - Optional variables: OPT_ARGS=(string) [additional simulator arguments]"
 	@echo ""
 	@echo "  render-design"
-	@echo "    - Generate Xilinx IP core files (.xci) for the target profile"
-	@echo "    - Generate build configuration package (src/qeciphy_build_cfg_pkg.sv)"
-	@echo "    - Generate simulation configuration package (tb/qeciphy_sim_cfg_pkg.sv)"
+	@echo "    - Xilinx profiles: generate IP core files (.xci) via Vivado"
+	@echo "    - Altera profiles: no IP generation (IP is generated during synth)"
+	@echo "    - All profiles: generate build/sim config packages"
 	@echo "    - Required variables: OPT_PROFILE"
-	@echo "    - Optional variables: OPT_SIM_FILES=(true|false) [default: false]"
-	@echo "      When OPT_SIM_FILES=true, also exports simulation files for vendor specific modules to tb/generated_sim_files/"
+	@echo "    - Optional variables: OPT_SIM_FILES=(true|false) [default: false] (xilinx only)"
 	@echo ""
 	@echo "  format"
 	@echo "    - Format SystemVerilog source code using Verible"
@@ -141,6 +143,7 @@ help:
 	@echo "  make synth OPT_PROFILE=zcu216"
 	@echo "  make sim OPT_PROFILE=zcu216 OPT_TOOL=vcs"
 	@echo "  make sim OPT_PROFILE=zcu216 OPT_MODE=gui OPT_TOOL=vcs"
+	@echo "  make synth OPT_PROFILE=de10"
 	@echo "  make lint"
 	@echo "  make format"
 	@echo "  make uvm-sim OPT_TEST=qeciphy_txrx_test OPT_PROFILE=zcu216" 
@@ -225,6 +228,12 @@ check_verible:
 		exit 1; \
 	fi
 
+check_quartus_sh:
+	@if ! command -v quartus_sh >/dev/null 2>&1; then \
+		echo "ERROR: quartus_sh not found in PATH. Please ensure Quartus Prime is installed and available."; \
+		exit 1; \
+	fi
+
 # -------------------------------------------------------------
 # Main targets
 # -------------------------------------------------------------
@@ -239,9 +248,16 @@ lint:
 render-design:
 	@$(MAKE) check_profile
 	@echo "INFO: Rendering design for profile $(OPT_PROFILE)"
-	@$(MAKE) vivado_generate_xci
+	@if [ "$(VENDOR)" = "xilinx" ]; then \
+		$(MAKE) vivado_generate_xci; \
+		$(MAKE) generate-sim-cfg-pkg; \
+	elif [ "$(VENDOR)" = "altera" ]; then \
+		echo "INFO: Altera profile — skipping IP generation (handled during synth)"; \
+	else \
+		echo "ERROR: Unsupported vendor '$(VENDOR)' for profile $(OPT_PROFILE)"; exit 1; \
+	fi
 	@$(MAKE) generate-build-cfg-pkg
-	@$(MAKE) generate-sim-cfg-pkg
+	#@$(MAKE) generate-sim-cfg-pkg
 
 sim:
 	@$(MAKE) check_profile
@@ -258,10 +274,16 @@ formal:
 	@echo "INFO: Running formal verification for $(OPT_TOP)"
 	$(MAKE) vcf_formal
 
-synth: 
+synth:
 	@$(MAKE) check_profile
 	@echo "INFO: Running synthesis for profile $(OPT_PROFILE)"
-	@$(MAKE) vivado_synth
+	@if [ "$(VENDOR)" = "xilinx" ]; then \
+		$(MAKE) vivado_synth; \
+	elif [ "$(VENDOR)" = "altera" ]; then \
+		$(MAKE) quartus_synth; \
+	else \
+		echo "ERROR: Unsupported vendor '$(VENDOR)' for profile $(OPT_PROFILE)"; exit 1; \
+	fi
 
 clean:
 	@echo "INFO: Cleaning build artifacts"
@@ -455,3 +477,16 @@ vivado_synth:
 	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
 	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)
+
+quartus_synth:
+	@$(MAKE) check_quartus_sh
+	@mkdir -p $(RUN_DIR)
+	@LINE_RATE_MBPS=$$(echo "$(LINE_RATE_GBPS) * 1000" | bc -l); \
+	[ -n "$$LINE_RATE_MBPS" ] || { echo "ERROR: LINE_RATE_GBPS is not set for profile $(OPT_PROFILE)"; exit 1; }; \
+	quartus_sh --script scripts/quartus_proj.tcl -tclargs \
+		"$(OPT_QUARTUS_PROJECT)" "$(PART)" "$(FAMILY)" "$(SYN_TOP)" "$(VARIANT)" \
+		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "$(XDC)" $(SRC_FILES) $(SYN_FILES) && \
+	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
+		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
+		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" && \
+	quartus_sh --flow compile "$(RUN_DIR)/$(OPT_QUARTUS_PROJECT)/$(OPT_QUARTUS_PROJECT)"

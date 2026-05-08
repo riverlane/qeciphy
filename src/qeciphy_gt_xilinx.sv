@@ -1,0 +1,505 @@
+// SPDX-License-Identifier: BSD-2-Clause
+// Copyright (c) 2024-2026 Riverlane Ltd.
+// Original authors: Dogancan Davutoglu, Aniket Datta
+
+module qeciphy_gt_xilinx #(
+    parameter string GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH"
+) (
+    input logic gt_ref_clk_i,
+
+    input  logic f_clk_i,
+    input  logic gt_rst_n_i,
+    output logic gt_power_good_o,
+
+    output logic        tx_clk_o,
+    output logic        tx_clk_2x_o,
+    input  logic [31:0] tx_tdata_i,
+    input  logic [ 3:0] tx_tdata_charisk_i,
+    output logic        gt_tx_rst_done_o,
+
+    output logic        rx_clk_o,
+    output logic        rx_clk_2x_o,
+    output logic [31:0] rx_tdata_o,
+    output logic        gt_rx_rst_done_o,
+    output logic        rx_byte_aligned_o,
+
+    // GT differential signals
+    input  logic gt_rx_p_i,
+    input  logic gt_rx_n_i,
+    output logic gt_tx_p_o,
+    output logic gt_tx_n_o
+);
+
+   // -------------------------------------------------------------
+   // Common signal declaration
+   // -------------------------------------------------------------
+
+   logic rxoutclk;
+   logic txoutclk;
+
+   logic rxpcommaalignen;
+   logic rxmcommaalignen;
+   logic rxbyteisaligned;
+   logic rxbyterealign;
+   logic rxcommadet;
+   logic rx_comma_align_en;
+
+   logic rx_byte_aligned;
+   logic rx_datapath_resetn;
+
+   logic gt_tx_rst_done;
+   logic gt_tx_rst_done_reg;
+   logic gt_rx_rst_done;
+   logic gt_rx_rst_done_reg;
+
+   // Assign outputs
+   assign rx_byte_aligned_o = rx_byte_aligned;
+   assign gt_tx_rst_done_o  = gt_tx_rst_done_reg;
+   assign gt_rx_rst_done_o  = gt_rx_rst_done_reg;
+
+   // Capture gt_tx_rst_done in its own clock domain to cleanup any potential glitches
+   always_ff @(posedge tx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         gt_tx_rst_done_reg <= '0;
+      end else begin
+         gt_tx_rst_done_reg <= gt_tx_rst_done;
+      end
+   end
+
+   // Capture gt_rx_rst_done in its own clock domain to cleanup any potential glitches
+   always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         gt_rx_rst_done_reg <= '0;
+      end else begin
+         gt_rx_rst_done_reg <= gt_rx_rst_done;
+      end
+   end
+
+   // Comma align enable signals
+   assign rxpcommaalignen = rx_comma_align_en;
+   assign rxmcommaalignen = rx_comma_align_en;
+
+   // Comma align enable logic
+   always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+      if (!gt_rst_n_i) begin
+         rx_comma_align_en <= 1'b0;
+      end else if (rx_byte_aligned) begin
+         rx_comma_align_en <= 1'b0;
+      end else if (gt_rx_rst_done_reg) begin
+         rx_comma_align_en <= 1'b1;
+      end else begin
+         rx_comma_align_en <= 1'b0;
+      end
+   end
+
+   // Monitor rx_tdata to ensure comma alignment is done
+   // Otherwise, reset the rx datapath and try again
+   qeciphy_rx_comma_detect #(
+       .TX_PATTERN_LENGTH(128),
+       .MAX_REVIEWS(128),
+       .MAX_RETRIES(32)
+   ) i_qeciphy_rx_comma_detect (
+       .clk_i(rx_clk_2x_o),
+       .rst_n_i(gt_rx_rst_done_reg),
+       .comma_realign_i(rxbyterealign),
+       .tdata_i(rx_tdata_o),
+       .align_done_o(rx_byte_aligned),
+       .rx_datapath_resetn_o(rx_datapath_resetn)
+   );
+
+   // -------------------------------------------------------------
+   // GTY transceiver instantiation
+   // -------------------------------------------------------------
+   generate
+      if (GT_TYPE == "GTY") begin : gen_GTY_transceiver
+         // -------------------------------------------------------------
+         // Transceiver specific declaration
+         // -------------------------------------------------------------
+         logic txpmaresetdone;
+         logic rxpmaresetdone;
+         logic userclk_tx_reset;
+         logic userclk_rx_reset;
+         logic rxcommadeten;
+
+         // Comma detect enable logic
+         always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+            if (!gt_rst_n_i) begin
+               rxcommadeten <= 1'b0;
+            end else if (gt_rx_rst_done_reg) begin
+               rxcommadeten <= 1'b1;
+            end else begin
+               rxcommadeten <= 1'b0;
+            end
+         end
+
+         assign userclk_tx_reset = ~txpmaresetdone;
+         assign userclk_rx_reset = ~rxpmaresetdone;
+
+         //debug
+         logic cdr_stable;
+
+         qeciphy_gty_transceiver transceiver (
+             .gtwiz_userclk_tx_active_in        (~userclk_tx_reset),
+             .gtwiz_userclk_rx_active_in        (~userclk_rx_reset),
+             .gtwiz_reset_clk_freerun_in        (f_clk_i),
+             .gtwiz_reset_all_in                (~gt_rst_n_i),
+             .gtwiz_reset_tx_pll_and_datapath_in(~gt_rst_n_i),
+             .gtwiz_reset_tx_datapath_in        (~gt_rst_n_i),
+             .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
+             .gtwiz_reset_rx_datapath_in        (~rx_datapath_resetn),
+             .gtwiz_reset_rx_cdr_stable_out     (cdr_stable),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
+             .gtwiz_userdata_tx_in              (tx_tdata_i),
+             .gtwiz_userdata_rx_out             (rx_tdata_o),
+             .gtrefclk00_in                     (gt_ref_clk_i),
+             .qpll0lock_out                     (),
+             .qpll0outclk_out                   (),
+             .qpll0outrefclk_out                (),
+             .gtyrxn_in                         (gt_rx_n_i),
+             .gtyrxp_in                         (gt_rx_p_i),
+             .gtytxn_out                        (gt_tx_n_o),
+             .gtytxp_out                        (gt_tx_p_o),
+             .rx8b10ben_in                      (1'b1),
+             .rxusrclk_in                       (rx_clk_2x_o),
+             .rxusrclk2_in                      (rx_clk_2x_o),
+             .tx8b10ben_in                      (1'b1),
+             .txctrl0_in                        (16'd0),
+             .txctrl1_in                        (16'd0),
+             .txctrl2_in                        ({4'h0, tx_tdata_charisk_i}),
+             .txusrclk_in                       (tx_clk_2x_o),
+             .txusrclk2_in                      (tx_clk_2x_o),
+             .gtpowergood_out                   (gt_power_good_o),
+             .rxctrl0_out                       (),
+             .rxctrl1_out                       (),
+             .rxctrl2_out                       (),
+             .rxctrl3_out                       (),
+             .rxoutclk_out                      (rxoutclk),
+             .rxpmaresetdone_out                (rxpmaresetdone),
+             .txoutclk_out                      (txoutclk),
+             .txpmaresetdone_out                (txpmaresetdone),
+             .rxcommadeten_in                   (rxcommadeten),
+             .rxpcommaalignen_in                (rxpcommaalignen),
+             .rxmcommaalignen_in                (rxmcommaalignen),
+             .rxbyteisaligned_out               (rxbyteisaligned),
+             .rxbyterealign_out                 (rxbyterealign),
+             .rxcommadet_out                    (rxcommadet)
+         );
+
+         // -------------------------------------------------------------
+         // Clock buffers
+         // -------------------------------------------------------------
+
+         // The rx_clk_2x_o is used both as rxusrclk_in and rxusrclk2_in.
+         // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
+         // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 4-51
+         BUFG_GT i_BUFG_gt_rx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_rx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b000),
+             .I      (rxoutclk),
+             .O      (rx_clk_2x_o)
+         );
+
+         // The rx_clk_o is used by the Channel Decoder of the QEC-Phy when converting 32 bit data into 64 bits.
+         // rx_clk_o = rx_clk_2x_o/2 and they should be phase aligned.
+         BUFG_GT i_BUFG_rx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_rx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b001),
+             .I      (rxoutclk),
+             .O      (rx_clk_o)
+         );
+
+         // The tx_clk_2x_o is used both as txusrclk_in and txusrclk2_in.
+         // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
+         // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 3-3
+         BUFG_GT i_BUFG_gt_tx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_tx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b000),
+             .I      (txoutclk),
+             .O      (tx_clk_2x_o)
+         );
+
+         // The tx_clk_o is used by the Channel Encoder of the QEC-Phy when converting 64 bit data into 32 bits.
+         // tx_clk_o = tx_clk_2x_o/2 and they should be phase aligned.
+         BUFG_GT i_BUFG_tx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_tx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b001),
+             .I      (txoutclk),
+             .O      (tx_clk_o)
+         );
+
+      end else if (GT_TYPE == "GTH") begin : gen_GTH_transceiver
+
+         // -------------------------------------------------------------
+         // Transceiver specific declaration
+         // -------------------------------------------------------------
+         logic txpmaresetdone;
+         logic rxpmaresetdone;
+         logic userclk_tx_reset;
+         logic userclk_rx_reset;
+         logic rxcommadeten;
+
+         // Comma detect enable logic
+         always_ff @(posedge rx_clk_2x_o or negedge gt_rst_n_i) begin
+            if (!gt_rst_n_i) begin
+               rxcommadeten <= 1'b0;
+            end else if (gt_rx_rst_done_reg) begin
+               rxcommadeten <= 1'b1;
+            end else begin
+               rxcommadeten <= 1'b0;
+            end
+         end
+
+         assign userclk_tx_reset = ~txpmaresetdone;
+         assign userclk_rx_reset = ~rxpmaresetdone;
+
+         //debug
+         logic cdr_stable;
+
+         qeciphy_gth_transceiver transceiver (
+             .gtwiz_userclk_tx_active_in        (~userclk_tx_reset),
+             .gtwiz_userclk_rx_active_in        (~userclk_rx_reset),
+             .gtwiz_reset_clk_freerun_in        (f_clk_i),
+             .gtwiz_reset_all_in                (~gt_rst_n_i),
+             .gtwiz_reset_tx_pll_and_datapath_in(~gt_rst_n_i),
+             .gtwiz_reset_tx_datapath_in        (~gt_rst_n_i),
+             .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
+             .gtwiz_reset_rx_datapath_in        (~rx_datapath_resetn),
+             .gtwiz_reset_rx_cdr_stable_out     (cdr_stable),
+             .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
+             .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
+             .gtwiz_userdata_tx_in              (tx_tdata_i),
+             .gtwiz_userdata_rx_out             (rx_tdata_o),
+             .gtrefclk00_in                     (gt_ref_clk_i),
+             .qpll0lock_out                     (),
+             .qpll0outclk_out                   (),
+             .qpll0outrefclk_out                (),
+             .gthrxn_in                         (gt_rx_n_i),
+             .gthrxp_in                         (gt_rx_p_i),
+             .gthtxn_out                        (gt_tx_n_o),
+             .gthtxp_out                        (gt_tx_p_o),
+             .rx8b10ben_in                      (1'b1),
+             .rxusrclk_in                       (rx_clk_2x_o),
+             .rxusrclk2_in                      (rx_clk_2x_o),
+             .tx8b10ben_in                      (1'b1),
+             .txctrl0_in                        (16'd0),
+             .txctrl1_in                        (16'd0),
+             .txctrl2_in                        ({4'h0, tx_tdata_charisk_i}),
+             .txusrclk_in                       (tx_clk_2x_o),
+             .txusrclk2_in                      (tx_clk_2x_o),
+             .gtpowergood_out                   (gt_power_good_o),
+             .rxctrl0_out                       (),
+             .rxctrl1_out                       (),
+             .rxctrl2_out                       (),
+             .rxctrl3_out                       (),
+             .rxoutclk_out                      (rxoutclk),
+             .rxpmaresetdone_out                (rxpmaresetdone),
+             .txoutclk_out                      (txoutclk),
+             .txpmaresetdone_out                (txpmaresetdone),
+             .rxcommadeten_in                   (rxcommadeten),
+             .rxpcommaalignen_in                (rxpcommaalignen),
+             .rxmcommaalignen_in                (rxmcommaalignen),
+             .rxbyteisaligned_out               (rxbyteisaligned),
+             .rxbyterealign_out                 (rxbyterealign),
+             .rxcommadet_out                    (rxcommadet)
+         );
+
+         // -------------------------------------------------------------
+         // Clock buffers
+         // -------------------------------------------------------------
+
+         // The rx_clk_2x_o is used both as rxusrclk_in and rxusrclk2_in.
+         // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
+         // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 4-51
+         BUFG_GT i_BUFG_gt_rx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_rx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b000),
+             .I      (rxoutclk),
+             .O      (rx_clk_2x_o)
+         );
+
+         // The rx_clk_o is used by the Channel Decoder of the QEC-Phy when converting 32 bit data into 64 bits.
+         // rx_clk_o = rx_clk_2x_o/2 and they should be phase aligned.
+         BUFG_GT i_BUFG_rx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_rx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b001),
+             .I      (rxoutclk),
+             .O      (rx_clk_o)
+         );
+
+         // The tx_clk_2x_o is used both as txusrclk_in and txusrclk2_in.
+         // This should be okay as they are both expected to be of the same frequency for a 32 bit datapath.
+         // Please refer: https://docs.amd.com/v/u/en-US/ug578-ultrascale-gty-transceivers : Table 3-3
+         BUFG_GT i_BUFG_gt_tx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_tx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b000),
+             .I      (txoutclk),
+             .O      (tx_clk_2x_o)
+         );
+
+         // The tx_clk_o is used by the Channel Encoder of the QEC-Phy when converting 64 bit data into 32 bits.
+         // tx_clk_o = tx_clk_2x_o/2 and they should be phase aligned.
+         BUFG_GT i_BUFG_tx_clk (
+             .CE     (1'b1),
+             .CEMASK (1'b0),
+             .CLR    (userclk_tx_reset),
+             .CLRMASK(1'b0),
+             .DIV    (3'b001),
+             .I      (txoutclk),
+             .O      (tx_clk_o)
+         );
+
+      end else if (GT_TYPE == "GTX") begin : gen_GTX_transceiver
+         // -------------------------------------------------------------
+         // Transceiver specific declaration
+         // -------------------------------------------------------------
+         logic qplllock_out;
+         logic qpllrefclklost_out;
+         logic qpllreset_in;
+         logic qplloutclk_out;
+         logic qplloutrefclk_out;
+         logic txoutclk_stopped;
+         logic txoutclk_stopped_d1;
+         logic rxoutclk_stopped;
+         logic rxoutclk_stopped_d1;
+         logic txoutclk_stopped_fall;
+         logic rxoutclk_stopped_fall;
+         logic tx_mmcm_reset;
+         logic rx_mmcm_reset;
+         logic rxpmaresetdone;
+
+         qeciphy_gtx_transceiver transceiver (
+             .sysclk_in                  (f_clk_i),
+             .soft_reset_tx_in           (1'b0),
+             .soft_reset_rx_in           (~rx_datapath_resetn),
+             .dont_reset_on_data_error_in(1'b1),
+             .gt0_tx_fsm_reset_done_out  (gt_tx_rst_done),
+             .gt0_rx_fsm_reset_done_out  (gt_rx_rst_done),
+             .gt0_data_valid_in          (rxpmaresetdone),
+             .gt0_drpaddr_in             (9'h00),
+             .gt0_drpclk_in              (f_clk_i),
+             .gt0_drpdi_in               (16'h0000),
+             .gt0_drpdo_out              (),
+             .gt0_drpen_in               (1'b0),
+             .gt0_drprdy_out             (),
+             .gt0_drpwe_in               (1'b0),
+             .gt0_dmonitorout_out        (),
+             .gt0_loopback_in            (3'b000),
+             .gt0_eyescanreset_in        (1'b0),
+             .gt0_rxuserrdy_in           (1'b1),
+             .gt0_eyescandataerror_out   (),
+             .gt0_eyescantrigger_in      (1'b0),
+             .gt0_rxusrclk_in            (rx_clk_2x_o),
+             .gt0_rxusrclk2_in           (rx_clk_2x_o),
+             .gt0_rxdata_out             (rx_tdata_o),
+             .gt0_rxdisperr_out          (),
+             .gt0_rxnotintable_out       (),
+             .gt0_gtxrxp_in              (gt_rx_p_i),
+             .gt0_gtxrxn_in              (gt_rx_n_i),
+             .gt0_rxdfelpmreset_in       (1'b0),
+             .gt0_rxmonitorout_out       (),
+             .gt0_rxmonitorsel_in        (2'b00),
+             .gt0_rxoutclk_out           (rxoutclk),
+             .gt0_rxoutclkfabric_out     (),
+             .gt0_gtrxreset_in           (~gt_rst_n_i),
+             .gt0_rxpmareset_in          (~gt_rst_n_i),
+             .gt0_rxcharisk_out          (),
+             .gt0_rxresetdone_out        (rxpmaresetdone),
+             .gt0_gttxreset_in           (~gt_rst_n_i),
+             .gt0_txuserrdy_in           (1'b1),
+             .gt0_txusrclk_in            (tx_clk_2x_o),
+             .gt0_txusrclk2_in           (tx_clk_2x_o),
+             .gt0_txdata_in              (tx_tdata_i),
+             .gt0_gtxtxn_out             (gt_tx_n_o),
+             .gt0_gtxtxp_out             (gt_tx_p_o),
+             .gt0_txoutclk_out           (txoutclk),
+             .gt0_txoutclkfabric_out     (),
+             .gt0_txoutclkpcs_out        (),
+             .gt0_txcharisk_in           (tx_tdata_charisk_i),
+             .gt0_txpmareset_in          (~gt_rst_n_i),
+             .gt0_txresetdone_out        (),
+             .gt0_qplllock_in            (qplllock_out),
+             .gt0_qpllrefclklost_in      (qpllrefclklost_out),
+             .gt0_qpllreset_out          (qpllreset_in),
+             .gt0_qplloutclk_in          (qplloutclk_out),
+             .gt0_qplloutrefclk_in       (qplloutrefclk_out),
+             .gt0_rxpcommaalignen_in     (rxpcommaalignen),
+             .gt0_rxmcommaalignen_in     (rxmcommaalignen),
+             .gt0_rxbyteisaligned_out    (rxbyteisaligned),
+             .gt0_rxbyterealign_out      (rxbyterealign),
+             .gt0_rxcommadet_out         (rxcommadet)
+         );
+
+         // GTX transceiver does not have gt_power_good
+         assign gt_power_good_o = 1'b1;
+
+         // MMCMs must be reset after clk input gets interrupted
+         // Async reset generation for TX MMCM
+         assign txoutclk_stopped_fall = txoutclk_stopped & ~txoutclk_stopped_d1;
+         always_ff @(posedge f_clk_i) begin
+            txoutclk_stopped_d1 <= txoutclk_stopped;
+            if (txoutclk_stopped_fall) tx_mmcm_reset <= 1'b1;
+            else tx_mmcm_reset <= 1'b0;
+         end
+
+         // Async reset generation for RX MMCM
+         assign rxoutclk_stopped_fall = rxoutclk_stopped & ~rxoutclk_stopped_d1;
+         always_ff @(posedge f_clk_i) begin
+            rxoutclk_stopped_d1 <= rxoutclk_stopped;
+            if (rxoutclk_stopped_fall) rx_mmcm_reset <= 1'b1;
+            else rx_mmcm_reset <= 1'b0;
+         end
+
+         qeciphy_gtx_common i_gtx_common (
+             .qpllrefclksel_in  (3'b010),
+             .gtrefclk0_in      (1'b0),
+             .gtrefclk1_in      (gt_ref_clk_i),
+             .qplllock_out      (qplllock_out),
+             .qplllockdetclk_in (f_clk_i),
+             .qplloutclk_out    (qplloutclk_out),
+             .qplloutrefclk_out (qplloutrefclk_out),
+             .qpllrefclklost_out(qpllrefclklost_out),
+             .qpllreset_in      (qpllreset_in)
+         );
+
+         qeciphy_clk_mmcm i_tx_clks (
+             .clk_in           (txoutclk),
+             .reset            (tx_mmcm_reset),
+             .clk_out          (tx_clk_o),
+             .clk_out_2x       (tx_clk_2x_o),
+             .input_clk_stopped(txoutclk_stopped)
+         );
+
+         qeciphy_clk_mmcm i_rx_clks (
+             .clk_in           (rxoutclk),
+             .reset            (rx_mmcm_reset),
+             .clk_out          (rx_clk_o),
+             .clk_out_2x       (rx_clk_2x_o),
+             .input_clk_stopped(rxoutclk_stopped)
+         );
+
+      end
+   endgenerate
+
+endmodule  // qeciphy_gt_xilinx

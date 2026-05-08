@@ -85,6 +85,31 @@
           "example_designs/vendors/xilinx/qeciphy_vio.tcl"
         ]
       }
-    }
+    },
+    "de10": {
+      "device": {
+        "part": "AGFB014R24B2E2V",
+        "vendor": "altera",
+	"family": "Agilex 7"
+      },
+      "variant": "ETILE",
+      "rclk_freq": "156.25",
+      "transceiver": {
+        "line_rate_gbps": "10.3125"
+      },
+      "synth": {
+        "top": "qeciphy_syn_wrapper",
+        "filelists": [
+          "example_designs/de10/src.f"
+        ],
+        "constraints": [
+          "example_designs/de10/syn/pin_assignments.tcl",
+          "example_designs/de10/syn/clock_constraints.sdc",
+          "example_designs/de10/syn/signal_tap.stp"
+	],
+        "pre_setup_hooks": [
+        ]
+      }
+  }
   }
 }
