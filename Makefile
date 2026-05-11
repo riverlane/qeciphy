@@ -188,6 +188,7 @@ get_gt_type = $(shell \
 	if [ "$(OPT_PROFILE)" = "kasliSoC" ]; then echo "GTX"; \
 	elif [ "$(OPT_PROFILE)" = "zcu106" ]; then echo "GTH"; \
 	elif [ "$(OPT_PROFILE)" = "zcu216" ]; then echo "GTY"; \
+	elif [ "$(OPT_PROFILE)" = "zcu111" ]; then echo "GTY"; \
 	else echo "GTY"; fi)
 
 # -------------------------------------------------------------
