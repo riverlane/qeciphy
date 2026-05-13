@@ -8,7 +8,7 @@ on:
 jobs:
   # Detect which files have changed to determine which jobs to run
   changes:
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     environment: ci
     outputs:
       lint: ${{ steps.changes.outputs.lint }}
@@ -73,7 +73,7 @@ jobs:
   static-checks:
     needs: changes
     if: needs.changes.outputs.lint == 'true' || needs.changes.outputs.format == 'true'
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
       always() && 
       needs.changes.outputs.simulation == 'true' && 
       (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped')
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
       always() && 
       needs.changes.outputs.simulation == 'true' && 
       (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped')
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -119,7 +119,7 @@ jobs:
       always() && 
       needs.changes.outputs.uvm == 'true' &&
       (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped')
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -133,7 +133,7 @@ jobs:
       always() && 
       needs.changes.outputs.synthesis == 'true' && 
       (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped')
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

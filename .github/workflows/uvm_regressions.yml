@@ -5,7 +5,7 @@ on:
 
 jobs:
   uvm-regression:
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     environment: ci
     steps:
       - name: Checkout repo
