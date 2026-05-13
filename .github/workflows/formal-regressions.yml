@@ -6,7 +6,7 @@ on:
 jobs:
   formal-verification:
     name: Run Formal Regressions
-    runs-on: sanity-builder
+    runs-on: engineering-eda
     environment: ci
     
     steps:
