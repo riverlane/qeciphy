@@ -278,7 +278,7 @@ module QECIPHY (
    // =========================================================================
 
    qeciphy_serdes #(
-       .GT_TYPE(qeciphy_build_cfg_pkg::QECIPHY_GT_TYPE)  // GT primitive type selection
+       .GT_TYPE(qeciphy_build_cfg_pkg::QECIPHY_GT_TYPE)  // GT primitive type: "GTX","GTH","GTY" (Xilinx) or "ETILE" (Altera)
    ) i_qeciphy_serdes (
        // GT Reference and Control
        .gt_ref_clk_i   (RCLK),               // GT reference clock
