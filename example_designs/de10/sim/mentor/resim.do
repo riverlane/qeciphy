@@ -87,10 +87,9 @@ if { $USE_SYN_WRAPPER_TB } {
 
 ld -t fs $TB_TOP
 
-if { $USE_SYN_WRAPPER_TB }{
+if { $USE_SYN_WRAPPER_TB } {
     do wave_syn_tb.do
-}
-else{
+} else {
     do wave_dual_tb.do
 }
 set StdArithNoWarnings 1
