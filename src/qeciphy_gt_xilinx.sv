@@ -7,6 +7,12 @@ module qeciphy_gt_xilinx #(
 ) (
     input logic gt_ref_clk_i,
 
+    // GT differential signals
+    input  logic gt_rx_p_i,
+    input  logic gt_rx_n_i,
+    output logic gt_tx_p_o,
+    output logic gt_tx_n_o,
+
     input  logic f_clk_i,
     input  logic gt_rst_n_i,
     output logic gt_power_good_o,
@@ -21,13 +27,7 @@ module qeciphy_gt_xilinx #(
     output logic        rx_clk_2x_o,
     output logic [31:0] rx_tdata_o,
     output logic        gt_rx_rst_done_o,
-    output logic        rx_byte_aligned_o,
-
-    // GT differential signals
-    input  logic gt_rx_p_i,
-    input  logic gt_rx_n_i,
-    output logic gt_tx_p_o,
-    output logic gt_tx_n_o
+    output logic        rx_byte_aligned_o
 );
 
    // -------------------------------------------------------------
