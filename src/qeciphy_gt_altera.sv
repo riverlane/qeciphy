@@ -52,40 +52,72 @@ module qeciphy_gt_altera #(
 );
 
    // -------------------------------------------------------------
+   // Local parameters
+   // -------------------------------------------------------------
+
+   // 8b10b codec parameters
+   localparam DATA_WIDTH = 40;   // Encoded data width (4 symbols × 10 bits)
+   localparam WORD_SIZE  = 10;   // 8b10b symbol size
+
+   // Word alignment parameters
+   localparam TX_PATTERN_LENGTH  = 128;  // Cycles to wait for comma pattern
+   localparam RXSLIDE_COUNT_MAX  = 80;   // Max bit positions to try
+   localparam RX_ALIGN_MATCH_MAX = 8;    // Required consecutive matches
+
+   // Comma detection parameters
+   localparam MAX_REVIEWS = 128;  // Reviews before declaring aligned
+   localparam MAX_RETRIES = 32;   // Retries before failure
+
+   // -------------------------------------------------------------
    // Signal declarations
    // -------------------------------------------------------------
+
+   // Tile parallel data struct for 80-bit interface
+   // Format for F-Tile/E-Tile 80-bit parallel interface:
+   //   [79]    = fifo_wr_en (write enable for elastic FIFO)
+   //   [78:60] = reserved
+   //   [59:40] = data_hi (upper 20 bits of 40-bit encoded stream)
+   //   [39]    = reserved
+   //   [38]    = data_valid
+   //   [37:20] = reserved
+   //   [19:0]  = data_lo (lower 20 bits of 40-bit encoded stream)
+   typedef struct packed {
+      logic        fifo_wr_en;   // [79]
+      logic [18:0] reserved_hi;  // [78:60]
+      logic [19:0] data_hi;      // [59:40]
+      logic        reserved_mid; // [39]
+      logic        data_valid;   // [38]
+      logic [17:0] reserved_lo;  // [37:20]
+      logic [19:0] data_lo;      // [19:0]
+   } tile_parallel_data_t;
 
    logic        rst;
 
    // TX path signals
-   logic        tx_clkout2;  // 2x raw clock from FTile TX PLL
-   logic        tx_reset_sync;  // Reset synchronized to TX 2x clock
-   logic [ 4:0] tx_reset_sync_ff;
-   logic        rx_reset_sync;
-   logic [ 4:0] rx_reset_sync_ff;
-   logic        tx_reset_ack;
-   logic        tx_ready;
-   logic        tx_reset_phy;
-   logic        tx_pll_locked;
-   logic [39:0] tx_encoded;
-   logic [79:0] tx_parallel_data;
+   logic                  tx_clkout2;  // 2x raw clock from FTile TX PLL
+   logic                  tx_reset_sync;  // Reset synchronized to TX 2x clock
+   logic                  rx_reset_sync;  // Reset synchronized to RX 2x clock
+   logic                  tx_reset_ack;
+   logic                  tx_ready;
+   logic                  tx_reset_phy;
+   logic                  tx_pll_locked;
+   logic [39:0]           tx_encoded;
+   tile_parallel_data_t   tx_parallel_data;
 
    // TX ready synchronizer to tx_clk_2x_o domain
-   logic [ 4:0] tx_ready_2x_sync_ff;
    logic        tx_ready_2x_sync;
 
    // TX ready synchronizer to f_clk_i domain
-   logic [ 4:0] tx_ready_sync_ff;
    logic        tx_ready_sync;
 
    // RX path signals
-   logic        rx_clkout2;  // 2x raw clock from FTile RX CDR
-   logic        rx_reset_ack;
-   logic        rx_ready;
-   logic        rx_reset_phy;
-   logic        rx_freqlocked;
-   logic        rx_is_locked_to_ref;
-   logic [79:0] rx_parallel_data;
+   logic                  rx_clkout2;  // 2x raw clock from FTile RX CDR
+   logic                  rx_reset_ack;
+   logic                  rx_ready;
+   logic                  rx_reset_phy;
+   logic                  rx_freqlocked;
+   logic                  rx_is_locked_to_ref;
+   tile_parallel_data_t   rx_parallel_data;
 
    // E-Tile-specific signals (unused in FTILE path)
    logic [39:0] rx_unaligned;
@@ -96,11 +128,9 @@ module qeciphy_gt_altera #(
    logic        rx_reset_datapath;
 
    // RX ready synchronizer to rx_clk_2x_o domain
-   logic [ 4:0] rx_ready_2x_sync_ff;
    logic        rx_ready_2x_sync;
 
    // RX ready synchronizer to f_clk_i domain
-   logic [ 4:0] rx_ready_sync_ff;
    logic        rx_ready_sync;
 
    // Comma detection signals
@@ -126,13 +156,7 @@ module qeciphy_gt_altera #(
 
    assign rst             = ~gt_rst_n_i;
    // F-Tile does not have a power-good signal; tie high.
-   assign gt_power_good_o = (gt_power_reset_counter == '1);
-
-   always_ff @(posedge f_clk_i) begin
-      if (gt_power_reset_counter != '1) begin
-         gt_power_reset_counter <= gt_power_reset_counter + 1;
-      end
-   end
+   assign gt_power_good_o = 1'b1;
 
 
    // -------------------------------------------------------------
@@ -144,55 +168,69 @@ module qeciphy_gt_altera #(
    assign gt_rx_rst_done_o  = rx_ready_sync;
 
    // -------------------------------------------------------------
-   // TX reset synchronization to tx_clk_2x_o domain
+   // TX/RX reset synchronization using proper reset synchronizers
    // -------------------------------------------------------------
+   // Use riv_synchronizer_2ff with ASYNC reset to safely cross
+   // the asynchronous reset into the TX/RX clock domains.
 
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_tx_reset_sync (
+       .src_in   (rst),
+       .dst_clk  (tx_clk_2x_o),
+       .dst_rst_n(gt_rst_n_i),
+       .dst_out  (tx_reset_sync)
+   );
 
-   always_ff @(posedge tx_clk_2x_o) begin
-      tx_reset_sync_ff <= {tx_reset_sync_ff[3:0], rst};
-      tx_reset_sync    <= tx_reset_sync_ff[4];
-   end
-
-   always_ff @(posedge rx_clk_2x_o) begin
-      rx_reset_sync_ff <= {rx_reset_sync_ff[3:0], rst};
-      rx_reset_sync    <= rx_reset_sync_ff[4];
-   end
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_rx_reset_sync (
+       .src_in   (rst),
+       .dst_clk  (rx_clk_2x_o),
+       .dst_rst_n(gt_rst_n_i),
+       .dst_out  (rx_reset_sync)
+   );
 
 
    // -------------------------------------------------------------
    // TX / RX ready synchronization to 2x clock domains
    // -------------------------------------------------------------
 
-   always_ff @(posedge tx_clk_2x_o) begin
-      tx_ready_2x_sync_ff <= {tx_ready_2x_sync_ff[3:0], tx_ready};
-      tx_ready_2x_sync    <= tx_ready_2x_sync_ff[4];
-   end
+   riv_synchronizer_2ff i_tx_ready_2x_sync (
+       .src_in   (tx_ready),
+       .dst_clk  (tx_clk_2x_o),
+       .dst_rst_n(gt_rst_n_i),
+       .dst_out  (tx_ready_2x_sync)
+   );
 
-   always_ff @(posedge rx_clk_2x_o) begin
-      rx_ready_2x_sync_ff <= {rx_ready_2x_sync_ff[3:0], rx_ready};
-      rx_ready_2x_sync    <= rx_ready_2x_sync_ff[4];
-   end
+   riv_synchronizer_2ff i_rx_ready_2x_sync (
+       .src_in   (rx_ready),
+       .dst_clk  (rx_clk_2x_o),
+       .dst_rst_n(gt_rst_n_i),
+       .dst_out  (rx_ready_2x_sync)
+   );
 
    // -------------------------------------------------------------
    // TX / RX ready synchronization to f_clk_i domain
    // -------------------------------------------------------------
 
-   always_ff @(posedge f_clk_i) begin
-      tx_ready_sync_ff <= {tx_ready_sync_ff[3:0], tx_ready};
-      tx_ready_sync    <= tx_ready_sync_ff[4];
-   end
+   riv_synchronizer_2ff i_tx_ready_sync (
+       .src_in   (tx_ready),
+       .dst_clk  (f_clk_i),
+       .dst_rst_n(gt_rst_n_i),
+       .dst_out  (tx_ready_sync)
+   );
 
-   always_ff @(posedge f_clk_i) begin
-      rx_ready_sync_ff <= {rx_ready_sync_ff[3:0], rx_ready};
-      rx_ready_sync    <= rx_ready_sync_ff[4];
-   end
+   riv_synchronizer_2ff i_rx_ready_sync (
+       .src_in   (rx_ready),
+       .dst_clk  (f_clk_i),
+       .dst_rst_n(gt_rst_n_i),
+       .dst_out  (rx_ready_sync)
+   );
 
    // -------------------------------------------------------------
    // RX ready synchronization to rx_clk_2x_o domain
    // -------------------------------------------------------------
-   // RX datapath reset: hold in reset until FTile RX is ready, or when
-   // comma detect or word aligner requests a datapath reset (alignment retry).
-
    // RX datapath reset: hold in reset until FTile RX is ready, or when
    // comma detect or word aligner requests a datapath reset (alignment retry).
 
@@ -221,38 +259,36 @@ module qeciphy_gt_altera #(
        .dout_dat(tx_encoded)
    );
 
-   assign tx_parallel_data = {
-      1'b1,  // [79] Write enable for elastic FIFO
-      19'b0,  // [78:60] Reserved
-      tx_encoded[39:20],  // [59:40] Upper 20 bits of encoded data
-      1'b0,  // [39] Reserved
-      1'b1,  // [38] Data valid
-      18'b0,  // [37:20] Reserved
-      tx_encoded[19:0]  // [19:0] Lower 20 bits of encoded data
-   };
+   assign tx_parallel_data.fifo_wr_en   = 1'b1;
+   assign tx_parallel_data.reserved_hi  = 19'b0;
+   assign tx_parallel_data.data_hi      = tx_encoded[39:20];
+   assign tx_parallel_data.reserved_mid = 1'b0;
+   assign tx_parallel_data.data_valid   = 1'b1;
+   assign tx_parallel_data.reserved_lo  = 18'b0;
+   assign tx_parallel_data.data_lo      = tx_encoded[19:0];
 
    // -------------------------------------------------------------
    // RX data path: word alignment then 8b10b decoding (x4)
    // -------------------------------------------------------------
 
-   // Concatenate FTile 80-bit parallel data to 40-bit word for aligner
-   assign rx_unaligned = {rx_parallel_data[59:40], rx_parallel_data[19:0]};
+   // Extract 40-bit encoded data from Tile 80-bit parallel interface for aligner
+   assign rx_unaligned = {rx_parallel_data.data_hi, rx_parallel_data.data_lo};
 
    // Word aligner: barrel-shifts raw 40-bit stream and automatically
    // detects K28.5 comma patterns in the encoded output to align.
    qeciphy_word_align #(
-       .DATA_WIDTH        (40),
-       .WORD_SIZE         (10),
-       .TX_PATTERN_LENGTH (128),
-       .RXSLIDE_COUNT_MAX (80),
-       .RX_ALIGN_MATCH_MAX(8)
+       .DATA_WIDTH        (DATA_WIDTH),
+       .WORD_SIZE         (WORD_SIZE),
+       .TX_PATTERN_LENGTH (TX_PATTERN_LENGTH),
+       .RXSLIDE_COUNT_MAX (RXSLIDE_COUNT_MAX),
+       .RX_ALIGN_MATCH_MAX(RX_ALIGN_MATCH_MAX)
    ) u_word_aligner (
-       .clk         (rx_clk_2x_o),
+       .clk_i       (rx_clk_2x_o),
        .rst_n_i     (~rx_reset_datapath),
-       .rx_datain   (rx_unaligned),
-       .rx_dataout  (word_aligner_data_out),
-       .o_align_done(word_align_done),
-       .o_align_fail(word_align_fail)
+       .rx_datain_i (rx_unaligned),
+       .rx_dataout_o(word_aligner_data_out),
+       .align_done_o(word_align_done),
+       .align_fail_o(word_align_fail)
    );
 
    eth_8b10b_dec_x4_a u_8b10b_decoder_4x (
@@ -275,9 +311,9 @@ module qeciphy_gt_altera #(
    // is observed.
 
    qeciphy_rx_comma_detect #(
-       .TX_PATTERN_LENGTH(128),
-       .MAX_REVIEWS      (128),
-       .MAX_RETRIES      (32)
+       .TX_PATTERN_LENGTH(TX_PATTERN_LENGTH),
+       .MAX_REVIEWS      (MAX_REVIEWS),
+       .MAX_RETRIES      (MAX_RETRIES)
    ) i_qeciphy_rx_comma_detect (
        .clk_i               (rx_clk_2x_o),
        .rst_n_i             (~rx_reset_datapath && word_align_done),
@@ -290,20 +326,19 @@ module qeciphy_gt_altera #(
    // -------------------------------------------------------------
    // Clock generation via Altera PLL dividers
    // -------------------------------------------------------------
-   // FTile outputs 2x (257.8125 MHz) clocks on tx_clkout2 / rx_clkout2.
-   // qeciphy_altera_clk_mmcm divides to provide both 2x (clock_div1x)
-   // and 1x (clock_div2x) clocks.
+   // FTile and ETile output line_rate/data_width (nominally 10.3125 Gbps / 40 bits = 257.8125 MHz) clocks on tx_clkout2 / rx_clkout2.
+   // qeciphy_altera_clk_mmcm divides to provide both InClk and divide-by-2 InClk outputs for the 32-bit and 64-bit datapaths, respectively.
 
    qeciphy_altera_clk_mmcm tile_tx_clk_network (
-       .inclk      (tx_clkout2),   // 257.8125 MHz input from FTile TX PLL
-       .clock_div1x(tx_clk_2x_o),  // 257.8125 MHz output (2x clock for 32-bit path)
-       .clock_div2x(tx_clk_o)      // 128.90625 MHz output (1x clock for 64-bit path)
+       .inclk      (tx_clkout2),   // Nominally 257.8125 MHz input from Tile TX PLL
+       .clock_div1x(tx_clk_2x_o),  // Inclk output (nominally 257.8125 MHz for 32-bit path)
+       .clock_div2x(tx_clk_o)      // Inclk/2 output (nominally 128.90625 MHz for 64-bit path)
    );
 
    qeciphy_altera_clk_mmcm tile_rx_clk_network (
-       .inclk      (rx_clkout2),   // 257.8125 MHz input from FTile RX CDR
-       .clock_div1x(rx_clk_2x_o),  // 257.8125 MHz output (2x clock for 32-bit path)
-       .clock_div2x(rx_clk_o)      // 128.90625 MHz output (1x clock for 64-bit path)
+       .inclk      (rx_clkout2),   // Nominally 257.8125 MHz input from Tile RX CDR
+       .clock_div1x(rx_clk_2x_o),  // Inclk output (nominally 257.8125 MHz for 32-bit path)
+       .clock_div2x(rx_clk_o)      // Inclk/2 output (nominally 128.90625 MHz for 64-bit path)
    );
 
    // -------------------------------------------------------------
@@ -347,8 +382,8 @@ module qeciphy_gt_altera #(
              .rx_coreclkin      (rx_clk_2x_o),
              .tx_ready          (tx_ready),
              .rx_ready          (rx_ready),
-             .tx_pma_ready      (tx_pma_ready),
-             .rx_pma_ready      (rx_pma_ready),
+             .tx_pma_ready      (),
+             .rx_pma_ready      (),
              .tx_clkout         (),
              .tx_clkout2        (tx_clkout2),
              .rx_clkout         (),
@@ -363,7 +398,7 @@ module qeciphy_gt_altera #(
          );
 `endif
 
-      end else begin : gen_ftile
+      end else if (GT_TYPE == "FTILE") begin : gen_ftile
 
          assign tx_reset_phy = rst;
          assign rx_reset_phy = rst;
@@ -432,6 +467,11 @@ module qeciphy_gt_altera #(
              .rx_parallel_data    (rx_parallel_data)      // 80-bit RX data from FTile
          );
 `endif
+        end else begin : gen_invalid
+             initial begin
+                $error("Invalid GT_TYPE parameter value: %s. Valid values are 'ETILE' or 'FTILE'.", GT_TYPE);
+                $finish;
+             end
 
       end
    endgenerate
