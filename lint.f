@@ -4,3 +4,7 @@ lint_stubs/qeciphy_clk_mmcm.sv
 lint_stubs/qeciphy_gty_transceiver.sv
 lint_stubs/qeciphy_gtx_transceiver.sv
 lint_stubs/qeciphy_gth_transceiver.sv
+lint_stubs/qeciphy_etile.sv
+lint_stubs/qeciphy_ftile.sv
+lint_stubs/qeciphy_altera_clk_mmcm.sv
+lint_stubs/tennm_lcell_comb.sv
