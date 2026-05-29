@@ -34,7 +34,7 @@ module qeciphy_gt_wrapper #(
    // Vendor-specific GT wrapper selection
    // -------------------------------------------------------------
    generate
-      if (GT_TYPE inside {"FTILE", "ETILE"}) begin : gen_altera
+      if (GT_TYPE == "FTILE" || GT_TYPE == "ETILE") begin : gen_altera
          qeciphy_gt_altera #(
              .GT_TYPE(GT_TYPE)
          ) i_qeciphy_gt_altera (
@@ -57,7 +57,7 @@ module qeciphy_gt_wrapper #(
              .gt_rx_rst_done_o  (gt_rx_rst_done_o),
              .rx_byte_aligned_o (rx_byte_aligned_o)
          );
-      end else begin : gen_xilinx
+      end else if (GT_TYPE == "GTY" || GT_TYPE == "GTH" || GT_TYPE == "GTX") begin : gen_xilinx
          qeciphy_gt_xilinx #(
              .GT_TYPE(GT_TYPE)
          ) i_qeciphy_gt_xilinx (
@@ -80,6 +80,12 @@ module qeciphy_gt_wrapper #(
              .gt_rx_rst_done_o  (gt_rx_rst_done_o),
              .rx_byte_aligned_o (rx_byte_aligned_o)
          );
+      end else begin : gen_unsupported
+         // synthesis translate_off
+         initial begin
+            $warning("qeciphy_gt_wrapper: unsupported GT_TYPE = \"%s\". Valid values: GTX, GTY, GTH, ETILE, FTILE.", GT_TYPE);
+         end
+         // synthesis translate_on
       end
    endgenerate
 
