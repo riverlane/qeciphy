@@ -70,7 +70,7 @@ VENDOR_SRC_FILELIST := $(shell \
 # Extracted file lists
 LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SRC_XILINX_FILELIST) $(SRC_ALTERA_FILELIST) $(LINT_FILELIST))
 SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(VENDOR_SRC_FILELIST))
-SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST) $(SVA_FILELIST))
+SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST) $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
 VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SVA_FILELIST))
 XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sources.py $(XCI_FILELIST); fi)
