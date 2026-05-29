@@ -59,9 +59,17 @@ XCI_FILELIST := xci.f
 UVM_FILELIST := uvm.f
 SVA_FILELIST := sva.f
 
+# Vendor-specific source file lists (optional, included if they exist)
+SRC_XILINX_FILELIST := src_xilinx.f
+SRC_ALTERA_FILELIST := src_altera.f
+VENDOR_SRC_FILELIST := $(shell \
+	if [ "$(VENDOR)" = "xilinx" ] && [ -f $(SRC_XILINX_FILELIST) ]; then echo $(SRC_XILINX_FILELIST); \
+	elif [ "$(VENDOR)" = "altera" ] && [ -f $(SRC_ALTERA_FILELIST) ]; then echo $(SRC_ALTERA_FILELIST); \
+	fi)
+
 # Extracted file lists
-LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(LINT_FILELIST))
-SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST))
+LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SRC_XILINX_FILELIST) $(SRC_ALTERA_FILELIST) $(LINT_FILELIST))
+SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(VENDOR_SRC_FILELIST))
 SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST) $(SVA_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
 VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SVA_FILELIST))
