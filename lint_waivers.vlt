@@ -53,6 +53,43 @@ lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin co
 
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gtx_common.sv" -match "Cell pin connected by name with empty reference: *"
 
+// Altera GT wrapper - 8b10b decoder unconnected outputs
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'dout_k'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'dout_kerr'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'dout_rderr'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'dout_rdreg'"
+
+// Altera GT wrapper - comma detect unused output
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'rx_datapath_resetn_o'"
+
+// E-Tile transceiver unconnected outputs
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pma_ready'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'rx_pma_ready'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_clkout'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'rx_clkout'"
+
+// F-Tile transceiver unconnected outputs
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_fifo_full'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_fifo_empty'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pmaif_fifo_empty'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pmaif_fifo_pempty'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pmaif_fifo_pfull'"
+
+// Altera GT wrapper - signals used only in FTILE generate path (not visible to lint in ETILE-only flow)
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not used: 'tx_reset_ack'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'tx_reset_phy'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'tx_pll_locked'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not used: 'rx_reset_ack'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'rx_reset_phy'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not used: 'rx_freqlocked'"
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'rx_is_locked_to_ref'"
+
+// Altera GT wrapper - tile parallel data struct reserved fields are intentionally unused
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Bits of signal are not used: 'rx_parallel_data'*"
+
+// Word aligner - full width registered for pipeline but only lower WORD_SIZE bits checked for comma
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_word_align.sv" -match "Bits of signal are not used: 'rx_data_q'*"
+
 // Ignore linting errors for lint stub files
 
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/BUFG_GT.sv"           

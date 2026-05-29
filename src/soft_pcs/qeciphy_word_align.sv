@@ -39,7 +39,7 @@ module qeciphy_word_align #(
    // synthesis translate_on
 
    // ----------------------------------------------------------------
-   // Alignment FSM parameters (from qeciphy_rx_bytealigner)
+   // Alignment FSM parameters
    // ----------------------------------------------------------------
    localparam RXSLIDE_COUNT_WIDTH = $clog2(RXSLIDE_COUNT_MAX);
    localparam PATTERN_COUNT_WIDTH = $clog2(TX_PATTERN_LENGTH);
@@ -83,7 +83,6 @@ module qeciphy_word_align #(
    logic                       review_to_fail_q;    // Boundary check failed in REVIEW
 
    // Comma detection on encoded output
-   localparam NUM_SYMBOLS = DATA_WIDTH / WORD_SIZE;
    logic [       DATA_WIDTH-1:0] rx_data_q;
    logic                         rx_datan_comma_m_nxt;
    logic                         rx_datan_comma_m;
@@ -135,7 +134,7 @@ module qeciphy_word_align #(
    // ================================================================
    // Comma detection in encoded domain
    // ================================================================
-   // Search for K28.5 (positive or negative disparity) at any WORD_SIZE
+   // Search for K28.5 (positive or negative disparity) at the LSB-most WORD_SIZE
    // boundary in the barrel-shifter output.
 
    always_ff @(posedge clk_i) begin
@@ -209,7 +208,7 @@ module qeciphy_word_align #(
    assign do_slide = fsm_slide;
 
    // ================================================================
-   // Counters (from qeciphy_rx_bytealigner)
+   // Counters
    // ================================================================
 
    assign rx_slide_count_max = (rx_slide_count == RXSLIDE_COUNT_WIDTH'(RXSLIDE_COUNT_MAX - 1));
