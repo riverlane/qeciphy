@@ -91,8 +91,6 @@ module qeciphy_gt_altera #(
       logic [19:0] data_lo;      // [19:0]
    } tile_parallel_data_t;
 
-   logic        rst;
-
    // TX path signals
    logic                  tx_clkout2;  // 2x raw clock from FTile TX PLL
    logic                  tx_reset_sync;  // Reset synchronized to TX 2x clock
@@ -147,11 +145,6 @@ module qeciphy_gt_altera #(
 `endif
 
 
-   // -------------------------------------------------------------
-   // Derived resets
-   // -------------------------------------------------------------
-
-   assign rst             = ~gt_rst_n_i;
    // F-Tile does not have a power-good signal; tie high.
    assign gt_power_good_o = 1'b1;
 
