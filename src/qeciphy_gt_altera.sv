@@ -138,9 +138,6 @@ module qeciphy_gt_altera #(
    logic        word_align_done;
    logic        word_align_fail;
 
-   // GT Reset counter
-   logic [ 8:0] gt_power_reset_counter = 9'b0;
-
 `ifdef TILE_SIM_MODEL
    // Sim-only cross-connect signals accessed hierarchically by the testbench.
    // sim_tile_tx_parallel_data: exposes this instance's TX to the peer's RX.
