@@ -97,9 +97,10 @@ module qeciphy_gt_altera #(
    logic                  tx_clkout2;  // 2x raw clock from FTile TX PLL
    logic                  tx_reset_sync;  // Reset synchronized to TX 2x clock
    logic                  rx_reset_sync;  // Reset synchronized to RX 2x clock
+   logic                  tx_reset_sync_n;  // Reset synchronized to TX 2x clock
+   logic                  rx_reset_sync_n;  // Reset synchronized to RX 2x clock
    logic                  tx_reset_ack;
    logic                  tx_ready;
-   logic                  tx_reset_phy;
    logic                  tx_pll_locked;
    logic [39:0]           tx_encoded;
    tile_parallel_data_t   tx_parallel_data;
@@ -114,7 +115,6 @@ module qeciphy_gt_altera #(
    logic                  rx_clkout2;  // 2x raw clock from FTile RX CDR
    logic                  rx_reset_ack;
    logic                  rx_ready;
-   logic                  rx_reset_phy;
    logic                  rx_freqlocked;
    logic                  rx_is_locked_to_ref;
    tile_parallel_data_t   rx_parallel_data;
@@ -170,22 +170,25 @@ module qeciphy_gt_altera #(
    // Use riv_synchronizer_2ff with ASYNC reset to safely cross
    // the asynchronous reset into the TX/RX clock domains.
 
+   assign tx_reset_sync = ~tx_reset_sync_n;
+   assign rx_reset_sync = ~rx_reset_sync_n;
+   
    riv_synchronizer_2ff #(
        .RESET_TYPE("ASYNC")
    ) i_tx_reset_sync (
-       .src_in   (rst),
+       .src_in   (1'b1),
        .dst_clk  (tx_clk_2x_o),
        .dst_rst_n(gt_rst_n_i),
-       .dst_out  (tx_reset_sync)
+       .dst_out  (tx_reset_sync_n)
    );
 
    riv_synchronizer_2ff #(
        .RESET_TYPE("ASYNC")
    ) i_rx_reset_sync (
-       .src_in   (rst),
+       .src_in   (1'b1),
        .dst_clk  (rx_clk_2x_o),
        .dst_rst_n(gt_rst_n_i),
-       .dst_out  (rx_reset_sync)
+       .dst_out  (rx_reset_sync_n)
    );
 
 
@@ -193,14 +196,18 @@ module qeciphy_gt_altera #(
    // TX / RX ready synchronization to 2x clock domains
    // -------------------------------------------------------------
 
-   riv_synchronizer_2ff i_tx_ready_2x_sync (
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   )i_tx_ready_2x_sync (
        .src_in   (tx_ready),
        .dst_clk  (tx_clk_2x_o),
        .dst_rst_n(gt_rst_n_i),
        .dst_out  (tx_ready_2x_sync)
    );
 
-   riv_synchronizer_2ff i_rx_ready_2x_sync (
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_rx_ready_2x_sync (
        .src_in   (rx_ready),
        .dst_clk  (rx_clk_2x_o),
        .dst_rst_n(gt_rst_n_i),
@@ -211,14 +218,18 @@ module qeciphy_gt_altera #(
    // TX / RX ready synchronization to f_clk_i domain
    // -------------------------------------------------------------
 
-   riv_synchronizer_2ff i_tx_ready_sync (
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_tx_ready_sync (
        .src_in   (tx_ready),
        .dst_clk  (f_clk_i),
        .dst_rst_n(gt_rst_n_i),
        .dst_out  (tx_ready_sync)
    );
 
-   riv_synchronizer_2ff i_rx_ready_sync (
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_rx_ready_sync (
        .src_in   (rx_ready),
        .dst_clk  (f_clk_i),
        .dst_rst_n(gt_rst_n_i),
@@ -351,7 +362,7 @@ module qeciphy_gt_altera #(
 `ifdef TILE_SIM_MODEL
          qeciphy_etile_sim_model transceiver_inst (
              .pll_refclk0 (gt_ref_clk_i),
-             .reset       (rst),
+             .reset       (~gt_rst_n_i),
              .tx_coreclkin(tx_clk_2x_o),
              .rx_coreclkin(rx_clk_2x_o),
              .tx_ready    (tx_ready),
@@ -373,7 +384,7 @@ module qeciphy_gt_altera #(
          );
 `else
          qeciphy_etile transceiver_inst (
-             .reset             (rst),
+             .reset             (~gt_rst_n_i),
              .pll_refclk0       (gt_ref_clk_i),
              .tx_coreclkin      (tx_clk_2x_o),
              .rx_coreclkin      (rx_clk_2x_o),
@@ -397,14 +408,12 @@ module qeciphy_gt_altera #(
 
       end else if (GT_TYPE == "FTILE") begin : gen_ftile
 
-         assign tx_reset_phy = rst;
-         assign rx_reset_phy = rst;
 `ifdef TILE_SIM_MODEL
          qeciphy_ftile_sim_model transceiver_inst (
              .rx_cdr_refclk_link    (gt_ref_clk_i),
              .tx_pll_refclk_link    (gt_ref_clk_i),
-             .tx_reset              (tx_reset_phy),
-             .rx_reset              (rx_reset_phy),
+             .tx_reset              (~gt_rst_n_i),
+             .rx_reset              (~gt_rst_n_i),
              .tx_reset_ack          (tx_reset_ack),
              .rx_reset_ack          (rx_reset_ack),
              .tx_ready              (tx_ready),
@@ -436,8 +445,8 @@ module qeciphy_gt_altera #(
          qeciphy_ftile transceiver_inst (
              .rx_cdr_refclk_link  (gt_ref_clk_i),         // RX CDR reference clock
              .tx_pll_refclk_link  (gt_ref_clk_i),         // TX PLL reference clock
-             .tx_reset            (tx_reset_phy),         // TX reset (active-high)
-             .rx_reset            (rx_reset_phy),         // RX reset (active-high)
+             .tx_reset            (~gt_rst_n_i),         // TX reset (active-high)
+             .rx_reset            (~gt_rst_n_i),         // RX reset (active-high)
              .tx_reset_ack        (tx_reset_ack),
              .rx_reset_ack        (rx_reset_ack),
              .tx_ready            (tx_ready),             // TX datapath ready

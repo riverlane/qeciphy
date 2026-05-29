@@ -9,6 +9,8 @@ set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_q
 set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tx_reset_sync_ff[0]}]
 set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|rx_reset_sync_ff[0]}]
 
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|gen_etile.transceiver_inst|xcvrnphy_fme_0|g_pma_rsfec_reset.g_auto_reset.reset_ip_auto_etile_inst|reset_control_inst|g_tx.g_tx[0].g_tx.counter_tx_ready|r_reset}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_tx_ready_2x_sync|sync_stage_sf[0]}]
+
 # Reference clock constraint - 6.4ns period (156.25 MHz)
 create_clock -name {clk_100_p} -period 10.000 [get_ports {clk_100_p}]
 create_clock -name gt_refclk -period 6.4 [get_ports {gt_refclk_in_p}]
