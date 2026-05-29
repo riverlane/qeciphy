@@ -234,8 +234,8 @@ module qeciphy_gt_altera #(
    // RX datapath reset: hold in reset until FTile RX is ready, or when
    // comma detect or word aligner requests a datapath reset (alignment retry).
 
-   assign tx_reset_datapath = (tx_reset_sync || !tx_ready_2x_sync) ? 1'b1 : 1'b0;
-   assign rx_reset_datapath = (rx_reset_sync || !rx_ready_2x_sync || word_align_fail) ? 1'b1 : 1'b0;
+   assign tx_reset_datapath = tx_reset_sync || !tx_ready_2x_sync;
+   assign rx_reset_datapath = rx_reset_sync || !rx_ready_2x_sync || word_align_fail;
 
 
 

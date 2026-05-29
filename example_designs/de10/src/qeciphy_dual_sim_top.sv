@@ -70,11 +70,6 @@ module qeciphy_dual_sim_top (
    logic       out_systempll_synthlock_2;
    logic       out_systempll_clk_2;
 
-   // Aliases for TB observability
-   logic       ACLK_1;
-   logic       ACLK_2;
-   assign ACLK_1 = sys_clk_100;
-   assign ACLK_2 = sys_clk_100;
 
    // POR reset from configuration IP
    assign rst_n  = !init_done_n;
