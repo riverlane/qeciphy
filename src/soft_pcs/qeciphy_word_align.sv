@@ -75,9 +75,17 @@ module qeciphy_word_align #(
    logic                       fsm_done;
    logic                       fsm_fail;
 
+   // Registered FSM transition conditions (reduces combinational fan-in)
+   logic                       check_to_review_q;   // Comma detected in CHECK
+   logic                       check_to_slide_q;    // Pattern timeout, retry slide
+   logic                       check_to_fail_q;     // Pattern timeout, no more slides
+   logic                       review_to_done_q;    // Enough matches in REVIEW
+   logic                       review_to_fail_q;    // Boundary check failed in REVIEW
+
    // Comma detection on encoded output
    localparam NUM_SYMBOLS = DATA_WIDTH / WORD_SIZE;
    logic [       DATA_WIDTH-1:0] rx_data_q;
+   logic                         rx_datan_comma_m_nxt;
    logic                         rx_datan_comma_m;
 
    // Counters
@@ -93,11 +101,17 @@ module qeciphy_word_align #(
    logic [                  3:0] rx_align_matched_count_nxt;
    logic                         rx_align_matched_count_max;
 
-   logic [                  9:0] rx_align_timeout_count;
-   logic [                  9:0] rx_align_timeout_count_nxt;
+   logic [                  PATTERN_COUNT_WIDTH-1:0] rx_align_timeout_count;
+   logic [                  PATTERN_COUNT_WIDTH-1:0] rx_align_timeout_count_nxt;
    logic                         rx_align_boundary_check;
    logic                         rx_align_boundary_check_fail;
    logic                         rx_align_matched;
+
+   // Registered counter control signals (reduces combinational fan-in)
+   logic                         slide_count_clear_q;   // Clear slide counter
+   logic                         slide_count_inc_q;     // Increment slide counter
+   logic                         pattern_count_clear_q; // Clear pattern counter
+   logic                         pattern_count_inc_q;   // Increment pattern counter
 
    // ================================================================
    // Barrel shifter 
@@ -130,13 +144,37 @@ module qeciphy_word_align #(
    end
 
    always_comb begin
-      rx_datan_comma_m = 1'b0;
-      if (rx_data_q[WORD_SIZE-1:0] == COMMA_POS || rx_data_q[WORD_SIZE-1:0] == COMMA_NEG) rx_datan_comma_m = 1'b1;
+      rx_datan_comma_m_nxt = 1'b0;
+      if (rx_data_q[WORD_SIZE-1:0] == COMMA_POS || rx_data_q[WORD_SIZE-1:0] == COMMA_NEG) rx_datan_comma_m_nxt = 1'b1;
+   end
+
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) rx_datan_comma_m <= 1'b0;
+      else rx_datan_comma_m <= rx_datan_comma_m_nxt;
    end
 
    // ================================================================
    // Alignment FSM
    // ================================================================
+
+   // Register FSM transition conditions to reduce combinational fan-in
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         check_to_review_q <= 1'b0;
+         check_to_slide_q  <= 1'b0;
+         check_to_fail_q   <= 1'b0;
+         review_to_done_q  <= 1'b0;
+         review_to_fail_q  <= 1'b0;
+      end else begin
+         // CHECK state transition conditions
+         check_to_review_q <= rx_datan_comma_m;
+         check_to_slide_q  <= rx_pattern_count_max & ~rx_slide_count_max;
+         check_to_fail_q   <= rx_pattern_count_max & rx_slide_count_max;
+         // REVIEW state transition conditions
+         review_to_done_q  <= rx_align_matched_count_max;
+         review_to_fail_q  <= rx_align_boundary_check_fail;
+      end
+   end
 
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) fsm <= IDLE;
@@ -147,8 +185,13 @@ module qeciphy_word_align #(
       case (fsm)
          IDLE:    fsm_nxt = SLIDE;
          SLIDE:   fsm_nxt = CHECK;
-         CHECK:   fsm_nxt = rx_datan_comma_m ? REVIEW : rx_pattern_count_max ? (rx_slide_count_max ? FAIL : SLIDE) : CHECK;
-         REVIEW:  fsm_nxt = rx_align_matched_count_max ? DONE : rx_align_boundary_check_fail ? FAIL : REVIEW;
+         CHECK:   fsm_nxt = check_to_review_q ? REVIEW :
+                            check_to_fail_q   ? FAIL   :
+                            check_to_slide_q  ? SLIDE  : 
+                            CHECK;
+         REVIEW:  fsm_nxt = review_to_done_q ? DONE :
+                            review_to_fail_q ? FAIL : 
+                            REVIEW;
          DONE:    fsm_nxt = DONE;
          FAIL:    fsm_nxt = IDLE;
          default: fsm_nxt = IDLE;
@@ -172,17 +215,32 @@ module qeciphy_word_align #(
    assign rx_slide_count_max = (rx_slide_count == RXSLIDE_COUNT_WIDTH'(RXSLIDE_COUNT_MAX - 1));
    assign rx_pattern_count_max = (rx_pattern_count == PATTERN_COUNT_WIDTH'(TX_PATTERN_LENGTH - 1));
 
+   // Register counter control signals to reduce combinational fan-in
+   always_ff @(posedge clk_i) begin
+      if (!rst_n_i) begin
+         slide_count_clear_q   <= 1'b1;
+         slide_count_inc_q     <= 1'b0;
+         pattern_count_clear_q <= 1'b1;
+         pattern_count_inc_q   <= 1'b0;
+      end else begin
+         // Slide counter controls: clear on idle, comma match, or max both counters; inc on pattern max
+         slide_count_clear_q   <= fsm_idle | (fsm_check & rx_datan_comma_m) | (fsm_check & rx_pattern_count_max & rx_slide_count_max);
+         slide_count_inc_q     <= fsm_check & rx_pattern_count_max & ~rx_slide_count_max;
+         // Pattern counter controls: clear on idle, comma match, or pattern max; inc while checking
+         pattern_count_clear_q <= fsm_idle | (fsm_check & rx_datan_comma_m) | (fsm_check & rx_pattern_count_max);
+         pattern_count_inc_q   <= fsm_check & ~rx_pattern_count_max & ~rx_datan_comma_m;
+      end
+   end
+
    // Slide counter: how many bit positions we have tried
    always_ff @(posedge clk_i) begin
       if (!rst_n_i) rx_slide_count <= '0;
       else rx_slide_count <= rx_slide_count_nxt;
    end
 
-   assign rx_slide_count_nxt = fsm_idle                                              ? '0 :
-                                fsm_check & rx_pattern_count_max & rx_slide_count_max ? '0 :
-                                fsm_check & rx_pattern_count_max                      ? rx_slide_count + RXSLIDE_COUNT_WIDTH'(1) :
-                                fsm_check & rx_datan_comma_m                          ? '0 :
-                                                                                       rx_slide_count;
+   assign rx_slide_count_nxt = slide_count_clear_q ? RXSLIDE_COUNT_WIDTH'(0) :
+                               slide_count_inc_q   ? rx_slide_count + RXSLIDE_COUNT_WIDTH'(1) :
+                                                    rx_slide_count;
 
    // Pattern counter: cycles since last slide (wait for data to propagate)
    always_ff @(posedge clk_i) begin
@@ -190,11 +248,9 @@ module qeciphy_word_align #(
       else rx_pattern_count <= rx_pattern_count_nxt;
    end
 
-   assign rx_pattern_count_nxt = fsm_idle                         ? '0 :
-                                 fsm_check & rx_pattern_count_max ? '0 :
-                                 fsm_check & rx_datan_comma_m     ? '0 :
-                                 fsm_check                        ? rx_pattern_count + PATTERN_COUNT_WIDTH'(1) :
-                                                                   rx_pattern_count;
+   assign rx_pattern_count_nxt = pattern_count_clear_q ? PATTERN_COUNT_WIDTH'(0) :
+                                pattern_count_inc_q   ? rx_pattern_count + PATTERN_COUNT_WIDTH'(1) :
+                                                        rx_pattern_count;
 
    // ================================================================
    // Alignment verification (REVIEW state)
@@ -207,7 +263,7 @@ module qeciphy_word_align #(
       else rx_align_matched_count <= rx_align_matched_count_nxt;
    end
 
-   assign rx_align_matched_count_nxt = fsm_review ? (rx_align_matched ? rx_align_matched_count + 4'd1 : rx_align_matched_count) : '0;
+   assign rx_align_matched_count_nxt = fsm_review ? (rx_align_matched ? rx_align_matched_count + 4'(1) : rx_align_matched_count) : 4'(0);
    assign rx_align_matched_count_max = (rx_align_matched_count == 4'(RX_ALIGN_MATCH_MAX));
 
    // Timeout counter for periodic boundary checks during REVIEW
@@ -216,10 +272,11 @@ module qeciphy_word_align #(
       else rx_align_timeout_count <= rx_align_timeout_count_nxt;
    end
 
-   assign rx_align_timeout_count_nxt   = !fsm_review ? 10'd0 :
-                                         (rx_align_timeout_count == 10'(TX_PATTERN_LENGTH - 1)) ? 10'd0 :
-                                         rx_align_timeout_count + 10'd1;
-   assign rx_align_boundary_check      = (rx_align_timeout_count == 10'(TX_PATTERN_LENGTH - 1));
+   //Starts at 1 due to a 1 cycle pipeline delay between the comma match and the fsm transitioning to REVIEW
+   assign rx_align_timeout_count_nxt   = !fsm_review ? PATTERN_COUNT_WIDTH'(1) :
+                                         (rx_align_timeout_count == PATTERN_COUNT_WIDTH'(TX_PATTERN_LENGTH - 1)) ? PATTERN_COUNT_WIDTH'(0) :
+                                         rx_align_timeout_count + PATTERN_COUNT_WIDTH'(1);
+   assign rx_align_boundary_check      = (rx_align_timeout_count == PATTERN_COUNT_WIDTH'(TX_PATTERN_LENGTH - 1));
    assign rx_align_boundary_check_fail = rx_align_boundary_check ^ rx_datan_comma_m;
 
    // ================================================================

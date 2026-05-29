@@ -94,8 +94,8 @@ module qeciphy_dual_sim_top_tb;
 
 
    // Extract ACLK signals from DUT for testbench use
-   assign ACLK_1 = qeciphy_dual_sim_top.sys_clk_100;
-   assign ACLK_2 = qeciphy_dual_sim_top.sys_clk_100;
+   assign ACLK_1 = qeciphy_dual_sim_top.sys_clk_200;
+   assign ACLK_2 = qeciphy_dual_sim_top.sys_clk_200;
 
    //----------------------------------------
    // Reference Clock Generation
