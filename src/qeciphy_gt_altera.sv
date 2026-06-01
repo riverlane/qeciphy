@@ -56,17 +56,17 @@ module qeciphy_gt_altera #(
    // -------------------------------------------------------------
 
    // 8b10b codec parameters
-   localparam DATA_WIDTH = 40;   // Encoded data width (4 symbols × 10 bits)
-   localparam WORD_SIZE  = 10;   // 8b10b symbol size
+   localparam DATA_WIDTH = 40;  // Encoded data width (4 symbols × 10 bits)
+   localparam WORD_SIZE = 10;  // 8b10b symbol size
 
    // Word alignment parameters
-   localparam TX_PATTERN_LENGTH  = 128;  // Cycles to wait for comma pattern
-   localparam RXSLIDE_COUNT_MAX  = 80;   // Max bit positions to try
-   localparam RX_ALIGN_MATCH_MAX = 8;    // Required consecutive matches
+   localparam TX_PATTERN_LENGTH = 128;  // Cycles to wait for comma pattern
+   localparam RXSLIDE_COUNT_MAX = 80;  // Max bit positions to try
+   localparam RX_ALIGN_MATCH_MAX = 8;  // Required consecutive matches
 
    // Comma detection parameters
    localparam MAX_REVIEWS = 128;  // Reviews before declaring aligned
-   localparam MAX_RETRIES = 32;   // Retries before failure
+   localparam MAX_RETRIES = 32;  // Retries before failure
 
    // -------------------------------------------------------------
    // Signal declarations
@@ -82,59 +82,59 @@ module qeciphy_gt_altera #(
    //   [37:20] = reserved
    //   [19:0]  = data_lo (lower 20 bits of 40-bit encoded stream)
    typedef struct packed {
-      logic        fifo_wr_en;   // [79]
-      logic [18:0] reserved_hi;  // [78:60]
-      logic [19:0] data_hi;      // [59:40]
-      logic        reserved_mid; // [39]
-      logic        data_valid;   // [38]
-      logic [17:0] reserved_lo;  // [37:20]
-      logic [19:0] data_lo;      // [19:0]
+      logic        fifo_wr_en;    // [79]
+      logic [18:0] reserved_hi;   // [78:60]
+      logic [19:0] data_hi;       // [59:40]
+      logic        reserved_mid;  // [39]
+      logic        data_valid;    // [38]
+      logic [17:0] reserved_lo;   // [37:20]
+      logic [19:0] data_lo;       // [19:0]
    } tile_parallel_data_t;
 
    // TX path signals
-   logic                  tx_clkout2;  // 2x raw clock from FTile TX PLL
-   logic                  tx_reset_sync;  // Reset synchronized to TX 2x clock
-   logic                  rx_reset_sync;  // Reset synchronized to RX 2x clock
-   logic                  tx_reset_sync_n;  // Reset synchronized to TX 2x clock
-   logic                  rx_reset_sync_n;  // Reset synchronized to RX 2x clock
-   logic                  tx_reset_ack;
-   logic                  tx_ready;
-   logic                  tx_pll_locked;
-   logic [39:0]           tx_encoded;
-   tile_parallel_data_t   tx_parallel_data;
+   logic                       tx_clkout2;  // 2x raw clock from FTile TX PLL
+   logic                       tx_reset_sync;  // Reset synchronized to TX 2x clock
+   logic                       rx_reset_sync;  // Reset synchronized to RX 2x clock
+   logic                       tx_reset_sync_n;  // Reset synchronized to TX 2x clock
+   logic                       rx_reset_sync_n;  // Reset synchronized to RX 2x clock
+   logic                       tx_reset_ack;
+   logic                       tx_ready;
+   logic                       tx_pll_locked;
+   logic                [39:0] tx_encoded;
+   tile_parallel_data_t        tx_parallel_data;
 
    // TX ready synchronizer to tx_clk_2x_o domain
-   logic        tx_ready_2x_sync;
+   logic                       tx_ready_2x_sync;
 
    // TX ready synchronizer to f_clk_i domain
-   logic        tx_ready_sync;
+   logic                       tx_ready_sync;
 
    // RX path signals
-   logic                  rx_clkout2;  // 2x raw clock from FTile RX CDR
-   logic                  rx_reset_ack;
-   logic                  rx_ready;
-   logic                  rx_freqlocked;
-   logic                  rx_is_locked_to_ref;
-   tile_parallel_data_t   rx_parallel_data;
+   logic                       rx_clkout2;  // 2x raw clock from FTile RX CDR
+   logic                       rx_reset_ack;
+   logic                       rx_ready;
+   logic                       rx_freqlocked;
+   logic                       rx_is_locked_to_ref;
+   tile_parallel_data_t        rx_parallel_data;
 
    // E-Tile-specific signals (unused in FTILE path)
-   logic [39:0] rx_unaligned;
-   logic [39:0] word_aligner_data_out;
+   logic                [39:0] rx_unaligned;
+   logic                [39:0] word_aligner_data_out;
 
    // Datapath reset signals
-   logic        tx_reset_datapath;
-   logic        rx_reset_datapath;
+   logic                       tx_reset_datapath;
+   logic                       rx_reset_datapath;
 
    // RX ready synchronizer to rx_clk_2x_o domain
-   logic        rx_ready_2x_sync;
+   logic                       rx_ready_2x_sync;
 
    // RX ready synchronizer to f_clk_i domain
-   logic        rx_ready_sync;
+   logic                       rx_ready_sync;
 
    // Comma detection signals
-   logic        rx_byte_aligned;
-   logic        word_align_done;
-   logic        word_align_fail;
+   logic                       rx_byte_aligned;
+   logic                       word_align_done;
+   logic                       word_align_fail;
 
 `ifdef TILE_SIM_MODEL
    // Sim-only cross-connect signals accessed hierarchically by the testbench.
@@ -154,8 +154,8 @@ module qeciphy_gt_altera #(
    // -------------------------------------------------------------
 
    assign rx_byte_aligned_o = rx_byte_aligned;
-   assign gt_tx_rst_done_o  = tx_ready_sync;
-   assign gt_rx_rst_done_o  = rx_ready_sync;
+   assign gt_tx_rst_done_o = tx_ready_sync;
+   assign gt_rx_rst_done_o = rx_ready_sync;
 
    // -------------------------------------------------------------
    // TX/RX reset synchronization using proper reset synchronizers
@@ -165,7 +165,7 @@ module qeciphy_gt_altera #(
 
    assign tx_reset_sync = ~tx_reset_sync_n;
    assign rx_reset_sync = ~rx_reset_sync_n;
-   
+
    riv_synchronizer_2ff #(
        .RESET_TYPE("ASYNC")
    ) i_tx_reset_sync (
@@ -191,7 +191,7 @@ module qeciphy_gt_altera #(
 
    riv_synchronizer_2ff #(
        .RESET_TYPE("ASYNC")
-   )i_tx_ready_2x_sync (
+   ) i_tx_ready_2x_sync (
        .src_in   (tx_ready),
        .dst_clk  (tx_clk_2x_o),
        .dst_rst_n(gt_rst_n_i),
@@ -273,7 +273,7 @@ module qeciphy_gt_altera #(
    // -------------------------------------------------------------
 
    // Extract 40-bit encoded data from Tile 80-bit parallel interface for aligner
-   assign rx_unaligned = {rx_parallel_data.data_hi, rx_parallel_data.data_lo};
+   assign rx_unaligned                  = {rx_parallel_data.data_hi, rx_parallel_data.data_lo};
 
    // Word aligner: barrel-shifts raw 40-bit stream and automatically
    // detects K28.5 comma patterns in the encoded output to align.
@@ -438,8 +438,8 @@ module qeciphy_gt_altera #(
          qeciphy_ftile transceiver_inst (
              .rx_cdr_refclk_link  (gt_ref_clk_i),         // RX CDR reference clock
              .tx_pll_refclk_link  (gt_ref_clk_i),         // TX PLL reference clock
-             .tx_reset            (~gt_rst_n_i),         // TX reset (active-high)
-             .rx_reset            (~gt_rst_n_i),         // RX reset (active-high)
+             .tx_reset            (~gt_rst_n_i),          // TX reset (active-high)
+             .rx_reset            (~gt_rst_n_i),          // RX reset (active-high)
              .tx_reset_ack        (tx_reset_ack),
              .rx_reset_ack        (rx_reset_ack),
              .tx_ready            (tx_ready),             // TX datapath ready
@@ -466,11 +466,11 @@ module qeciphy_gt_altera #(
              .rx_parallel_data    (rx_parallel_data)      // 80-bit RX data from FTile
          );
 `endif
-        end else begin : gen_invalid
-             initial begin
-                $error("Invalid GT_TYPE parameter value: %s. Valid values are 'ETILE' or 'FTILE'.", GT_TYPE);
-                $finish;
-             end
+      end else begin : gen_invalid
+         initial begin
+            $error("Invalid GT_TYPE parameter value: %s. Valid values are 'ETILE' or 'FTILE'.", GT_TYPE);
+            $finish;
+         end
 
       end
    endgenerate

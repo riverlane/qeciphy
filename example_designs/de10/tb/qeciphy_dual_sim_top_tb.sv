@@ -2,8 +2,7 @@
 // Copyright (c) 2026 Riverlane Ltd.
 // Testbench for dual QECIPHY simulation top-level
 
-`timescale 1ps / 1ps
-`default_nettype none
+`timescale 1ps / 1ps `default_nettype none
 
 module qeciphy_dual_sim_top_tb;
 

@@ -11,7 +11,7 @@
 // -----------------------------------------------------------------------------
 
 module tennm_lcell_comb #(
-    parameter [63:0] lut_mask    = 64'h0,
+    parameter [63:0] lut_mask     = 64'h0,
     parameter        extended_lut = "off",
     parameter        shared_arith = "off"
 ) (

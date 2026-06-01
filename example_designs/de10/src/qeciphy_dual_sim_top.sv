@@ -72,7 +72,7 @@ module qeciphy_dual_sim_top (
 
 
    // POR reset from configuration IP
-   assign rst_n  = !init_done_n;
+   assign rst_n = !init_done_n;
    reset_release reset_release_inst (.ninit_done(init_done_n));
 
    // Buffer 100 MHz system clock
