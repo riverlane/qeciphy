@@ -41,24 +41,24 @@ module qeciphy_ftile (
     output logic [79:0] rx_parallel_data
 );
 
-   assign tx_reset_ack        = '0;
-   assign rx_reset_ack        = '0;
-   assign tx_ready            = '0;
-   assign rx_ready            = '0;
-   assign tx_clkout           = '0;
-   assign tx_clkout2          = '0;
-   assign rx_clkout           = '0;
-   assign rx_clkout2          = '0;
-   assign tx_serial_data      = '0;
-   assign tx_serial_data_n    = '0;
-   assign tx_pll_locked       = '0;
-   assign rx_is_lockedtodata  = '0;
-   assign rx_is_lockedtoref   = '0;
-   assign tx_fifo_full        = '0;
-   assign tx_fifo_empty       = '0;
-   assign tx_pmaif_fifo_empty = '0;
-   assign tx_pmaif_fifo_pempty= '0;
-   assign tx_pmaif_fifo_pfull = '0;
-   assign rx_parallel_data    = '0;
+   assign tx_reset_ack         = '0;
+   assign rx_reset_ack         = '0;
+   assign tx_ready             = '0;
+   assign rx_ready             = '0;
+   assign tx_clkout            = '0;
+   assign tx_clkout2           = '0;
+   assign rx_clkout            = '0;
+   assign rx_clkout2           = '0;
+   assign tx_serial_data       = '0;
+   assign tx_serial_data_n     = '0;
+   assign tx_pll_locked        = '0;
+   assign rx_is_lockedtodata   = '0;
+   assign rx_is_lockedtoref    = '0;
+   assign tx_fifo_full         = '0;
+   assign tx_fifo_empty        = '0;
+   assign tx_pmaif_fifo_empty  = '0;
+   assign tx_pmaif_fifo_pempty = '0;
+   assign tx_pmaif_fifo_pfull  = '0;
+   assign rx_parallel_data     = '0;
 
 endmodule
