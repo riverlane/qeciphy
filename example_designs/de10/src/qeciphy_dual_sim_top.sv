@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
-// Copyright (c) 2026 Riverlane Ltd.
-// Dual QECIPHY simulation top-level with all ports exposed
+// Copyright (c) 2024-2026 Riverlane Ltd.
+// Original authors: Evan Sun
 
 module qeciphy_dual_sim_top (
     // Base clocks for IP generation

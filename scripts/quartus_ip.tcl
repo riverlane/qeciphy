@@ -32,12 +32,13 @@ set device_family  [lindex $argv 2]
 set proj_name      [lindex $argv 3]
 set line_rate_mbps [lindex $argv 4]
 set rclk_freq_mhz  [lindex $argv 5]
+set ip_directory   [lindex $argv 6]
 
 # ---------------------------------------------------------------------------
 # Vendor directory and version
 # ---------------------------------------------------------------------------
 set start_dir  [pwd]
-set vendor_dir [file join $start_dir "vendors" "altera" "25.3"]
+set vendor_dir [file join $start_dir $ip_directory]
 
 if {![file isdirectory $vendor_dir]} {
     puts "ERROR: Vendor directory not found: $vendor_dir"

@@ -11,10 +11,10 @@ module qeciphy_syn_wrapper_tb;
    logic clk_100_p;
 
    // DUT signals
-   logic GT_RXP_1;
-   logic GT_RXN_1;
-   logic GT_TXP_1;
-   logic GT_TXN_1;
+   logic gt_rx_p_1;
+   logic gt_rx_n_1;
+   logic gt_tx_p_1;
+   logic gt_tx_n_1;
    logic i2c_qsfpdd0_enable;
    wire i2c_qsfpdd0_scl;
    wire i2c_qsfpdd0_sda;
@@ -47,10 +47,10 @@ module qeciphy_syn_wrapper_tb;
    qeciphy_syn_wrapper qeciphy_syn_wrapper (
        .gt_refclk_in_p       (gt_refclk_in_p),
        .clk_100_p            (clk_100_p),
-       .GT_RXP               (GT_RXP_1),
-       .GT_RXN               (GT_RXN_1),
-       .GT_TXP               (GT_TXP_1),
-       .GT_TXN               (GT_TXN_1),
+       .gt_rx_p               (gt_rx_p_1),
+       .gt_rx_n               (gt_rx_n_1),
+       .gt_tx_p               (gt_tx_p_1),
+       .gt_tx_n               (gt_tx_n_1),
        .i2c_qsfpdd0_enable   (i2c_qsfpdd0_enable),
        .i2c_qsfpdd0_scl      (i2c_qsfpdd0_scl),
        .i2c_qsfpdd0_sda      (i2c_qsfpdd0_sda),
@@ -67,8 +67,8 @@ module qeciphy_syn_wrapper_tb;
    end
 
    // Connect GTY signals for loopback testing
-   assign GT_RXP_1 = GT_TXP_1;  // Loopback connection
-   assign GT_RXN_1 = GT_TXN_1;
+   assign gt_rx_p_1 = gt_tx_p_1;  // Loopback connection
+   assign gt_rx_n_1 = gt_tx_n_1;
 
    // I2C pull-ups (simple model)
    pullup (i2c_qsfpdd0_scl);

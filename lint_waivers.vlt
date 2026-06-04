@@ -77,10 +77,8 @@ lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin co
 
 // Altera GT wrapper - signals used only in FTILE generate path (not visible to lint in ETILE-only flow)
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not used: 'tx_reset_ack'"
-lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'tx_reset_phy'"
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'tx_pll_locked'"
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not used: 'rx_reset_ack'"
-lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'rx_reset_phy'"
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not used: 'rx_freqlocked'"
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not driven, nor used: 'rx_is_locked_to_ref'"
 

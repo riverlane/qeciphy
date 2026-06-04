@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright (c) 2026 Riverlane Ltd.
 #
-# quartus_proj_new.tcl — Dynamic Quartus project creation.
+# quartus_proj.tcl — Dynamic Quartus project creation.
 #
 # Called from Makefile quartus_synth target via:
-#   quartus_sh --script scripts/quartus_proj_new.tcl -tclargs \
+#   quartus_sh --script scripts/quartus_proj.tcl -tclargs \
 #       <project_name> <device> <device_family> <top_level_entity> <variant> \
 #       <line_rate_mbps> <rclk_freq_mhz> <constraints_list> [src_file ...]
 #
@@ -29,13 +29,10 @@ if {[llength $argv] > 0 && [string match "*tcl*" [lindex $argv 0]]} {
 }
 
 if {[llength $argv] < 8} {
-    puts "ERROR: quartus_proj_new.tcl requires at least 8 arguments."
+    puts "ERROR: quartus_proj.tcl requires at least 8 arguments."
     puts "  project_name device device_family top_level variant line_rate_mbps rclk_freq_mhz constraints [src_files...]"
     exit 1
 }
-
-
-puts "DEBUG: argv = $argv"
 
 set proj_name      [lindex $argv 0]
 set proj_device    [lindex $argv 1]
@@ -200,7 +197,6 @@ if {$make_assignments} {
 	set_global_assignment -name USE_PWRMGT_SCL SDM_IO0
 	set_global_assignment -name USE_PWRMGT_SDA SDM_IO12
 	set_global_assignment -name USE_CONF_DONE SDM_IO16
-	set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
 	set_global_assignment -name ACTIVE_SERIAL_CLOCK AS_FREQ_100MHZ
 	set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "AVST X16"
 	set_global_assignment -name EDA_SIMULATION_TOOL "Questa Intel FPGA (Verilog)"
@@ -213,53 +209,14 @@ if {$make_assignments} {
 	set_global_assignment -name PWRMGT_LINEAR_FORMAT_N "-12"
 	set_global_assignment -name ENABLE_SIGNALTAP ON
 	set_global_assignment -name POWER_APPLY_THERMAL_MARGIN ADDITIONAL
-	set_instance_assignment -name RESERVE_PIN AS_BIDIRECTIONAL -to i2c_qsfpdd0_sda
-	set_instance_assignment -name RESERVE_PIN AS_BIDIRECTIONAL -to i2c_qsfpdd0_scl
-	set_instance_assignment -name IO_STANDARD "1.2 V" -to fpga_led[0] -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2 V" -to fpga_led[1] -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2 V" -to fpga_led[2] -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2 V" -to fpga_led[3] -entity qeciphy_syn_wrapper
-	set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_1V -to GT_TXP -entity qeciphy_syn_wrapper
-	set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_1V -to GT_RXP -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD LVPECL -to gt_refclk_in_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "TRUE DIFFERENTIAL SIGNALING" -to clk_100_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to clk_100_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_TXP -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_RXP -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_TXN -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_RXN -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_TXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_RXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_TXN_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to GT_RXN_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2 V" -to i2c_qsfpdd0_scl -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2 V" -to i2c_qsfpdd0_sda -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2-V" -to qsfpdd0_modsel_L -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2-V" -to qsfpdd0_reset_L -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2-V" -to qsfpdd0_Initmode -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2-V" -to qsfpdd0_modprs_L -entity qeciphy_syn_wrapper
-	set_instance_assignment -name IO_STANDARD "1.2-V" -to qsfpdd0_int_L -entity qeciphy_syn_wrapper
-	set_instance_assignment -name SLEW_RATE 1 -to qsfpdd0_modsel_L -entity qeciphy_syn_wrapper
-	set_instance_assignment -name SLEW_RATE 1 -to qsfpdd0_reset_L -entity qeciphy_syn_wrapper
-	set_instance_assignment -name SLEW_RATE 1 -to qsfpdd0_Initmode -entity qeciphy_syn_wrapper
-	set_instance_assignment -name SLEW_RATE 1 -to i2c_qsfpdd0_sda -entity qeciphy_syn_wrapper
-	set_instance_assignment -name SLEW_RATE 1 -to i2c_qsfpdd0_scl -entity qeciphy_syn_wrapper
-	set_instance_assignment -name PARTITION_COLOUR 4294964852 -to qeciphy_dual_sim_top -entity qeciphy_syn_wrapper
-	set_instance_assignment -name PARTITION_COLOUR 4294949993 -to auto_fab_0 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "refclk_divider_enable_termination=enable_term" -to gt_refclk_in_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "refclk_divider_enable_3p3v=enable_3p3v_tol" -to gt_refclk_in_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "refclk_divider_input_freq=156250000" -to gt_refclk_in_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "refclk_divider_powerdown_mode=false" -to gt_refclk_in_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "refclk_divider_enable_hysteresis=disable_hyst" -to gt_refclk_in_p -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "txeq_main_tap=35" -to GT_TXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "txeq_pre_tap_1=5" -to GT_TXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "txeq_pre_tap_2=0" -to GT_TXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "txeq_post_tap_1=0" -to GT_TXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "rx_ac_couple_enable=ENABLE" -to GT_RXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "rx_onchip_termination=RXONCHIP_TERMINATION_R_2" -to GT_RXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "rx_term_mode_select=RXTERM_MODE_SELECT_GROUNDED" -to GT_RXP_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "refclk_divider_use_as_BTI_clock=TRUE" -to gt_refclk_in_p_1 -entity qeciphy_syn_wrapper
-	set_instance_assignment -name HSSI_PARAMETER "refclk_divider_input_freq=156250000" -to gt_refclk_in_p_1 -entity qeciphy_syn_wrapper
+    set_global_assignment -name PRESERVE_UNUSED_XCVR_CHANNEL ON
+    
+	# set_instance_assignment -name PARTITION_COLOUR 4294964852 -to qeciphy_dual_sim_top -entity qeciphy_syn_wrapper
+	# set_instance_assignment -name PARTITION_COLOUR 4294949993 -to auto_fab_0 -entity qeciphy_syn_wrapper
+	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_tx_p_1 -entity qeciphy_syn_wrapper
+	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_rx_p_1 -entity qeciphy_syn_wrapper
+	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_tx_n_1 -entity qeciphy_syn_wrapper
+	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_rx_n_1 -entity qeciphy_syn_wrapper
 
     export_assignments
     puts "INFO: Project assignments written for '$proj_name'."
@@ -273,4 +230,4 @@ if {$need_to_close_project} {
 }
 
 cd $start_dir
-puts "INFO: quartus_proj_new.tcl complete. Project: $proj_name"
+puts "INFO: quartus_proj.tcl complete. Project: $proj_name"

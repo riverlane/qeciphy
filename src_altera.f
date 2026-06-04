@@ -1,4 +1,5 @@
 # Altera-specific source files
+-F src_common.f
 src/qeciphy_gt_altera.sv
 src/soft_pcs/qeciphy_word_align.sv
 src/soft_pcs/eth_8b10b_enc_a.v

@@ -1,11 +1,11 @@
-package require -exact qsys 25.3
+package require -exact qsys 25.3.1
 
 # create the system "qeciphy_vio"
 proc do_create_qeciphy_vio {} {
 	# create the system
 	create_system qeciphy_vio
 	set_project_property BOARD {default}
-	set_project_property DEVICE {AGIB027R31B1E1V}
+	set_project_property DEVICE {AGFB014R24B2E2V}
 	set_project_property DEVICE_FAMILY {Agilex 7}
 	set_project_property HIDE_FROM_IP_CATALOG {true}
 	set_use_testbench_naming_pattern 0 {}
@@ -20,8 +20,8 @@ proc do_create_qeciphy_vio {} {
 	set_instance_parameter_value in_system_sources_probes_0 {instance_id} {NONE}
 	set_instance_parameter_value in_system_sources_probes_0 {probe_width} {0}
 	set_instance_parameter_value in_system_sources_probes_0 {sld_instance_index} {0}
-	set_instance_parameter_value in_system_sources_probes_0 {source_initial_value} {7B}
-	set_instance_parameter_value in_system_sources_probes_0 {source_width} {7}
+	set_instance_parameter_value in_system_sources_probes_0 {source_initial_value} {1}
+	set_instance_parameter_value in_system_sources_probes_0 {source_width} {1}
 	set_instance_property in_system_sources_probes_0 AUTO_EXPORT true
 
 	# add wirelevel expressions

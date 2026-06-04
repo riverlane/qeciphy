@@ -1,4 +1,4 @@
-package require -exact qsys 25.3
+package require -exact qsys 25.3.1
 
 # create the system "qeciphy_altera_clk_mmcm"
 proc do_create_qeciphy_altera_clk_mmcm {} {

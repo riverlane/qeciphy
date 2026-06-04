@@ -5,13 +5,13 @@
 //------------------------------------------------------------------------------
 // QECIPHY Altera GT Wrapper
 //------------------------------------------------------------------------------
-// Wraps Intel Agilex F-Tile or E-Tile transceiver IP with soft PCS (8b10b
+// Wraps Altera Agilex F-Tile or E-Tile transceiver IP with soft PCS (8b10b
 // encode/decode + word alignment) and soft comma detection to present the same
 // interface as qeciphy_gt_xilinx to qeciphy_gt_wrapper.
 //
 // Tile selection is controlled by GT_TYPE parameter:
-//   "FTILE" - Intel Agilex 7 F-Tile (qeciphy_ftile)
-//   "ETILE" - Intel Agilex E-Tile  (qeciphy_etile)
+//   "FTILE" - Altera Agilex 7 F-Tile (qeciphy_ftile)
+//   "ETILE" - Altera Agilex E-Tile  (qeciphy_etile)
 //
 // Data flow (both tiles):
 //   TX: tx_tdata_i (32b) + tx_tdata_charisk_i → [8b10b enc x4] → [Tile IP]
