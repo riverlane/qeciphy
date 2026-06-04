@@ -55,11 +55,11 @@ vlog ../../../../src/qeciphy_error_handler.sv
 vlog ../../../../src/qeciphy_resetcontroller.sv
 
 # Soft PCS (8b10b + word aligner)
-vlog ../../../../src/soft_pcs/eth_8b10b_enc_a.v
-vlog ../../../../src/soft_pcs/eth_8b10b_dec_a.v
-vlog ../../../../src/soft_pcs/eth_8b10b_enc_x4_a.v
-vlog ../../../../src/soft_pcs/eth_8b10b_dec_x4_a.v
-vlog ../../../../src/soft_pcs/qeciphy_word_align.sv
+vlog ../../../../vendors/altera/25.3.1/src/eth_8b10b_enc_a.v
+vlog ../../../../vendors/altera/25.3.1/src/eth_8b10b_dec_a.v
+vlog ../../../../vendors/altera/25.3.1/src/eth_8b10b_enc_x4_a.v
+vlog ../../../../vendors/altera/25.3.1/src/eth_8b10b_dec_x4_a.v
+vlog ../../../../vendors/altera/25.3.1/src/qeciphy_word_align.sv
 
 # Tile simulation model (used under +define+SIM)
 vlog +acc ../../../../example_designs/de10/tb/qeciphy_etile_sim_model.sv

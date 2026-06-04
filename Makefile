@@ -497,8 +497,8 @@ quartus_synth:
 		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "$(CONSTRAINTS)" $(SRC_FILES) $(SYN_FILES) && \
 	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
 		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
-		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "vendors/altera/25.3" && \
+		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "vendors/altera/25.3.1/ip" && \
 	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
 		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
-		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "example_designs/vendors/altera/25.3" && \
+		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "example_designs/vendors/altera/25.3.1/ip" && \
 	quartus_sh --flow compile "$(RUN_DIR)/$(OPT_QUARTUS_PROJECT)/$(OPT_QUARTUS_PROJECT)"

@@ -79,7 +79,7 @@ switch -- [string toupper $variant] {
 # Create project directory structure
 # ---------------------------------------------------------------------------
 set start_dir  [pwd]
-set vendor_dir [file join $start_dir "vendors" "altera" "25.3"]
+set vendor_dir [file join $start_dir "vendors" "altera" "25.3.1" "ip"]
 
 set target_dir [file normalize [file join $start_dir "run"]]
 if {![file isdirectory $target_dir]} {
