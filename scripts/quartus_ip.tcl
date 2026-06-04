@@ -8,7 +8,7 @@
 #       <variant> <device> <device_family> <project_name> <line_rate_mbps> <rclk_freq_mhz>
 #
 # Navigates to run/<project_name>/ip/, then runs qsys-script for each applicable
-# IP script in vendors/altera/25.3/, passing device/family/rate params via --cmd.
+# IP script in vendors/altera/25.3.1/ip, passing device/family/rate params via --cmd.
 
 package require ::quartus::project
 
