@@ -200,10 +200,10 @@ QECIPHY i_QECIPHY (
     .FAULT_FATAL(qeciphy_fault_fatal),
     
     // GT Interface (connect to transceivers)
-    .GT_TXP     (gt_txp),
-    .GT_TXN     (gt_txn),
-    .GT_RXP     (gt_rxp),
-    .GT_RXN     (gt_rxn)
+    .gt_tx_p     (gt_tx_p),
+    .gt_tx_n     (gt_tx_n),
+    .gt_rx_p     (gt_rx_p),
+    .gt_rx_n     (gt_rx_n)
 );
 ```
 

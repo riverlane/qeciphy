@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // -----------------------------------------------------------------------------
 // File        : tennm_lcell_comb.sv
-// Description : Lint stub for Intel Agilex (Tennm) LUT primitive.
+// Description : Lint stub for Altera Agilex (Tennm) LUT primitive.
 //               Declares the module interface for tooling convenience only.
 //               No functional implementation is provided.
 //
 // Copyright (c) 2025 Riverlane Ltd.
-// This file is not affiliated with or endorsed by Intel Corporation.
+// This file is not affiliated with or endorsed by Altera Corporation.
 // The module names and ports are reproduced solely for build compatibility.
 // -----------------------------------------------------------------------------
 
@@ -15,20 +15,20 @@ module tennm_lcell_comb #(
     parameter        extended_lut = "off",
     parameter        shared_arith = "off"
 ) (
-    input  dataa,
-    input  datab,
-    input  datac,
-    input  datad,
-    input  datae,
-    input  dataf,
-    input  datag,
-    input  datah,
-    input  cin,
-    input  sharein,
-    output sumout,
-    output cout,
-    output shareout,
-    output combout
+    input  logic dataa,
+    input  logic datab,
+    input  logic datac,
+    input  logic datad,
+    input  logic datae,
+    input  logic dataf,
+    input  logic datag,
+    input  logic datah,
+    input  logic cin,
+    input  logic sharein,
+    output logic sumout,
+    output logic cout,
+    output logic shareout,
+    output logic combout
 );
 
    assign combout  = '0;

@@ -13,7 +13,6 @@ OPT_TEST?=
 OPT_ARGS?=0
 OPT_SEED?=0
 OPT_QUARTUS_PROJECT ?= qeciphy_integration
-OPT_DEVICE          ?= AGIB027R31B1E1V
 
 # -------------------------------------------------------------
 # Utils
@@ -33,7 +32,7 @@ CFG       ?= config.json
 # Collect fields from config (require OPT_PROFILE)
 SYN_TOP   := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).synth.top)
 SYN_FILELIST := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).synth.filelists)
-XDC       := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).synth.constraints)
+CONSTRAINTS       := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).synth.constraints)
 PART      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).device.part)
 VENDOR    := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).device.vendor)
 FAMILY    := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).device.family 2>/dev/null || echo "")
@@ -54,7 +53,7 @@ LINE_RATE_GBPS   := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROF
 # Static file lists
 SIM_FILELIST := sim.f
 LINT_FILELIST := lint.f
-SRC_FILELIST := src.f
+SRC_FILELIST := src_common.f
 XCI_FILELIST := xci.f
 UVM_FILELIST := uvm.f
 SVA_FILELIST := sva.f
@@ -68,11 +67,11 @@ VENDOR_SRC_FILELIST := $(shell \
 	fi)
 
 # Extracted file lists
-LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SRC_XILINX_FILELIST) $(SRC_ALTERA_FILELIST) $(LINT_FILELIST))
-SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(VENDOR_SRC_FILELIST))
+LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_XILINX_FILELIST) $(SRC_ALTERA_FILELIST) $(LINT_FILELIST))
+SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(VENDOR_SRC_FILELIST))
 SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST) $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
-VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_FILELIST) $(SVA_FILELIST))
+VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
 XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sources.py $(XCI_FILELIST); fi)
 
 # Tool paths and directories
@@ -265,10 +264,12 @@ render-design:
 		echo "ERROR: Unsupported vendor '$(VENDOR)' for profile $(OPT_PROFILE)"; exit 1; \
 	fi
 	@$(MAKE) generate-build-cfg-pkg
-	#@$(MAKE) generate-sim-cfg-pkg
 
 sim:
 	@$(MAKE) check_profile
+	@if [ "$(VENDOR)" = "altera" ]; then \
+		echo "ERROR: Simulation is not supported for Altera vendor"; exit 1; \
+	fi
 	@$(MAKE) check_simulator
 	@echo "INFO: Running simulation for profile $(OPT_PROFILE) using $(OPT_TOOL)"
 	@if [ "$(OPT_TOOL)" = "vcs" ]; then \
@@ -484,7 +485,7 @@ endif
 vivado_synth:
 	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(XDC) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)
+	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(CONSTRAINTS) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)
 
 quartus_synth:
 	@$(MAKE) check_quartus_sh
@@ -493,8 +494,11 @@ quartus_synth:
 	[ -n "$$LINE_RATE_MBPS" ] || { echo "ERROR: LINE_RATE_GBPS is not set for profile $(OPT_PROFILE)"; exit 1; }; \
 	quartus_sh --script scripts/quartus_proj.tcl -tclargs \
 		"$(OPT_QUARTUS_PROJECT)" "$(PART)" "$(FAMILY)" "$(SYN_TOP)" "$(VARIANT)" \
-		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "$(XDC)" $(SRC_FILES) $(SYN_FILES) && \
+		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "$(CONSTRAINTS)" $(SRC_FILES) $(SYN_FILES) && \
 	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
 		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
-		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" && \
+		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "vendors/altera/25.3" && \
+	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
+		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
+		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "example_designs/vendors/altera/25.3" && \
 	quartus_sh --flow compile "$(RUN_DIR)/$(OPT_QUARTUS_PROJECT)/$(OPT_QUARTUS_PROJECT)"

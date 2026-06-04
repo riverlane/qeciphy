@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright (c) 2026 Riverlane Ltd.
 //
-// Behavioral simulation model for the Intel Agilex E-Tile Direct PHY IP.
+// Behavioral simulation model for the Altera Agilex E-Tile Direct PHY IP.
 // Replaces qeciphy_etile when `ETILE_SIM_MODEL is defined.
 //
 // Port interface is identical to qeciphy_etile plus two sim-only ports:

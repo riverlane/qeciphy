@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // -----------------------------------------------------------------------------
 // File        : qeciphy_ftile.sv
-// Description : Lint stub for Intel Agilex F-Tile transceiver module.
+// Description : Lint stub for Altera Agilex F-Tile transceiver module.
 //               Declares the module interface for tooling convenience only.
 //               No functional implementation is provided.
 //
 // Copyright (c) 2025 Riverlane Ltd.
-// This file is not affiliated with or endorsed by Intel Corporation.
+// This file is not affiliated with or endorsed by Altera Corporation.
 // The module names and ports are reproduced solely for build compatibility.
 // -----------------------------------------------------------------------------
 

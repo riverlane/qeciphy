@@ -17,7 +17,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 ## Key Features
 
 - **Simple Interface**: AXI4-Stream interface hides all physical layer complexity
-- **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Intel Agilex 7 FPGAs (E-Tile transceiver)
+- **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Altera Agilex 7 FPGAs (E-Tile transceiver)
 - **Latency**: ~150-200ns latency at 12.5 Gbps line rate
 - **Programmable Line Rate**: Configurable transceiver line rates for different bandwidth requirements
 - **Programmable Clock Sources**: Configurable reference clock sources for flexibility
@@ -39,7 +39,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 
 **To use QECIPHY:**
 - Vivado 2024.1+: tested with 2024.1 (Xilinx targets)
-- Quartus Prime Pro 25.3.1: tested with 25.3.1 (Intel Agilex 7 E-Tile targets)
+- Quartus Prime Pro 25.3.1: tested with 25.3.1 (Altera Agilex 7 E-Tile targets)
 - Python 3.8+: for build scripts
 - Make: for build automation
 
@@ -62,16 +62,16 @@ cd qeciphy
 
 # Render design for your platform. 
 # This generates the required vendor specific IP cores and build/simulation configs.
-make render-design OPT_PROFILE=zcu216     # GTY transceivers (Xilinx UltraScale+)
-# make render-design OPT_PROFILE=zcu106   # GTH transceivers (Xilinx UltraScale)
-# make render-design OPT_PROFILE=kasliSoC # GTX transceivers (Xilinx 7-series)
-# make render-design OPT_PROFILE=de10     # E-Tile transceiver (Intel Agilex 7)
+make render-design OPT_PROFILE=zcu216     # GTY transceivers   
+# make render-design OPT_PROFILE=zcu106   # GTH transceivers   
+# make render-design OPT_PROFILE=kasliSoC # GTX transceivers   
+# make render-design OPT_PROFILE=de10     # E-Tile transceiver 
 
 # Run your first simulation
 make sim OPT_PROFILE=zcu216         # GTY transceivers
 # make sim OPT_PROFILE=zcu106       # GTH transceivers
 # make sim OPT_PROFILE=kasliSoC     # GTX transceivers
-# make sim OPT_PROFILE=de10         # E-Tile (Intel Agilex 7)
+# make sim OPT_PROFILE=de10         # E-Tile 
 
 # Run synthesis
 make synth OPT_PROFILE=zcu216       # GTY transceivers (uses Vivado)
@@ -131,7 +131,7 @@ qeciphy/
 ├── docs/                        # Documentation files
 ├── config.json                  # Build configuration (profiles, settings)
 ├── Makefile                     # Build automation
-├── src.f, sim.f, lint.f, uvm.f, sva.f # File lists for different flows
+├── src_common.f, sim.f, lint.f, uvm.f, sva.f # File lists for different flows
 ├── lint_waivers.vlt             # Verilator lint waivers
 ├── CODE_OF_CONDUCT.md           # Code of conduct
 ├── CONTRIBUTING.md              # Development guidelines
@@ -230,11 +230,11 @@ make formal OPT_TOP=<module_name> OPT_MODE=gui
 
 ## Performance
 
-| Metric | GTX (7-series)  | GTH (UltraScale) | GTY (UltraScale+) | E-Tile (Agilex 7) |
+| Metric | GTX (7-series)  | GTH (UltraScale) | GTY (UltraScale+) 
 |--------|----------------|----------------------|----------------------|--------------------|
-| **Latency** | ~220ns | ~190ns | ~195ns | TBD |
-| **LUT** | 1372 | 1230 | 1230 | TBD |
-| **FF** | 1229 | 1156 | 1156 | TBD |
+| **Latency** | ~220ns | ~190ns | ~195ns 
+| **LUT** | 1372 | 1230 | 1230 
+| **FF** | 1229 | 1156 | 1156 
 
 *Measured at 12.5 Gbps line rate (Xilinx). Performance varies by platform and configuration.*
 
