@@ -10,10 +10,6 @@ module qeciphy_syn_wrapper (
     input  logic gt_rx_n,
     output logic gt_tx_p,
     output logic gt_tx_n,
-    //    output logic qsfpdd0_modsel_L,
-    //    output logic qsfpdd0_Initmode,
-    //    input  logic qsfpdd0_modprs_L,
-    //    input  logic qsfpdd0_int_L,
 
     inout logic i2c_qsfpdd0_scl,
     inout logic i2c_qsfpdd0_sda,
@@ -21,6 +17,12 @@ module qeciphy_syn_wrapper (
 
 
 );
+
+    //Optional QSFPDD0-related signals are available on the board but are not used in this design
+    //    output logic qsfpdd0_modsel_L,
+    //    output logic qsfpdd0_Initmode,
+    //    input  logic qsfpdd0_modprs_L,
+    //    input  logic qsfpdd0_int_L,
 
    logic        sys_clk_100;
    logic        sys_clk_200;

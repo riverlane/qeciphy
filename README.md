@@ -17,7 +17,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 ## Key Features
 
 - **Simple Interface**: AXI4-Stream interface hides all physical layer complexity
-- **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Altera Agilex 7 FPGAs (E-Tile transceiver)
+- **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Altera FPGAs (E-Tile transceiver)
 - **Latency**: ~150-200ns latency at 12.5 Gbps line rate
 - **Programmable Line Rate**: Configurable transceiver line rates for different bandwidth requirements
 - **Programmable Clock Sources**: Configurable reference clock sources for flexibility
@@ -39,7 +39,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 
 **To use QECIPHY:**
 - Vivado 2024.1+: tested with 2024.1 (Xilinx targets)
-- Quartus Prime Pro 25.3.1: tested with 25.3.1 (Altera Agilex 7 E-Tile targets)
+- Quartus Prime Pro 25.3.1: tested with 25.3.1 (Altera E-Tile targets)
 - Python 3.8+: for build scripts
 - Make: for build automation
 

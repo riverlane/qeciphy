@@ -5,18 +5,16 @@
 #
 # Called from Makefile quartus_synth target via:
 #   quartus_sh --script scripts/quartus_proj.tcl -tclargs \
-#       <project_name> <device> <device_family> <top_level_entity> <variant> \
-#       <line_rate_mbps> <rclk_freq_mhz> <constraints_list> [src_file ...]
+#       <top_level_entity> <constraints_list> <device> <device_family> <variant> \
+#       <project_name> [src_file ...]
 #
-# argv[0]  = project_name        e.g. qeciphy_integration
-# argv[1]  = device              e.g. AGFB014R24B2E2V
-# argv[2]  = device_family       e.g. Agilex 7
-# argv[3]  = top_level_entity    e.g. qeciphy_syn_wrapper
+# argv[0]  = top_level_entity    e.g. qeciphy_syn_wrapper
+# argv[1]  = constraints         space-separated list of .sdc/.tcl paths
+# argv[2]  = device              e.g. AGFB014R24B2E2V
+# argv[3]  = device_family       e.g. Agilex 7
 # argv[4]  = variant             ETILE or FTILE
-# argv[5]  = line_rate_mbps      e.g. 10312.5
-# argv[6]  = rclk_freq_mhz       e.g. 156.25
-# argv[7]  = constraints         space-separated list of .sdc/.tcl paths
-# argv[8+] = source files        SRC_FILES and SYN_FILES
+# argv[5]  = project_name        e.g. qeciphy_integration
+# argv[6+] = source files        SRC_FILES and SYN_FILES
 
 package require ::quartus::project
 
@@ -28,21 +26,19 @@ if {[llength $argv] > 0 && [string match "*tcl*" [lindex $argv 0]]} {
     set argv [lrange $argv 1 end]
 }
 
-if {[llength $argv] < 8} {
-    puts "ERROR: quartus_proj.tcl requires at least 8 arguments."
-    puts "  project_name device device_family top_level variant line_rate_mbps rclk_freq_mhz constraints [src_files...]"
+if {[llength $argv] < 6} {
+    puts "ERROR: quartus_proj.tcl requires at least 6 arguments."
+    puts "  top_level constraints device device_family variant project_name [src_files...]"
     exit 1
 }
 
-set proj_name      [lindex $argv 0]
-set proj_device    [lindex $argv 1]
-set device_family  [lindex $argv 2]
-set top_entity     [lindex $argv 3]
+set top_entity     [lindex $argv 0]
+set constraints    [lindex $argv 1]
+set proj_device    [lindex $argv 2]
+set device_family  [lindex $argv 3]
 set variant        [lindex $argv 4]
-set line_rate_mbps [lindex $argv 5]
-set rclk_freq_mhz  [lindex $argv 6]
-set constraints    [lindex $argv 7]
-set src_files      [lrange $argv 8 end]
+set proj_name      [lindex $argv 5]
+set src_files      [lrange $argv 6 end]
 
 # ---------------------------------------------------------------------------
 # File type classification
@@ -61,25 +57,9 @@ proc get_file_assignment {filepath} {
 }
 
 # ---------------------------------------------------------------------------
-# Variant exclusion — mirrors quartus_ip.tcl logic
-# ---------------------------------------------------------------------------
-set etile_only_scripts {qeciphy_etile.tcl}
-set ftile_only_scripts {qeciphy_ftile.tcl refclk.tcl}
-
-switch -- [string toupper $variant] {
-    "ETILE" { set excluded_scripts $ftile_only_scripts }
-    "FTILE" { set excluded_scripts $etile_only_scripts }
-    default {
-        puts "ERROR: Unknown variant '$variant'. Must be ETILE or FTILE."
-        exit 1
-    }
-}
-
-# ---------------------------------------------------------------------------
 # Create project directory structure
 # ---------------------------------------------------------------------------
 set start_dir  [pwd]
-set vendor_dir [file join $start_dir "vendors" "altera" "25.3.1" "ip"]
 
 set target_dir [file normalize [file join $start_dir "run"]]
 if {![file isdirectory $target_dir]} {
@@ -162,24 +142,6 @@ if {$make_assignments} {
         } else {
             set_global_assignment -name SDC_FILE ../../$cfile
         }
-    }
-
-    # IP file references — scan vendor dir, apply same exclusion as quartus_ip.tcl
-    if {![file isdirectory $vendor_dir]} {
-        puts "ERROR: Vendor directory not found: $vendor_dir"
-        exit 1
-    }
-    set tcl_files [lsort [glob -nocomplain -directory $vendor_dir "*.tcl"]]
-    if {[llength $tcl_files] == 0} {
-        puts "WARNING: No .tcl files found in $vendor_dir — no IP_FILE assignments written."
-    }
-    foreach script_path $tcl_files {
-        set script_name [file tail $script_path]
-        if {[lsearch $excluded_scripts $script_name] >= 0} {
-            continue
-        }
-        set ip_name "[file rootname $script_name].ip"
-        set_global_assignment -name IP_FILE "ip/$ip_name"
     }
 
     # Auto-tiles support logic (if present from previous run)

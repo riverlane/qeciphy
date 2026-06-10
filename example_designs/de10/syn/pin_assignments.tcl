@@ -66,6 +66,7 @@ set_instance_assignment -name SLEW_RATE 1 -to i2c_qsfpdd0_sda -entity qeciphy_sy
 set_instance_assignment -name SLEW_RATE 1 -to i2c_qsfpdd0_scl -entity qeciphy_syn_wrapper
 
 
+#Optional QSFPDD control signals - not required for basic operation, but may be needed for some use cases
 #set_location_assignment PIN_DA20 -to qsfpdd0_reset_L
 #set_location_assignment PIN_CT29 -to qsfpdd0_modprs_L
 #set_location_assignment PIN_DB21 -to qsfpdd0_Initmode

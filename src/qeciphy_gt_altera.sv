@@ -351,31 +351,6 @@ module qeciphy_gt_altera #(
 
          assign tx_reset_ack = '0;
          assign rx_reset_ack = '0;
-
-`ifdef TILE_SIM_MODEL
-         qeciphy_etile_sim_model transceiver_inst (
-             .pll_refclk0 (gt_ref_clk_i),
-             .reset       (~gt_rst_n_i),
-             .tx_coreclkin(tx_clk_2x_o),
-             .rx_coreclkin(rx_clk_2x_o),
-             .tx_ready    (tx_ready),
-             .rx_ready    (rx_ready),
-
-             .tx_clkout             (),
-             .tx_clkout2            (tx_clkout2),
-             .rx_clkout             (),
-             .rx_clkout2            (rx_clkout2),
-             .tx_serial_data        (gt_tx_p_o),
-             .tx_serial_data_n      (gt_tx_n_o),
-             .rx_serial_data        (gt_rx_p_i),
-             .rx_serial_data_n      (gt_rx_n_i),
-             .rx_is_lockedtodata    (rx_freqlocked),
-             .tx_parallel_data      (tx_parallel_data),
-             .rx_parallel_data      (rx_parallel_data),
-             .sim_tx_parallel_data_o(sim_tile_tx_parallel_data),
-             .sim_rx_parallel_data_i(sim_tile_rx_parallel_data)
-         );
-`else
          qeciphy_etile transceiver_inst (
              .reset             (~gt_rst_n_i),
              .pll_refclk0       (gt_ref_clk_i),
@@ -397,44 +372,8 @@ module qeciphy_gt_altera #(
              .tx_parallel_data  (tx_parallel_data),
              .rx_parallel_data  (rx_parallel_data)
          );
-`endif
 
       end else if (GT_TYPE == "FTILE") begin : gen_ftile
-
-`ifdef TILE_SIM_MODEL
-         qeciphy_ftile_sim_model transceiver_inst (
-             .rx_cdr_refclk_link    (gt_ref_clk_i),
-             .tx_pll_refclk_link    (gt_ref_clk_i),
-             .tx_reset              (~gt_rst_n_i),
-             .rx_reset              (~gt_rst_n_i),
-             .tx_reset_ack          (tx_reset_ack),
-             .rx_reset_ack          (rx_reset_ack),
-             .tx_ready              (tx_ready),
-             .rx_ready              (rx_ready),
-             .tx_coreclkin          (tx_clk_2x_o),
-             .rx_coreclkin          (rx_clk_2x_o),
-             .tx_clkout             (),
-             .tx_clkout2            (tx_clkout2),
-             .rx_clkout             (),
-             .rx_clkout2            (rx_clkout2),
-             .tx_serial_data        (gt_tx_p_o),
-             .tx_serial_data_n      (gt_tx_n_o),
-             .rx_serial_data        (gt_rx_p_i),
-             .rx_serial_data_n      (gt_rx_n_i),
-             .tx_pll_locked         (tx_pll_locked),
-             .rx_is_lockedtodata    (rx_freqlocked),
-             .rx_is_lockedtoref     (rx_is_locked_to_ref),
-             .tx_fifo_full          (),
-             .tx_fifo_empty         (),
-             .tx_pmaif_fifo_empty   (),
-             .tx_pmaif_fifo_pempty  (),
-             .tx_pmaif_fifo_pfull   (),
-             .tx_parallel_data      (tx_parallel_data),
-             .rx_parallel_data      (rx_parallel_data),
-             .sim_tx_parallel_data_o(sim_tile_tx_parallel_data),
-             .sim_rx_parallel_data_i(sim_tile_rx_parallel_data)
-         );
-`else
          qeciphy_ftile transceiver_inst (
              .rx_cdr_refclk_link  (gt_ref_clk_i),         // RX CDR reference clock
              .tx_pll_refclk_link  (gt_ref_clk_i),         // TX PLL reference clock
@@ -465,7 +404,6 @@ module qeciphy_gt_altera #(
              .tx_parallel_data    (tx_parallel_data),     // 80-bit TX data to FTile
              .rx_parallel_data    (rx_parallel_data)      // 80-bit RX data from FTile
          );
-`endif
       end else begin : gen_invalid
          initial begin
             $error("Invalid GT_TYPE parameter value: %s. Valid values are 'ETILE' or 'FTILE'.", GT_TYPE);

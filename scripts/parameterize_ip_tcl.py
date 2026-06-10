@@ -40,10 +40,10 @@ set device_family  "REPLACE_FAMILY"
 set line_rate_mbps REPLACE_LINE_RATE
 set rclk_freq_mhz  REPLACE_RCLK
 
-if {{[llength $argv] >= 1}} {{ set device         [lindex $argv 0] }}
-if {{[llength $argv] >= 2}} {{ set device_family  [lindex $argv 1] }}
-if {{[llength $argv] >= 3}} {{ set line_rate_mbps [lindex $argv 2] }}
-if {{[llength $argv] >= 4}} {{ set rclk_freq_mhz  [lindex $argv 3] }}
+if {]llength $argv] >= 1} {{ set device         [lindex $argv 0] }}
+if {]llength $argv] >= 2}} {{ set device_family  [lindex $argv 1] }}
+if {]llength $argv] >= 3}} {{ set line_rate_mbps [lindex $argv 2] }}
+if {]llength $argv] >= 4}} {{ set rclk_freq_mhz  [lindex $argv 3] }}
 
 """
 
@@ -81,7 +81,7 @@ def insert_argv_block(text: str, block: str) -> str:
 
 def replace_project_property(text: str, key: str, var: str) -> str:
     """Replace set_project_property KEY {value} with set_project_property KEY $var."""
-    pattern = rf'(set_project_property\s+{key}\s+)\{{[^}}]*\}}'
+    pattern = rf'(set_project_property\s+{key}\s+)\{]^}}]*\}}'
     return re.sub(pattern, rf'\1${var}', text)
 
 
