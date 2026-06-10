@@ -18,16 +18,16 @@ module qeciphy_syn_wrapper (
 
 );
 
-    //Optional QSFPDD0-related signals are available on the board but are not used in this design
-    //    output logic qsfpdd0_modsel_L,
-    //    output logic qsfpdd0_Initmode,
-    //    input  logic qsfpdd0_modprs_L,
-    //    input  logic qsfpdd0_int_L,
+   //Optional QSFPDD0-related signals are available on the board but are not used in this design
+   //    output logic qsfpdd0_modsel_L,
+   //    output logic qsfpdd0_Initmode,
+   //    input  logic qsfpdd0_modprs_L,
+   //    input  logic qsfpdd0_int_L,
 
    logic        sys_clk_100;
    logic        sys_clk_200;
    logic        init_done_n;
-   
+
    //Reset logic
    logic [ 4:0] rst_counter;
    logic [ 4:0] rst_counter_nxt;
@@ -61,7 +61,7 @@ module qeciphy_syn_wrapper (
    logic        blinky_led;
 
    // Debug signals for VIO
-   logic vio_source;
+   logic        vio_source;
 
 
 
@@ -103,7 +103,7 @@ module qeciphy_syn_wrapper (
    end
 
 
-   assign fpga_led =  led; // Connect debug LEDs with extra bit
+   assign fpga_led = led;  // Connect debug LEDs with extra bit
    // For debugging
    assign led[0]   = (STATUS == 4'b0100) ? 1'b1 : 1'b0;
    assign led[1]   = (ECODE == 4'b0000) ? 1'b1 : 1'b0;
@@ -159,22 +159,22 @@ module qeciphy_syn_wrapper (
 
    assign RCLK = gt_refclk_in_p;
    QECIPHY i_QECIPHY (
-       .RCLK       (RCLK),
-       .FCLK       (FCLK),
-       .ACLK       (ACLK),
-       .ARSTn      (ARSTn),
-       .TX_TDATA   (TX_TDATA),
-       .TX_TVALID  (TX_TVALID),
-       .TX_TREADY  (TX_TREADY),
-       .RX_TDATA   (RX_TDATA),
-       .RX_TVALID  (RX_TVALID),
-       .RX_TREADY  (RX_TREADY),
-       .STATUS     (STATUS),
-       .ECODE      (ECODE),
-       .GT_RX_P    (gt_rx_p),
-       .GT_RX_N    (gt_rx_n),
-       .GT_TX_P    (gt_tx_p),
-       .GT_TX_N    (gt_tx_n)
+       .RCLK     (RCLK),
+       .FCLK     (FCLK),
+       .ACLK     (ACLK),
+       .ARSTn    (ARSTn),
+       .TX_TDATA (TX_TDATA),
+       .TX_TVALID(TX_TVALID),
+       .TX_TREADY(TX_TREADY),
+       .RX_TDATA (RX_TDATA),
+       .RX_TVALID(RX_TVALID),
+       .RX_TREADY(RX_TREADY),
+       .STATUS   (STATUS),
+       .ECODE    (ECODE),
+       .GT_RX_P  (gt_rx_p),
+       .GT_RX_N  (gt_rx_n),
+       .GT_TX_P  (gt_tx_p),
+       .GT_TX_N  (gt_tx_n)
    );
 
    // CURRENTLY UNUSED SIGNAL ASSIGNMENTS
