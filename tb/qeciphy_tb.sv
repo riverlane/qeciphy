@@ -2,7 +2,8 @@
 // Copyright (c) 2024-2025 Riverlane Ltd.
 // Original authors: Aniket Datta, Dogancan Davutoglu, Gargi Sunil
 
-`timescale 1ns / 1ps `default_nettype none
+`timescale 1ns / 1ps
+`default_nettype none
 
 `include "../src/qeciphy_pkg.sv"
 `include "../tb/qeciphy_sim_cfg_pkg.sv"
