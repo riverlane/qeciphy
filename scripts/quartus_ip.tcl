@@ -82,6 +82,7 @@ if {[llength $tcl_files] == 0} {
 set param_cmd "set argv \[list {$device} {$device_family} $line_rate_mbps $rclk_freq_mhz\]"
 
 set any_failed 0
+set generated_ips {}
 
 foreach script_path $tcl_files {
     set script_name [file tail $script_path]
@@ -103,6 +104,7 @@ foreach script_path $tcl_files {
         set any_failed 1
     } else {
         puts "INFO: Done: $script_name"
+        lappend generated_ips "[file rootname $script_name].ip"
     }
 }
 
@@ -112,8 +114,30 @@ if {$any_failed} {
 }
 
 # ---------------------------------------------------------------------------
-# Return to start directory
+# Return to start directory, then add IP_FILE assignments to the project
 # ---------------------------------------------------------------------------
 cd $start_dir
+
+if {[llength $generated_ips] > 0} {
+    set proj_dir [file join $start_dir "run" $proj_name]
+    cd $proj_dir
+
+    if {![project_exists $proj_name]} {
+        puts "ERROR: Project '$proj_name' not found in [pwd]. Run quartus_proj.tcl before quartus_ip.tcl."
+        exit 1
+    }
+    project_open -revision $proj_name $proj_name
+
+    foreach ip_name $generated_ips {
+        set_global_assignment -name IP_FILE "ip/$ip_name"
+        puts "INFO: Added IP_FILE: ip/$ip_name"
+    }
+    export_assignments
+    project_close
+    puts "INFO: Added [llength $generated_ips] IP_FILE assignment(s) to project '$proj_name'."
+
+    cd $start_dir
+}
+
 puts "INFO: Returned to: [pwd]"
 puts "INFO: quartus_ip.tcl complete."

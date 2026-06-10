@@ -18,6 +18,8 @@ create_clock -name tx_clk_2x_o [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt
 create_clock -name rx_clk_2x_o [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_rx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div1] -period 3.878
 create_clock -name tx_clk_o [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_tx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div2] -period 7.756
 create_clock -name rx_clk_o [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_rx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div2] -period 7.756
+
+#Generated directly from Quartus Timing Analyzer with settings: Input clock frequency: 100 MHz, Output clock frequency: 200 MHz
 create_generated_clock -name {clk200_inst} -source {clk_100_p} -divide_by 7 -multiply_by 14 -duty_cycle 50.00 { clk200_inst|iopll_0|tennm_pll|outclk[1] }
 
 # Capture clocks into variables (collections)

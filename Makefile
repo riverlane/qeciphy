@@ -493,8 +493,8 @@ quartus_synth:
 	@LINE_RATE_MBPS=$$(echo "$(LINE_RATE_GBPS) * 1000" | bc -l); \
 	[ -n "$$LINE_RATE_MBPS" ] || { echo "ERROR: LINE_RATE_GBPS is not set for profile $(OPT_PROFILE)"; exit 1; }; \
 	quartus_sh --script scripts/quartus_proj.tcl -tclargs \
-		"$(OPT_QUARTUS_PROJECT)" "$(PART)" "$(FAMILY)" "$(SYN_TOP)" "$(VARIANT)" \
-		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "$(CONSTRAINTS)" $(SRC_FILES) $(SYN_FILES) && \
+		"$(SYN_TOP)" "$(CONSTRAINTS)" "$(PART)" "$(FAMILY)" "$(VARIANT)" \
+		"$(OPT_QUARTUS_PROJECT)" $(SRC_FILES) $(SYN_FILES) && \
 	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
 		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
 		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "vendors/altera/25.3.1/ip" && \

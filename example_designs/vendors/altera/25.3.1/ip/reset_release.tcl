@@ -1,12 +1,20 @@
 package require -exact qsys 25.3.1
 
 # create the system "reset_release"
+# --- Parameters: overridden by $argv when called from quartus_ip.tcl ---
+set device         "AGIB027R31B1E1V"
+set device_family  "Agilex 7"
+
+if {[llength $argv] >= 1} { set device         [lindex $argv 0] }
+if {[llength $argv] >= 2} { set device_family  [lindex $argv 1] }
+
 proc do_create_reset_release {} {
-	# create the system
+    global device device_family
+    #create the system
 	create_system reset_release
 	set_project_property BOARD {default}
-	set_project_property DEVICE {AGIB027R31B1E1V}
-	set_project_property DEVICE_FAMILY {Agilex 7}
+	set_project_property DEVICE $device
+	set_project_property DEVICE_FAMILY $device_family
 	set_project_property HIDE_FROM_IP_CATALOG {true}
 	set_use_testbench_naming_pattern 0 {}
 
