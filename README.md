@@ -131,7 +131,7 @@ qeciphy/
 ├── docs/                        # Documentation files
 ├── config.json                  # Build configuration (profiles, settings)
 ├── Makefile                     # Build automation
-├── src_common.f, sim.f, lint.f, uvm.f, sva.f # File lists for different flows
+├── src_common.f, src_xilinx.f, src_altera.f, sim.f, lint.f, uvm.f, sva.f # File lists for different flows
 ├── lint_waivers.vlt             # Verilator lint waivers
 ├── CODE_OF_CONDUCT.md           # Code of conduct
 ├── CONTRIBUTING.md              # Development guidelines
@@ -230,11 +230,11 @@ make formal OPT_TOP=<module_name> OPT_MODE=gui
 
 ## Performance
 
-| Metric | GTX (7-series)  | GTH (UltraScale) | GTY (UltraScale+) 
-|--------|----------------|----------------------|----------------------|--------------------|
-| **Latency** | ~220ns | ~190ns | ~195ns 
-| **LUT** | 1372 | 1230 | 1230 
-| **FF** | 1229 | 1156 | 1156 
+| Metric | GTX (7-series) | GTH (UltraScale) | GTY (UltraScale+) |
+|--------|---|---|---|
+| **Latency** | ~220ns | ~190ns | ~195ns |
+| **LUT** | 1372 | 1230 | 1230 |
+| **FF** | 1229 | 1156 | 1156 | 
 
 *Measured at 12.5 Gbps line rate (Xilinx). Performance varies by platform and configuration.*
 

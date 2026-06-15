@@ -137,11 +137,11 @@ If your platform is not listed, create a new profile in `config.json`. Examples 
 - `synth`: Synthesis configuration (optional, for standalone testing)
 
 **Vendor-Specific Notes (Important):**
-- Xilinx profiles (`GTX`/`GTH`/`GTY`) usually include `fclk_freq`, `transceiver.gt_loc`, and Xilinx-oriented `rx_rclk_src`/`tx_rclk_src` values.
+- Xilinx profiles (`GTX`/`GTH`/`GTY`) require `fclk_freq`, `transceiver.gt_loc`, and Xilinx-oriented `rx_rclk_src`/`tx_rclk_src` values.
 - Altera `ETILE` profiles (for example `de10`) may differ by design:
-  - `device.family` is expected (for example `"Agilex 7"`).
-  - `fclk_freq` can be omitted
-  - `transceiver.gt_loc` can be omitted
+  - `device.family` is required (for example `"Agilex 7"`).
+  - `fclk_freq` shouldk be omitted
+  - `transceiver.gt_loc` should be omitted
   - `pre_setup_hooks` may be intentionally empty if no board-specific setup Tcl is needed.
 
 **Important:** Refer to your FPGA documentation for correct GT site assignments and available reference clock sources for your specific device and board.
@@ -191,6 +191,7 @@ For quick platform validation, create a standalone example design:
    └── syn/
        ├── clock_constraints.sdc     # SDC timing constraints
        └── pin_assignments.tcl       # Quartus pin assignment script
+       └── signal_tap.stp            # Quartus signal tap assignments
    ```
 
    **Required Files:**
@@ -288,10 +289,10 @@ QECIPHY i_QECIPHY (
     .FAULT_FATAL(qeciphy_fault_fatal),
     
     // GT Interface (connect to transceivers)
-    .gt_tx_p     (gt_tx_p),
-    .gt_tx_n     (gt_tx_n),
-    .gt_rx_p     (gt_rx_p),
-    .gt_rx_n     (gt_rx_n)
+    .GT_TXP     (gt_txp),
+    .GT_TXN     (gt_txn),
+    .GT_RXP     (gt_rxp),
+    .GT_RXN     (gt_rxn)
 );
 ```
 

@@ -80,7 +80,7 @@ The protocol operates with deterministic timing:
 **User Clocks:**
 - `ACLK`: User AXI4-Stream interface clock
 - `RCLK`: GT reference clock
-- `FCLK`: Free-running fabric clock for internal logic and reset sequencing
+- `FCLK`: Free-running fabric clock for internal logic
 
 **Generated Clocks:**
 - `tx_clk`: TX clock (64-bit data rate)
@@ -214,9 +214,9 @@ RX Boundary Gen -> RX Monitor -> User Data
 
 #### 5.1 RX Byte Aligner
 
-Byte alignment differs between Xilinx and Altera because Xilinx GT primitives provide hardware comma detection, while Altera tiles do not.
+Byte alignment differs between Xilinx and Altera because Xilinx GT primitives provide native comma detection, while Altera tiles do not.
 
-**Xilinx:** The GT transceiver's native comma detection hardware automatically realigns the recovered byte boundary to K28.5 comma characters. The `qeciphy_rx_comma_detect.sv` module then verifies that alignment is stable by monitoring the decoded stream for QECIPHY FAW patterns through a 6-state FSM:
+**Xilinx:** The byte alignment process leverages the GT transceiver's native comma detection and alignment capabilities combined with pattern monitoring through the `qeciphy_rx_comma_detect.sv` module. The GT transceiver automatically handles comma realignment while the comma detect module verifies alignment success through pattern detection across a 6-state FSM:
 
 1. **IDLE**: Initial state, transitions to CHECK
 2. **CHECK**: Monitor for Frame Alignment Word patterns (`0xBC` byte comma)
@@ -225,13 +225,58 @@ Byte alignment differs between Xilinx and Altera because Xilinx GT primitives pr
 5. **FAIL**: Pattern verification failed, retry alignment process
 6. **RESET**: Maximum retries reached, reset RX datapath and restart
 
-**Altera:** E-Tile and F-Tile transceivers output a raw 40-bit 8b10b-encoded stream with no hardware comma alignment. Byte alignment is performed entirely in fabric logic by two additional soft-PCS modules that sit between the tile and the common datapath:
+The module monitors the expected protocol pattern (FAW, CRC, and data word positions) over configurable review cycles to ensure stable byte alignment before declaring success.
 
-1. **Soft Word Aligner** (`qeciphy_word_align`): Barrel-shifts the raw 40-bit encoded stream across all possible bit positions, searching for valid K28.5 comma patterns in the encoded domain. It tries up to `RXSLIDE_COUNT_MAX` positions and requires `RX_ALIGN_MATCH_MAX` consecutive matches before declaring alignment. A failed search triggers `align_fail_o`, which resets the RX datapath for a retry.
 
-2. **Soft 8b10b Decoder** (`eth_8b10b_dec_x4_a`): Decodes the aligned 40-bit encoded stream to 32-bit parallel data, identical in width to the Xilinx GT output.
+**Xilinx Data Path:**
+```
+GT Primitive
+    |
+    | (Raw 32-bit data with comma detection)
+    v
+Comma Detection & Realignment (Hardware in GT)
+    |
+    | (Comma-aligned 32-bit data)
+    v
+qeciphy_rx_comma_detect.sv
+    |
+    | (Frame Alignment Word pattern verification)
+    v
+RX Byte Aligner Output (32-bit aligned data)
+    |
+    v
+RX Word Aligner (32b to 64b)
+```
 
-3. **Soft Comma Detect** (`qeciphy_rx_comma_detect`): Applies the same 6-state FSM as the Xilinx path to verify stable QECIPHY comma alignment on the decoded stream before signalling `rx_byte_aligned_o`.
+**Altera:** E-Tile and F-Tile transceivers output a raw 40-bit 8b10b-encoded stream with no hardware comma alignment. Byte alignment is performed entirely in fabric logic by two additional RTL modules that replicate the GT transceiver's native comma detection and alignment capabilities combined with the pattern monitoring through the `qeciphy_rx_comma_detect.sv` module:
+
+1. **Word Aligner** (`qeciphy_word_align`): Barrel-shifts the raw 40-bit encoded stream across all possible bit positions, searching for valid K28.5 comma patterns in the encoded domain. It tries up to `RXSLIDE_COUNT_MAX` positions and requires `RX_ALIGN_MATCH_MAX` consecutive matches before declaring alignment. A failed search triggers `align_fail_o`, which resets the RX datapath for a retry.
+
+2. **8b10b Decoder** (`eth_8b10b_dec_x4_a`): Decodes the aligned 40-bit encoded stream to 32-bit parallel data, identical in width to the Xilinx GT output. The output is then fed into the `qeciphy_rx_comma_detect.sv` module
+
+**Altera Data Path:**
+```
+E-Tile / F-Tile IP
+    |
+    | (Raw 40-bit 8b10b-encoded stream)
+    v
+qeciphy_word_align.sv (Barrel Shifter)
+    |
+    | (Searches for K28.5 comma patterns, up to RXSLIDE_COUNT_MAX positions)
+    v
+eth_8b10b_dec_x4_a (8b10b Decoder x4)
+    |
+    | (Decoded 32-bit parallel data)
+    v
+qeciphy_rx_comma_detect.sv
+    |
+    | (Frame Alignment Word pattern verification)
+    v
+RX Byte Aligner Output (32-bit aligned data)
+    |
+    v
+RX Word Aligner (32b to 64b)
+```
 
 #### 5.2 RX Word Aligner
 
