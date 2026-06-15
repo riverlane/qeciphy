@@ -193,10 +193,10 @@ make sim OPT_PROFILE=<profile> OPT_TOOL=vcs OPT_MODE=gui
 
 ### Synthesis
 ```bash
-# Run synthesis using Vivado (batch mode)
+# Run synthesis using Vivado for Xilinx profiles and Quartus Prime Pro for Altera profiles(batch mode)
 make synth OPT_PROFILE=<profile>
 
-# Run synthesis using Vivado (GUI mode)
+# Run synthesis (GUI mode) — Vivado only
 make synth OPT_PROFILE=<profile> OPT_MODE=gui
 ```
 

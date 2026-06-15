@@ -108,6 +108,10 @@
           "example_designs/de10/syn/signal_tap.stp"
 	],
         "pre_setup_hooks": [
+          "example_designs/vendors/altera/25.3.1/ip/qeciphy_vio.tcl",
+          "example_designs/vendors/altera/25.3.1/ip/reset_release.tcl",
+          "example_designs/vendors/altera/25.3.1/ip/sys_clk_100.tcl",
+          "example_designs/vendors/altera/25.3.1/ip/sys_clk_200_pll.tcl"
         ]
       }
   }

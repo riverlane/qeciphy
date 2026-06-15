@@ -54,7 +54,7 @@ LINE_RATE_GBPS   := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROF
 SIM_FILELIST := sim.f
 LINT_FILELIST := lint.f
 SRC_FILELIST := src_common.f
-XCI_FILELIST := xci.f
+GENIP_FILELIST := generated_ip.f
 UVM_FILELIST := uvm.f
 SVA_FILELIST := sva.f
 
@@ -72,10 +72,10 @@ SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(VENDOR_SRC_FILELIST))
 SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST) $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
 VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
-XCI_FILES := $(shell if [ -f $(XCI_FILELIST) ]; then $(PY) scripts/extract_sources.py $(XCI_FILELIST); fi)
+GENIP_FILES := $(shell if [ -f $(GENIP_FILELIST) ]; then $(PY) scripts/extract_sources.py $(GENIP_FILELIST); fi)
 
 # Tool paths and directories
-XCI_DIR := xci
+GENIP_DIR := generated_ip
 RUN_DIR := run
 GEN_XCI_TCL_gth := vendors/xilinx/qeciphy_gth_transceiver.tcl
 GEN_XCI_TCL_gtx := vendors/xilinx/qeciphy_gtx_transceiver.tcl
@@ -85,6 +85,11 @@ XSIM_TCL := scripts/vivado_sim.tcl
 VIVADO_SYNTH_TCL := scripts/vivado_synth.tcl
 VIVADO_SIM_EXPORT_TCL := scripts/vivado_sim_export.tcl
 FORMAL_TCL := scripts/vcf_default.tcl
+QUARTUS_PROJ_TCL := scripts/quartus_proj.tcl
+QUARTUS_IP_GEN_PROJ_TCL := scripts/quartus_ip_gen_proj.tcl
+ALTERA_IP_GEN_PROJECT := altera_ip_gen
+ALTERA_VENDOR_IP_DIR := vendors/altera/25.3.1/ip
+ALTERA_EXAMPLE_IP_DIR := example_designs/vendors/altera/25.3.1/ip
 
 # -------------------------------------------------------------
 # Targets
@@ -127,7 +132,7 @@ help:
 	@echo ""
 	@echo "  render-design"
 	@echo "    - Xilinx profiles: generate IP core files (.xci) via Vivado"
-	@echo "    - Altera profiles: no IP generation (IP is generated during synth)"
+	@echo "    - Altera profiles: generate IP core files (.ip) via Quartus (altera_ip_gen project)"
 	@echo "    - All profiles: generate build/sim config packages"
 	@echo "    - Required variables: OPT_PROFILE"
 	@echo "    - Optional variables: OPT_SIM_FILES=(true|false) [default: false] (xilinx only)"
@@ -147,6 +152,7 @@ help:
 	@echo "  make distclean"
 	@echo "  make render-design OPT_PROFILE=zcu216"
 	@echo "  make render-design OPT_PROFILE=zcu216 OPT_SIM_FILES=true"
+	@echo "  make render-design OPT_PROFILE=de10"
 	@echo "  make synth OPT_PROFILE=zcu216"
 	@echo "  make sim OPT_PROFILE=zcu216 OPT_TOOL=vcs"
 	@echo "  make sim OPT_PROFILE=zcu216 OPT_MODE=gui OPT_TOOL=vcs"
@@ -259,7 +265,7 @@ render-design:
 		$(MAKE) vivado_generate_xci; \
 		$(MAKE) generate-sim-cfg-pkg; \
 	elif [ "$(VENDOR)" = "altera" ]; then \
-		echo "INFO: Altera profile — skipping IP generation (handled during synth)"; \
+		$(MAKE) quartus_generate_ip; \
 	else \
 		echo "ERROR: Unsupported vendor '$(VENDOR)' for profile $(OPT_PROFILE)"; exit 1; \
 	fi
@@ -302,7 +308,7 @@ clean:
 
 distclean: clean
 	@echo "INFO: Performing distclean"
-	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f xci/ xci.f
+	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f generated_ip/ generated_ip.f
 	@rm -rf src/qeciphy_build_cfg_pkg.sv tb/qeciphy_sim_cfg_pkg.sv 
 
 
@@ -325,35 +331,69 @@ verible_format:
 
 vivado_generate_xci:
 	@$(MAKE) check_vivado
-	@mkdir -p $(XCI_DIR)
+	@mkdir -p $(GENIP_DIR)
 	@mkdir -p $(RUN_DIR)
 	@if [ "$(VARIANT)" = "GTH" ]; then \
 		vivado -mode batch -source $(GEN_XCI_TCL_gth) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
-		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
-		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(GENIP_DIR)/ \; ; \
+		echo "INFO: Copied .xci files from $(RUN_DIR) to $(GENIP_DIR)"; \
 	elif [ "$(VARIANT)" = "GTX" ]; then \
 		vivado -mode batch -source $(GEN_XCI_TCL_gtx) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
-		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(GENIP_DIR)/ \; ; \
 		vivado -mode batch -source $(GEN_XCI_TCL_gtx_mmcm) -tclargs $(PART) $(RUN_DIR) "$(LINE_RATE_GBPS)"; \
-		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
-		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(GENIP_DIR)/ \; ; \
+		echo "INFO: Copied .xci files from $(RUN_DIR) to $(GENIP_DIR)"; \
 	elif [ "$(VARIANT)" = "GTY" ]; then \
 		vivado -mode batch -source $(GEN_XCI_TCL_gty) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
-		find $(RUN_DIR) -name "*.xci" -exec cp {} $(XCI_DIR)/ \; ; \
-		echo "INFO: Copied .xci files from $(RUN_DIR) to $(XCI_DIR)"; \
+		find $(RUN_DIR) -name "*.xci" -exec cp {} $(GENIP_DIR)/ \; ; \
+		echo "INFO: Copied .xci files from $(RUN_DIR) to $(GENIP_DIR)"; \
 	else \
 		echo "ERROR: Unsupported variant $(VARIANT). Must be one of GTH, GTX, GTY."; \
 		exit 1; \
 	fi
 	@echo "INFO: Generating XCI filelist"
-	@find $(XCI_DIR) -name "*.xci" | sort > xci.f
-	@echo "INFO: Created xci.f with $$(wc -l < xci.f) XCI files"
+	@find $(GENIP_DIR) -name "*.xci" | sort > generated_ip.f
+	@echo "INFO: Created generated_ip.f with $$(wc -l < generated_ip.f) XCI files"
 ifeq ($(OPT_SIM_FILES),true)
 	@echo "INFO: Generating IP simulation files"
 	@$(PY) scripts/generate_sim_files.py --part $(PART) --simulator vcs
 endif
 	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
+
+quartus_generate_ip:
+	@$(MAKE) check_quartus_sh
+	@mkdir -p $(GENIP_DIR)
+	@mkdir -p $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip
+	@quartus_sh --script $(CURRENT_DIR)/$(QUARTUS_IP_GEN_PROJ_TCL) -tclargs \
+		"$(CURRENT_DIR)/$(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)" \
+		"$(ALTERA_IP_GEN_PROJECT)" \
+		"$(FAMILY)" \
+		"$(PART)"
+	@if [ "$(VARIANT)" = "ETILE" ]; then \
+		LINE_RATE_MBPS=$$(echo "$(LINE_RATE_GBPS) * 1000" | bc -l); \
+		[ -n "$$LINE_RATE_MBPS" ] || { echo "ERROR: LINE_RATE_GBPS is not set for profile $(OPT_PROFILE)"; exit 1; }; \
+		(cd $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip && \
+		qsys-script \
+			--script=$(CURRENT_DIR)/$(ALTERA_VENDOR_IP_DIR)/qeciphy_etile.tcl \
+			--quartus-project=$(CURRENT_DIR)/$(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/$(ALTERA_IP_GEN_PROJECT).qpf \
+			"--cmd=set argv [list {$(PART)} {$(FAMILY)} $$LINE_RATE_MBPS $(RCLK_FREQ)]" && \
+		qsys-script \
+			--script=$(CURRENT_DIR)/$(ALTERA_VENDOR_IP_DIR)/qeciphy_altera_clk_mmcm.tcl \
+			--quartus-project=$(CURRENT_DIR)/$(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/$(ALTERA_IP_GEN_PROJECT).qpf \
+			"--cmd=set argv [list {$(PART)} {$(FAMILY)} $$LINE_RATE_MBPS $(RCLK_FREQ)]") ; \
+		echo "INFO: Copying .ip files from $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip to $(GENIP_DIR)"; \
+		find $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip -name "*.ip" -exec cp {} $(GENIP_DIR)/ \; ; \
+	else \
+		echo "ERROR: Unsupported variant $(VARIANT) for Quartus IP generation. Must be ETILE."; \
+		exit 1; \
+	fi
+	
+	@echo "INFO: Generating IP filelist"
+	@find $(GENIP_DIR) -name "*.ip" | sort > $(GENIP_FILELIST)
+	@echo "INFO: Created $(GENIP_FILELIST) with $$(wc -l < $(GENIP_FILELIST)) IP files"
+	@echo "INFO: Cleaning up temporary project $(ALTERA_IP_GEN_PROJECT)"
+	@rm -rf $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)
 
 generate-build-cfg-pkg:
 	@echo "INFO: Generating build configuration package"
@@ -395,7 +435,7 @@ generate-sim-cfg-pkg:
 vivado_sim:
 	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(XCI_FILES)
+	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(GENIP_FILES)
 
 vcs_sim:
 	@$(MAKE) check_vcs
@@ -485,20 +525,11 @@ endif
 vivado_synth:
 	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(CONSTRAINTS) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(XCI_FILES)
+	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(CONSTRAINTS) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(GENIP_FILES)
 
 quartus_synth:
 	@$(MAKE) check_quartus_sh
 	@mkdir -p $(RUN_DIR)
-	@LINE_RATE_MBPS=$$(echo "$(LINE_RATE_GBPS) * 1000" | bc -l); \
-	[ -n "$$LINE_RATE_MBPS" ] || { echo "ERROR: LINE_RATE_GBPS is not set for profile $(OPT_PROFILE)"; exit 1; }; \
-	quartus_sh --script scripts/quartus_proj.tcl -tclargs \
+	@quartus_sh --script $(QUARTUS_PROJ_TCL) -tclargs \
 		"$(SYN_TOP)" "$(CONSTRAINTS)" "$(PART)" "$(FAMILY)" "$(VARIANT)" \
-		"$(OPT_QUARTUS_PROJECT)" $(SRC_FILES) $(SYN_FILES) && \
-	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
-		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
-		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "vendors/altera/25.3.1/ip" && \
-	quartus_sh --script scripts/quartus_ip.tcl -tclargs \
-		"$(VARIANT)" "$(PART)" "$(FAMILY)" "$(OPT_QUARTUS_PROJECT)" \
-		"$$LINE_RATE_MBPS" "$(RCLK_FREQ)" "example_designs/vendors/altera/25.3.1/ip" && \
-	quartus_sh --flow compile "$(RUN_DIR)/$(OPT_QUARTUS_PROJECT)/$(OPT_QUARTUS_PROJECT)"
+		'$(HOOKS)' $(SRC_FILES) $(SYN_FILES) -- $(GENIP_FILES)

@@ -1,20 +1,22 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright (c) 2026 Riverlane Ltd.
 #
-# quartus_proj.tcl — Dynamic Quartus project creation.
+# quartus_proj.tcl — Dynamic Quartus project creation and compilation.
 #
 # Called from Makefile quartus_synth target via:
 #   quartus_sh --script scripts/quartus_proj.tcl -tclargs \
 #       <top_level_entity> <constraints_list> <device> <device_family> <variant> \
-#       <project_name> [src_file ...]
+#       <hooks> <syn_files> -- <ip_files>
 #
 # argv[0]  = top_level_entity    e.g. qeciphy_syn_wrapper
 # argv[1]  = constraints         space-separated list of .sdc/.tcl paths
 # argv[2]  = device              e.g. AGFB014R24B2E2V
 # argv[3]  = device_family       e.g. Agilex 7
 # argv[4]  = variant             ETILE or FTILE
-# argv[5]  = project_name        e.g. qeciphy_integration
-# argv[6+] = source files        SRC_FILES and SYN_FILES
+# argv[5]  = hooks               space-separated list of Platform Designer script paths
+# argv[6+] = syn_files           SRC_FILES and SYN_FILES (before --)
+# --       = separator
+# argv[N+] = ip_files            GENIP_FILES (after --)
 
 package require ::quartus::project
 
@@ -28,17 +30,37 @@ if {[llength $argv] > 0 && [string match "*tcl*" [lindex $argv 0]]} {
 
 if {[llength $argv] < 6} {
     puts "ERROR: quartus_proj.tcl requires at least 6 arguments."
-    puts "  top_level constraints device device_family variant project_name [src_files...]"
+    puts "  top_level constraints device device_family variant hooks [syn_files...] -- [ip_files...]"
     exit 1
 }
+
+set proj_name      "synth_qeciphy"
 
 set top_entity     [lindex $argv 0]
 set constraints    [lindex $argv 1]
 set proj_device    [lindex $argv 2]
 set device_family  [lindex $argv 3]
 set variant        [lindex $argv 4]
-set proj_name      [lindex $argv 5]
-set src_files      [lrange $argv 6 end]
+set hooks_raw      [lindex $argv 5]
+
+set hooks [split $hooks_raw]
+
+# Parse file arguments separated by "--"
+set separator_index -1
+for {set i 0} {$i < [llength $argv]} {incr i} {
+    if {[lindex $argv $i] eq "--"} {
+        set separator_index $i
+        break
+    }
+}
+
+if {$separator_index == -1} {
+    set syn_files [lrange $argv 6 end]
+    set ip_files  {}
+} else {
+    set syn_files [lrange $argv 6 [expr {$separator_index - 1}]]
+    set ip_files  [lrange $argv [expr {$separator_index + 1}] end]
+}
 
 # ---------------------------------------------------------------------------
 # File type classification
@@ -118,13 +140,20 @@ if {$make_assignments} {
     set_global_assignment -name BOARD                        default
     set_global_assignment -name GENERATE_PROGRAMMING_FILES ON
 
-    # Source files — classified by extension
-    foreach f $src_files {
+    # Source and synthesis files — classified by extension
+    foreach f $syn_files {
         set assignment [get_file_assignment $f]
         if {$assignment ne ""} {
             set_global_assignment -name $assignment ../../$f
         } else {
             puts "WARNING: Unrecognised file extension, skipping: $f"
+        }
+    }
+
+    # Pre-generated IP files (from render-design / generated_ip/)
+    foreach f $ip_files {
+        if {$f ne ""} {
+            set_global_assignment -name IP_FILE ../../$f
         }
     }
 
@@ -184,12 +213,68 @@ if {$make_assignments} {
     puts "INFO: Project assignments written for '$proj_name'."
 }
 
-# ---------------------------------------------------------------------------
-# Close project and return
-# ---------------------------------------------------------------------------
+# Close before running qsys-script hooks to avoid file-locking conflicts.
 if {$need_to_close_project} {
     project_close
 }
 
+# ---------------------------------------------------------------------------
+# Run pre-setup hooks via qsys-script
+# ---------------------------------------------------------------------------
+set ip_dir  [file join $proj_dir "ip"]
+set qpf_path [file normalize [file join $proj_dir "${proj_name}.qpf"]]
+set param_cmd "set argv \[list {$proj_device} {$device_family}\]"
+set generated_ips {}
+
+foreach hook_script $hooks {
+    if {$hook_script eq ""} { continue }
+    set abs_script [file normalize [file join $start_dir $hook_script]]
+    if {![file exists $abs_script]} {
+        puts "WARNING: Hook script not found: $abs_script"
+        continue
+    }
+    puts "INFO: Running hook: [file tail $abs_script]"
+    set save_dir [pwd]
+    cd $ip_dir
+    if {[catch {
+        exec qsys-script \
+            --script=$abs_script \
+            --quartus-project=$qpf_path \
+            "--cmd=$param_cmd" \
+            >@stdout 2>@stdout
+    } result]} {
+        puts "ERROR: qsys-script failed for [file tail $abs_script]: $result"
+        cd $save_dir
+        exit 1
+    }
+    cd $save_dir
+    lappend generated_ips "[file rootname [file tail $abs_script]].ip"
+}
+
+# ---------------------------------------------------------------------------
+# Re-open project: add IP_FILE assignments, then compile
+# ---------------------------------------------------------------------------
+cd $proj_dir
+project_open -revision $proj_name $proj_name
+
+foreach ip_name $generated_ips {
+    set_global_assignment -name IP_FILE "ip/$ip_name"
+    puts "INFO: Added IP_FILE: ip/$ip_name"
+}
+if {[llength $generated_ips] > 0} {
+    export_assignments
+    puts "INFO: Updated project with [llength $generated_ips] IP_FILE assignment(s)."
+}
+
+package require ::quartus::flow
+puts "INFO: Starting compilation..."
+if {[catch { execute_flow -compile } result]} {
+    puts "ERROR: Compilation failed: $result"
+    project_close
+    cd $start_dir
+    exit 1
+}
+
+project_close
 cd $start_dir
 puts "INFO: quartus_proj.tcl complete. Project: $proj_name"
