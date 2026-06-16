@@ -1,10 +1,10 @@
 .Xil/
 scripts/__pycache__/
 run/
-xci/
+generated_ip/
 tb/generated_sim_files/
 tb/compiled_simlib/
-xci.f
+generated_ip.f
 generated_sim.f
 src/qeciphy_build_cfg_pkg.sv
 tb/qeciphy_sim_cfg_pkg.sv

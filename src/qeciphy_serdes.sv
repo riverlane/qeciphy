@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 
 module qeciphy_serdes #(
-    parameter string GT_TYPE = "GTY"  // GT primitive type: "GTX", "GTY", or "GTH"
+    parameter string GT_TYPE = "GTY"  // GT primitive type: "GTX", "GTY", "GTH", or "ETILE"
 ) (
     input  logic gt_ref_clk_i,    // GT reference clock input
     input  logic f_clk_i,         // Free-running fabric clock

@@ -17,7 +17,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 ## Key Features
 
 - **Simple Interface**: AXI4-Stream interface hides all physical layer complexity
-- **Universal Compatibility**: Supports any Xilinx FPGA with GTX, GTH, or GTY transceivers
+- **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Altera FPGAs (E-Tile transceiver)
 - **Latency**: ~150-200ns latency at 12.5 Gbps line rate
 - **Programmable Line Rate**: Configurable transceiver line rates for different bandwidth requirements
 - **Programmable Clock Sources**: Configurable reference clock sources for flexibility
@@ -38,7 +38,8 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 ### Prerequisites
 
 **To use QECIPHY:**
-- Vivado 2024.1+: tested with 2024.1 
+- Vivado 2024.1+: tested with 2024.1 (Xilinx targets)
+- Quartus Prime Pro 25.3.1: tested with 25.3.1 (Altera E-Tile targets)
 - Python 3.8+: for build scripts
 - Make: for build automation
 
@@ -52,7 +53,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 
 ### Three-Step Setup
 
-We provide three example profiles for different transceiver types:
+We provide example profiles for different transceiver types:
 
 ```bash
 # Clone the repository
@@ -61,19 +62,22 @@ cd qeciphy
 
 # Render design for your platform. 
 # This generates the required vendor specific IP cores and build/simulation configs.
-make render-design OPT_PROFILE=zcu216     # GTY transceivers
-# make render-design OPT_PROFILE=zcu106   # GTH transceivers  
-# make render-design OPT_PROFILE=kasliSoC # GTX transceivers
+make render-design OPT_PROFILE=zcu216     # GTY transceivers   
+# make render-design OPT_PROFILE=zcu106   # GTH transceivers   
+# make render-design OPT_PROFILE=kasliSoC # GTX transceivers   
+# make render-design OPT_PROFILE=de10     # E-Tile transceiver 
 
 # Run your first simulation
 make sim OPT_PROFILE=zcu216         # GTY transceivers
 # make sim OPT_PROFILE=zcu106       # GTH transceivers
 # make sim OPT_PROFILE=kasliSoC     # GTX transceivers
+# make sim OPT_PROFILE=de10         # E-Tile 
 
 # Run synthesis
-make synth OPT_PROFILE=zcu216       # GTY transceivers
-# make synth OPT_PROFILE=zcu106     # GTH transceivers
-# make synth OPT_PROFILE=kasliSoC   # GTX transceivers
+make synth OPT_PROFILE=zcu216       # GTY transceivers (uses Vivado)
+# make synth OPT_PROFILE=zcu106     # GTH transceivers (uses Vivado)
+# make synth OPT_PROFILE=kasliSoC   # GTX transceivers (uses Vivado)
+# make synth OPT_PROFILE=de10       # E-Tile (uses Quartus Prime Pro)
 ```
 
 > *And you're done! For detailed integration instructions, please refer to the [Integration Guide](INTEGRATION.md).*
@@ -127,7 +131,7 @@ qeciphy/
 ├── docs/                        # Documentation files
 ├── config.json                  # Build configuration (profiles, settings)
 ├── Makefile                     # Build automation
-├── src.f, sim.f, lint.f, uvm.f, sva.f # File lists for different flows
+├── src_common.f, src_xilinx.f, src_altera.f, sim.f, lint.f, uvm.f, sva.f # File lists for different flows
 ├── lint_waivers.vlt             # Verilator lint waivers
 ├── CODE_OF_CONDUCT.md           # Code of conduct
 ├── CONTRIBUTING.md              # Development guidelines
@@ -189,10 +193,10 @@ make sim OPT_PROFILE=<profile> OPT_TOOL=vcs OPT_MODE=gui
 
 ### Synthesis
 ```bash
-# Run synthesis using Vivado (batch mode)
+# Run synthesis using Vivado for Xilinx profiles and Quartus Prime Pro for Altera profiles(batch mode)
 make synth OPT_PROFILE=<profile>
 
-# Run synthesis using Vivado (GUI mode)
+# Run synthesis (GUI mode) — Vivado only
 make synth OPT_PROFILE=<profile> OPT_MODE=gui
 ```
 
@@ -226,13 +230,13 @@ make formal OPT_TOP=<module_name> OPT_MODE=gui
 
 ## Performance
 
-| Metric | GTX (7-series)  | GTH (UltraScale) | GTY (UltraScale+) |
-|--------|----------------|----------------------|----------------------|
-| **Latency** | ~220ns | ~190ns |~195ns |
+| Metric | GTX (7-series) | GTH (UltraScale) | GTY (UltraScale+) |
+|--------|---|---|---|
+| **Latency** | ~220ns | ~190ns | ~195ns |
 | **LUT** | 1372 | 1230 | 1230 |
-| **FF** | 1229 | 1156 | 1156 |
+| **FF** | 1229 | 1156 | 1156 | 
 
-*Measured at 12.5 Gbps line rate. Performance varies by platform and configuration.*
+*Measured at 12.5 Gbps line rate (Xilinx). Performance varies by platform and configuration.*
 
 ## Contributing
 

@@ -26,13 +26,14 @@ QECIPHY provides a simple AXI4-Stream interface that abstracts away all physical
 
 ### Hardware Requirements
 
-- Xilinx FPGA with GTX, GTH, or GTY transceivers
+- Xilinx FPGA with GTX, GTH, or GTY transceivers, or Altera FPGA with E-Tile transceivers
 - Appropriate reference clock source
 - Differential signal routing between FPGAs
 
 ### Software Requirements
 
-- Vivado 2024.1 or later
+- Vivado 2024.1 or later (Xilinx profiles)
+- Quartus Prime Pro 25.3.1 (Altera profiles)
 - Python 3.8+ (for build scripts)
 - Make (for build automation)
 
@@ -57,8 +58,9 @@ Check if your hardware platform matches one of the existing profiles in `config.
 - **zcu106**: Zynq UltraScale with GTH transceivers  
 - **kasliSoC**: 7-series with GTX transceivers
 
-If your platform is not listed, create a new profile in `config.json`:
+If your platform is not listed, create a new profile in `config.json`. Examples for both vendors:
 
+**Xilinx (GTY example):**
 ```json
 {
   "profiles": {
@@ -91,17 +93,56 @@ If your platform is not listed, create a new profile in `config.json`:
 }
 ```
 
+**Altera (E-Tile example):**
+```json
+{
+  "profiles": {
+    "your-platform": {
+      "device": {
+        "part": "AGFB014R24B2E2V",
+        "vendor": "altera",
+        "family": "Agilex 7"
+      },
+      "variant": "ETILE",
+      "rclk_freq": "156.25",
+      "transceiver": {
+        "line_rate_gbps": "10.3125"
+      },
+      "synth": {
+        "top": "qeciphy_syn_wrapper",
+        "filelists": [
+          "example_designs/<your-platform>/src.f"
+        ],
+        "constraints": [
+          "example_designs/<your-platform>/syn/clock_constraints.sdc",
+          "example_designs/<your-platform>/syn/pin_assignments.tcl"
+        ]
+      }
+    }
+  }
+}
+```
+
 **Profile Parameters:**
 - `device.part`: Your FPGA part number
+- `device.family`: Device family (Altera only)
 - `board`: Xilinx board file (optional)
-- `variant`: Transceiver type (GTX/GTH/GTY)
-- `fclk_freq`: Transceiver DRP clock frequency in MHz
+- `variant`: Transceiver type (GTX/GTH/GTY/E-Tile)
+- `fclk_freq`: Transceiver DRP clock frequency in MHz (Xilinx only)
 - `rclk_freq`: Transceiver reference clock frequency in MHz
-- `transceiver.gt_loc`: Transceiver location (e.g., "X0Y8") 
-- `transceiver.rx_rclk_src`: RX reference clock source (e.g., "X0Y8 clk1+2" means using refclock 1 from the GT quad located 2 quads above X0Y8)
-- `transceiver.tx_rclk_src`: TX reference clock source (same format as RX)
+- `transceiver.gt_loc`: Transceiver location (e.g., "X0Y8") (Xilinx only)
+- `transceiver.rx_rclk_src`: RX reference clock source (e.g., "X0Y8 clk1+2" means using refclock 1 from the GT quad located 2 quads above X0Y8) (Xilinx only)
+- `transceiver.tx_rclk_src`: TX reference clock source (same format as RX) (Xilinx only)
 - `transceiver.line_rate_gbps`: Transceiver line rate in Gbps (e.g., "10.3125")
 - `synth`: Synthesis configuration (optional, for standalone testing)
+- `pre_setup_hooks` Lists IP (`.tcl`) scripts run at synthesis time to generate board-level IPs (VIO probes, ILAs, etc.). Leave empty if no such IPs are needed.
+
+**Vendor-Specific Notes (Important):**
+- Xilinx profiles (`GTX`/`GTH`/`GTY`) require `fclk_freq`, `transceiver.gt_loc`, and Xilinx-oriented `rx_rclk_src`/`tx_rclk_src` values.
+- Altera `ETILE` profiles (for example `de10`) may differ by design:
+  - `device.family` is required (for example `"Agilex 7"`).
+  - `fclk_freq` should be omitted
+  - `transceiver.gt_loc` should be omitted
 
 **Important:** Refer to your FPGA documentation for correct GT site assignments and available reference clock sources for your specific device and board.
 
@@ -112,7 +153,7 @@ If your platform is not listed, create a new profile in `config.json`:
 make render-design OPT_PROFILE=<your-profile>
 ```
 
-This generates transceiver IP cores configured for your hardware platform.
+This generates transceiver IP cores and package files configured for your hardware platform.
 
 ### Step 4: (Optional) Create Standalone Test Design
 
@@ -129,20 +170,34 @@ For quick platform validation, create a standalone example design:
    - Top-level module that instantiates QECIPHY
    - XDC constraint file with pin assignments and timing
 
-   **Example Designs Folder Structure:**
+   **Example Designs Folder Structure (Xilinx):**
    ```
    example_designs/<your-platform>/
    ├── src/
    │   └── qeciphy_syn_wrapper.sv    # Top-level wrapper module
    ├── src.f                         # Source file list
    └── syn/
-       └── constraints.xdc           # Platform-specific constraints
+       └── constraints.xdc           # XDC timing and pin constraints
+   ```
+
+   **Example Designs Folder Structure (Altera):**
+   ```
+   example_designs/<your-platform>/
+   ├── src/
+   │   └── qeciphy_syn_wrapper.sv    # Top-level wrapper module
+   ├── src.f                         # Source file list
+   └── syn/
+       ├── clock_constraints.sdc     # SDC timing constraints
+       └── pin_assignments.tcl       # Quartus pin assignment script
+       └── signal_tap.stp            # Quartus signal tap assignments
    ```
 
    **Required Files:**
    - **`src/qeciphy_syn_wrapper.sv`**: SystemVerilog top-level that instantiates QECIPHY with your platform's clock and pin connections
    - **`src.f`**: File list containing the path to your top-level module
-   - **`syn/constraints.xdc`**: XDC file with pin assignments, clock definitions, and I/O standards for your platform
+   - **`syn/constraints.xdc`** (Xilinx): XDC file with pin assignments, clock definitions, and I/O standards for your platform
+   - **`syn/clock_constraints.sdc`** (Altera): SDC file with clock definitions, clock groups, multicycle paths, and false paths
+   - **`syn/pin_assignments.tcl`** (Altera): Tcl script sourced by Quartus for pin and I/O standard assignments
 
 3. **Update Config for Synthesis**:
    Add synthesis settings to your profile in `config.json`:
@@ -158,20 +213,33 @@ For quick platform validation, create a standalone example design:
    }
    ```
 
+   For Altera, list `.sdc` and `.tcl` constraint files instead of `.xdc`:
+   ```json
+   "constraints": [
+     "example_designs/<your-platform>/syn/clock_constraints.sdc",
+     "example_designs/<your-platform>/syn/pin_assignments.tcl"
+   ]
+   ```
+
 4. **Run Synthesis**:
    ```bash
    make synth OPT_PROFILE=<your-platform>
    ```
    
-   This creates a synthesis project with bitstream and debug files at:
+   For Xilinx profiles, this creates a bitstream and debug file at:
    - `run/synth_qeciphy/synth_qeciphy.runs/impl_1/qeciphy_syn_wrapper.bit`
    - `run/synth_qeciphy/synth_qeciphy.runs/impl_1/qeciphy_syn_wrapper.ltx`
+
+   For Altera profiles, the SOF programming file is at:
+   - `run/<project_name>/output_files/<top>.sof`
+
+   where `<project_name>` is controlled by `OPT_QUARTUS_PROJECT` (default: `qeciphy_integration`).
 
 ### Step 5: Integrate into Your Actual Design
 
 #### Add QECIPHY Files to Your Project
 
-Add all files listed in `src.f` and `xci.f` in your project.
+For Xilinx, add all files listed in `src_xilinx.f` and `generated_ip.f` to your project. For Altera, add all files listed in `src_altera.f` and `generated_ip.f`.
 
 #### Instantiate QECIPHY Module
 
@@ -209,15 +277,17 @@ QECIPHY i_QECIPHY (
 
 ### Step 6: Apply Timing Constraints and Run Synthesis
 
-1. **Add Timing Constraints**: Copy the appropriate timing constraints from the [Timing Constraints](#timing-constraints) section below and add them to your project's XDC constraint file.
+1. **Add Timing Constraints**: Copy the appropriate timing constraints from the [Timing Constraints](#timing-constraints) section below and add them to your project's constraint file (`.xdc` for Xilinx, `.sdc` for Altera).
 
 2. **Run Synthesis**: With QECIPHY integrated into your design and timing constraints applied, run synthesis with your complete design.
 
 ## Timing Constraints
 
-You must add the following timing constraints to your project for proper operation.
+You must add the following timing constraints to your project for proper operation. Xilinx profiles use XDC format (Vivado); Altera profiles use SDC format (Quartus).
 
 We recommend instantiating the IP with the name `i_QECIPHY` or `u_QECIPHY`. The following constraints can then be applied based on the type of transceiver being used. These constraints handle the clock relationships within the QECIPHY.
+
+**Note:** The E-Tile SDC constraints use `get_keepers` path expressions containing `i_QECIPHY` — the `i_QECIPHY` instantiation name is required for these expressions to resolve.
 
 ### GTY Transceiver Constraints
 
@@ -331,6 +401,64 @@ set_multicycle_path 1 -hold  -start -from [get_clocks tx_clk_2x] -to [get_clocks
 
 # GT location constraint (replace 'location' with actual GT site)
 set_property LOC {location} [get_cells -hierarchical -filter {lib_cell =~ GTXE2_CHANNEL && NAME =~ *QECIPHY*}]
+```
+
+### E-Tile Transceiver Constraints
+
+These constraints are in SDC format for Quartus Prime. They assume the QECIPHY instance is named `i_QECIPHY` — this naming is required for the false path `get_keepers` expressions to resolve correctly.
+
+```tcl
+# Reference clock and free-running/AXI clock (replace period and port names for your board)
+create_clock -name RCLK -period <refclk_period> [get_ports {<refclk_port>}]
+create_clock -name ACLK -period <axi_clk_period> [get_ports {<axi_clk_port>}]
+
+# QECIPHY internal clocks from Altera clock divider network
+# Periods depend on the configured line rate:
+#   2x clock period (ns) = 40 / line_rate_gbps    (e.g. 3.878 ns at 10.3125 Gbps)
+#   1x clock period (ns) = 80 / line_rate_gbps    (e.g. 7.756 ns at 10.3125 Gbps)
+create_clock -name tx_clk_2x_o -period <2x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_tx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div1]
+create_clock -name rx_clk_2x_o -period <2x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_rx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div1]
+create_clock -name tx_clk_o -period <1x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_tx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div2]
+create_clock -name rx_clk_o -period <1x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_rx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div2]
+
+# Collect clock groups
+set rx_clk_2x [get_clocks -include_generated_clocks rx_clk_2x_o]
+set rx_clk_1x [get_clocks -include_generated_clocks rx_clk_o]
+set tx_clk_2x [get_clocks -include_generated_clocks tx_clk_2x_o]
+set tx_clk_1x [get_clocks -include_generated_clocks tx_clk_o]
+
+set rx_grp [add_to_collection $rx_clk_2x $rx_clk_1x]
+set tx_grp [add_to_collection $tx_clk_2x $tx_clk_1x]
+
+# Set asynchronous clock groups
+# Optionally include additional board clocks
+set_clock_groups -asynchronous \
+    -group [get_clocks RCLK] \
+    -group [get_clocks -include_generated_clocks ACLK] \
+    -group $rx_grp \
+    -group $tx_grp
+
+# Multicycle paths for 1x/2x clock pair timing
+set_multicycle_path -setup -end   -from $rx_clk_2x -to $rx_clk_1x 2
+set_multicycle_path -hold  -end   -from $rx_clk_2x -to $rx_clk_1x 1
+set_multicycle_path -setup -start -from $rx_clk_1x -to $rx_clk_2x 2
+set_multicycle_path -hold  -start -from $rx_clk_1x -to $rx_clk_2x 1
+set_multicycle_path -setup -end   -from $tx_clk_2x -to $tx_clk_1x 2
+set_multicycle_path -hold  -end   -from $tx_clk_2x -to $tx_clk_1x 1
+set_multicycle_path -setup -start -from $tx_clk_1x -to $tx_clk_2x 2
+set_multicycle_path -hold  -start -from $tx_clk_1x -to $tx_clk_2x 1
+
+# False paths for E-Tile reset/ready signals crossing clock domains
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|gen_etile.transceiver_inst|xcvrnphy_fme_0|g_pma_rsfec_reset.g_auto_reset.reset_ip_auto_etile_inst|reset_control_inst|g_rx.g_rx[0].g_rx.counter_rx_ready|r_reset}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_rx_ready_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|gen_etile.transceiver_inst|xcvrnphy_fme_0|g_pma_rsfec_reset.g_auto_reset.reset_ip_auto_etile_inst|reset_control_inst|g_tx.g_tx[0].g_tx.counter_tx_ready|r_reset}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_tx_ready_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|gen_etile.transceiver_inst|xcvrnphy_fme_0|g_pma_rsfec_reset.g_auto_reset.reset_ip_auto_etile_inst|reset_control_inst|g_rx.g_rx[0].g_rx.counter_rx_ready|r_reset}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_rx_ready_2x_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|gen_etile.transceiver_inst|xcvrnphy_fme_0|g_pma_rsfec_reset.g_auto_reset.reset_ip_auto_etile_inst|reset_control_inst|g_tx.g_tx[0].g_tx.counter_tx_ready|r_reset}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_tx_ready_2x_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tx_reset_sync_ff[0]}]
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|rx_reset_sync_ff[0]}]
 ```
 
 ## Data Path Integration Examples
