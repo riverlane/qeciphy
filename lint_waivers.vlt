@@ -90,25 +90,20 @@ lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_word_align.sv" -match "Bits of si
 
 // Ignore linting errors for lint stub files
 
+//Xilinx Lint Stubs
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/BUFG_GT.sv"           
-
 lint_off -rule UNUSEDPARAM     -file "*lint_stubs/xilinx/GTXE2_COMMON.sv"  
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/GTXE2_COMMON.sv"  
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/qeciphy_gtx_transceiver.sv"   
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/qeciphy_gth_transceiver.sv"    
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/qeciphy_gty_transceiver.sv"
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/qeciphy_clk_mmcm.sv"       
 
-lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/qeciphy_clk_mmcm.sv"       
 
-lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/qeciphy_gtx_transceiver.sv"   
-
-lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/qeciphy_gth_transceiver.sv"    
-
-lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/qeciphy_gty_transceiver.sv"
-
+//Altera Lint Stubs
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/qeciphy_etile.sv"
-
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/qeciphy_ftile.sv"
-
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/qeciphy_altera_clk_mmcm.sv"
-
 lint_off -rule UNUSEDPARAM     -file "*lint_stubs/altera/tennm_lcell_comb.sv"
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/altera/tennm_lcell_comb.sv"
 
