@@ -232,23 +232,20 @@ The module monitors the expected protocol pattern (FAW, CRC, and data word posit
 ```
 GT Primitive
     |
-    | (Raw 32-bit data with comma detection)
+    | (32-bit data with comma alignment)
     v
-Comma Detection & Realignment (Hardware in GT)
+qeciphy_rx_comma_detect
     |
-    | (Comma-aligned 32-bit data)
+    | (32-bit data with verified frame alignment)
     v
-qeciphy_rx_comma_detect.sv
+qeciphy_rx_32b_to_64b
     |
-    | (Frame Alignment Word pattern verification)
+    | (64-bit word-aligned data)
     v
-RX Byte Aligner Output (32-bit aligned data)
-    |
-    v
-RX Word Aligner (32b to 64b)
+qeciphy_rx_channeldecoder
 ```
 
-**Altera:** E-Tile and F-Tile transceivers output a raw 40-bit 8b10b-encoded stream with no hardware comma alignment. Byte alignment is performed entirely in fabric logic by two additional RTL modules that replicate the GT transceiver's native comma detection and alignment capabilities combined with the pattern monitoring through the `qeciphy_rx_comma_detect.sv` module:
+**Altera:** E-Tile and F-Tile transceivers output a raw 40-bit 8b10b-encoded stream with no hardware comma alignment. Comma alignment is performed entirely in fabric logic by two additional RTL modules that replicate the GT transceiver's native comma detection and alignment capabilities combined with the pattern monitoring through the `qeciphy_rx_comma_detect.sv` module:
 
 1. **Word Aligner** (`qeciphy_word_align`): Barrel-shifts the raw 40-bit encoded stream across all possible bit positions, searching for valid K28.5 comma patterns in the encoded domain. It tries up to `RXSLIDE_COUNT_MAX` positions and requires `RX_ALIGN_MATCH_MAX` consecutive matches before declaring alignment. A failed search triggers `align_fail_o`, which resets the RX datapath for a retry.
 
@@ -260,22 +257,23 @@ E-Tile / F-Tile IP
     |
     | (Raw 40-bit 8b10b-encoded stream)
     v
-qeciphy_word_align.sv (Barrel Shifter)
+qeciphy_word_align
     |
-    | (Searches for K28.5 comma patterns, up to RXSLIDE_COUNT_MAX positions)
+    | (40-bit data with comma alignment)
     v
 eth_8b10b_dec_x4_a (8b10b Decoder x4)
     |
-    | (Decoded 32-bit parallel data)
+    | (32-bit data with comma alignment)
     v
 qeciphy_rx_comma_detect.sv
     |
-    | (Frame Alignment Word pattern verification)
+    | (32-bit data with verified frame alignment)
     v
-RX Byte Aligner Output (32-bit aligned data)
+qeciphy_rx_32b_to_64b
     |
+    | (64-bit word-aligned data)
     v
-RX Word Aligner (32b to 64b)
+qeciphy_rx_channeldecoder
 ```
 
 #### 5.2 RX Word Aligner

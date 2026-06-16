@@ -141,7 +141,7 @@ If your platform is not listed, create a new profile in `config.json`. Examples 
 - Xilinx profiles (`GTX`/`GTH`/`GTY`) require `fclk_freq`, `transceiver.gt_loc`, and Xilinx-oriented `rx_rclk_src`/`tx_rclk_src` values.
 - Altera `ETILE` profiles (for example `de10`) may differ by design:
   - `device.family` is required (for example `"Agilex 7"`).
-  - `fclk_freq` shouldk be omitted
+  - `fclk_freq` should be omitted
   - `transceiver.gt_loc` should be omitted
 
 **Important:** Refer to your FPGA documentation for correct GT site assignments and available reference clock sources for your specific device and board.
