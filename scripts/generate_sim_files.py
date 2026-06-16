@@ -25,7 +25,7 @@ VIVADO_SIM_EXPORT_TCL = "scripts/vivado_sim_export.tcl"
 GENERATED_SIM_FILES_DIR = "tb/generated_sim_files"
 IP_SIM_EXPORT_DIR = "run/ip_sim_export"
 GENERATED_SIM_F = "generated_sim.f"
-XCI_DIR = "xci"
+XCI_DIR = "generated_ip"
 
 # HDL file extensions in priority order (longest first to avoid partial matches)
 HDL_EXTENSIONS = ("vhdl", "vhd", "sv", "v")
