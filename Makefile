@@ -384,8 +384,26 @@ quartus_generate_ip:
 			"--cmd=set argv [list {$(PART)} {$(FAMILY)} $$LINE_RATE_MBPS $(RCLK_FREQ)]") ; \
 		echo "INFO: Copying .ip files from $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip to $(GENIP_DIR)"; \
 		find $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip -name "*.ip" -exec cp {} $(GENIP_DIR)/ \; ; \
+	elif [ "$(VARIANT)" = "FTILE" ]; then \
+		LINE_RATE_MBPS=$$(echo "$(LINE_RATE_GBPS) * 1000" | bc -l); \
+		[ -n "$$LINE_RATE_MBPS" ] || { echo "ERROR: LINE_RATE_GBPS is not set for profile $(OPT_PROFILE)"; exit 1; }; \
+		(cd $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip && \
+		qsys-script \
+			--script=$(CURRENT_DIR)/$(ALTERA_VENDOR_IP_DIR)/qeciphy_ftile.tcl \
+			--quartus-project=$(CURRENT_DIR)/$(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/$(ALTERA_IP_GEN_PROJECT).qpf \
+			"--cmd=set argv [list {$(PART)} {$(FAMILY)} $$LINE_RATE_MBPS $(RCLK_FREQ)]" && \
+		qsys-script \
+			--script=$(CURRENT_DIR)/$(ALTERA_VENDOR_IP_DIR)/refclk.tcl \
+			--quartus-project=$(CURRENT_DIR)/$(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/$(ALTERA_IP_GEN_PROJECT).qpf \
+			"--cmd=set argv [list {$(PART)} {$(FAMILY)} $$LINE_RATE_MBPS $(RCLK_FREQ)]" && \
+		qsys-script \
+			--script=$(CURRENT_DIR)/$(ALTERA_VENDOR_IP_DIR)/qeciphy_altera_clk_mmcm.tcl \
+			--quartus-project=$(CURRENT_DIR)/$(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/$(ALTERA_IP_GEN_PROJECT).qpf \
+			"--cmd=set argv [list {$(PART)} {$(FAMILY)} $$LINE_RATE_MBPS $(RCLK_FREQ)]") ; \
+		echo "INFO: Copying .ip files from $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip to $(GENIP_DIR)"; \
+		find $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)/ip -name "*.ip" -exec cp {} $(GENIP_DIR)/ \; ; \
 	else \
-		echo "ERROR: Unsupported variant $(VARIANT) for Quartus IP generation. Must be ETILE."; \
+		echo "ERROR: Unsupported variant $(VARIANT) for Quartus IP generation. Must be ETILE or FTILE."; \
 		exit 1; \
 	fi
 	
@@ -393,7 +411,7 @@ quartus_generate_ip:
 	@find $(GENIP_DIR) -name "*.ip" | sort > $(GENIP_FILELIST)
 	@echo "INFO: Created $(GENIP_FILELIST) with $$(wc -l < $(GENIP_FILELIST)) IP files"
 	@echo "INFO: Cleaning up temporary project $(ALTERA_IP_GEN_PROJECT)"
-	@rm -rf $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)
+# 	@rm -rf $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)
 
 generate-build-cfg-pkg:
 	@echo "INFO: Generating build configuration package"

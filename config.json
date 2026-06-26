@@ -114,6 +114,35 @@
           "example_designs/vendors/altera/25.3.1/ip/sys_clk_200_pll.tcl"
         ]
       }
+  },
+   "agilex7": {
+      "device": {
+        "part": "AGIB027R29A1E1VB",
+        "vendor": "altera",
+	"family": "Agilex 7"
+      },
+      "variant": "FTILE",
+      "rclk_freq": "156.25",
+      "transceiver": {
+        "line_rate_gbps": "10.3125"
+      },
+      "synth": {
+        "top": "qeciphy_syn_wrapper",
+        "filelists": [
+          "example_designs/agilex7/src.f"
+        ],
+        "constraints": [
+          "example_designs/agilex7/syn/pin_assignments.tcl",
+          "example_designs/agilex7/syn/clock_constraints.sdc",
+          "example_designs/agilex7/syn/signal_tap.stp"
+	],
+        "pre_setup_hooks": [
+          "example_designs/vendors/altera/25.3.1/ip/qeciphy_vio.tcl",
+          "example_designs/vendors/altera/25.3.1/ip/reset_release.tcl",
+          "example_designs/vendors/altera/25.3.1/ip/sys_clk_100.tcl",
+          "example_designs/vendors/altera/25.3.1/ip/sys_clk_200_pll.tcl"
+        ]
+      }
   }
   }
 }

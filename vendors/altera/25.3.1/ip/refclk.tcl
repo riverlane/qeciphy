@@ -9,6 +9,8 @@ if {[llength $argv] >= 1} { set device         [lindex $argv 0] }
 if {[llength $argv] >= 2} { set device_family  [lindex $argv 1] }
 if {[llength $argv] >= 4} { set rclk_freq_mhz  [lindex $argv 3] }
 
+set rclk_freq_mhz [format "%.6f" $rclk_freq_mhz]
+
 # create the system "refclk"
 proc do_create_refclk {} {
 	global device device_family rclk_freq_mhz
