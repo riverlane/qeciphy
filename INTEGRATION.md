@@ -26,7 +26,7 @@ QECIPHY provides a simple AXI4-Stream interface that abstracts away all physical
 
 ### Hardware Requirements
 
-- Xilinx FPGA with GTX, GTH, or GTY transceivers, or Altera FPGA with E-Tile transceivers
+- Xilinx FPGA with GTX, GTH, or GTY transceivers, or Altera FPGA with E-Tile or F-Tile transceivers
 - Appropriate reference clock source
 - Differential signal routing between FPGAs
 
@@ -57,6 +57,8 @@ Check if your hardware platform matches one of the existing profiles in `config.
 - **zcu216**: Zynq UltraScale+ with GTY transceivers
 - **zcu106**: Zynq UltraScale with GTH transceivers  
 - **kasliSoC**: 7-series with GTX transceivers
+- **de10**: Agilex 7 with E-Tile transceiver
+- **agilex7**: Agilex 7 I-Series Development Kit with F-Tile transceiver
 
 If your platform is not listed, create a new profile in `config.json`. Examples for both vendors:
 
@@ -127,7 +129,7 @@ If your platform is not listed, create a new profile in `config.json`. Examples 
 - `device.part`: Your FPGA part number
 - `device.family`: Device family (Altera only)
 - `board`: Xilinx board file (optional)
-- `variant`: Transceiver type (GTX/GTH/GTY/E-Tile)
+- `variant`: Transceiver type (`GTX`/`GTH`/`GTY`/`ETILE`/`FTILE`)
 - `fclk_freq`: Transceiver DRP clock frequency in MHz (Xilinx only)
 - `rclk_freq`: Transceiver reference clock frequency in MHz
 - `transceiver.gt_loc`: Transceiver location (e.g., "X0Y8") (Xilinx only)
@@ -139,7 +141,7 @@ If your platform is not listed, create a new profile in `config.json`. Examples 
 
 **Vendor-Specific Notes (Important):**
 - Xilinx profiles (`GTX`/`GTH`/`GTY`) require `fclk_freq`, `transceiver.gt_loc`, and Xilinx-oriented `rx_rclk_src`/`tx_rclk_src` values.
-- Altera `ETILE` profiles (for example `de10`) may differ by design:
+- Altera `ETILE` and `FTILE` profiles may differ by design:
   - `device.family` is required (for example `"Agilex 7"`).
   - `fclk_freq` should be omitted
   - `transceiver.gt_loc` should be omitted
@@ -287,7 +289,7 @@ You must add the following timing constraints to your project for proper operati
 
 We recommend instantiating the IP with the name `i_QECIPHY` or `u_QECIPHY`. The following constraints can then be applied based on the type of transceiver being used. These constraints handle the clock relationships within the QECIPHY.
 
-**Note:** The E-Tile SDC constraints use `get_keepers` path expressions containing `i_QECIPHY` — the `i_QECIPHY` instantiation name is required for these expressions to resolve.
+**Note:** The E-Tile and F-Tile SDC constraints use `get_keepers` path expressions containing `i_QECIPHY` — the `i_QECIPHY` instantiation name is required for these expressions to resolve.
 
 ### GTY Transceiver Constraints
 
@@ -460,6 +462,66 @@ set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_q
 set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tx_reset_sync_ff[0]}]
 set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|rx_reset_sync_ff[0]}]
 ```
+
+### F-Tile Transceiver Constraints
+
+These constraints are in SDC format for Quartus Prime. They assume the QECIPHY instance is named `i_QECIPHY`. The clock creation paths are identical to E-Tile; only the false path `get_keepers` expressions differ due to the F-Tile's internal reset controller hierarchy.
+
+```tcl
+# Reference clock and AXI clock (replace period and port names for your board)
+create_clock -name RCLK -period <refclk_period> [get_ports {<refclk_port>}]
+create_clock -name ACLK -period <axi_clk_period> [get_ports {<axi_clk_port>}]
+
+# QECIPHY internal clocks from Altera clock divider network
+# Periods depend on the configured line rate:
+#   2x clock period (ns) = 40 / line_rate_gbps    (e.g. 3.878 ns at 10.3125 Gbps)
+#   1x clock period (ns) = 80 / line_rate_gbps    (e.g. 7.756 ns at 10.3125 Gbps)
+create_clock -name tx_clk_2x_o -period <2x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_tx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div1]
+create_clock -name rx_clk_2x_o -period <2x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_rx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div1]
+create_clock -name tx_clk_o -period <1x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_tx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div2]
+create_clock -name rx_clk_o -period <1x_period> \
+    [get_pins i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tile_rx_clk_network|intelclkctrl_0|clkdiv_inst|clock_div2]
+
+# Collect clock groups
+set rx_clk_2x [get_clocks -include_generated_clocks rx_clk_2x_o]
+set rx_clk_1x [get_clocks -include_generated_clocks rx_clk_o]
+set tx_clk_2x [get_clocks -include_generated_clocks tx_clk_2x_o]
+set tx_clk_1x [get_clocks -include_generated_clocks tx_clk_o]
+
+set rx_grp [add_to_collection $rx_clk_2x $rx_clk_1x]
+set tx_grp [add_to_collection $tx_clk_2x $tx_clk_1x]
+
+# Set asynchronous clock groups
+# Optionally include additional board clocks
+set_clock_groups -asynchronous \
+    -group [get_clocks RCLK] \
+    -group [get_clocks -include_generated_clocks ACLK] \
+    -group $rx_grp \
+    -group $tx_grp
+
+# Multicycle paths for 1x/2x clock pair timing
+set_multicycle_path -setup -end   -from $rx_clk_2x -to $rx_clk_1x 2
+set_multicycle_path -hold  -end   -from $rx_clk_2x -to $rx_clk_1x 1
+set_multicycle_path -setup -start -from $rx_clk_1x -to $rx_clk_2x 2
+set_multicycle_path -hold  -start -from $rx_clk_1x -to $rx_clk_2x 1
+set_multicycle_path -setup -end   -from $tx_clk_2x -to $tx_clk_1x 2
+set_multicycle_path -hold  -end   -from $tx_clk_2x -to $tx_clk_1x 1
+set_multicycle_path -setup -start -from $tx_clk_1x -to $tx_clk_2x 2
+set_multicycle_path -hold  -start -from $tx_clk_1x -to $tx_clk_2x 1
+
+# False paths for F-Tile reset/ready signals crossing clock domains
+set_false_path -from [get_keepers -no_duplicates {synth_qeciphy_auto_tiles|*__reset_controller|x_f_tile_soft_reset_ctlr_sip_v1|x_ftile_reset|rst_ctrl|rx_lane_current_state_r[13]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_rx_ready_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {synth_qeciphy_auto_tiles|*__reset_controller|x_f_tile_soft_reset_ctlr_sip_v1|x_ftile_reset|rst_ctrl|tx_lane_current_state_r[13]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_tx_ready_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {synth_qeciphy_auto_tiles|*__reset_controller|x_f_tile_soft_reset_ctlr_sip_v1|x_ftile_reset|rst_ctrl|rx_lane_current_state_r[13]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_rx_ready_2x_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {synth_qeciphy_auto_tiles|*__reset_controller|x_f_tile_soft_reset_ctlr_sip_v1|x_ftile_reset|rst_ctrl|tx_lane_current_state_r[13]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|i_tx_ready_2x_sync|sync_stage_sf[0]}]
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|tx_reset_sync_ff[0]}]
+set_false_path -from [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_resetcontroller|i_cdc_gt_rst_n_o|sync_stage_sf[1]}] -to [get_keepers -no_duplicates {i_QECIPHY|i_qeciphy_serdes|i_qeciphy_gt_wrapper|gen_altera.i_qeciphy_gt_altera|rx_reset_sync_ff[0]}]
+```
+
+> **Note:** The exact keeper paths for F-Tile false paths depend on Quartus's auto-tile placement. Replace `*__reset_controller` with the specific tile instance name reported by the Quartus Timing Analyzer for your device. Refer to `example_designs/agilex7/syn/clock_constraints.sdc` for a board-specific example.
 
 ## Data Path Integration Examples
 

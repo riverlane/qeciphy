@@ -17,7 +17,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 ## Key Features
 
 - **Simple Interface**: AXI4-Stream interface hides all physical layer complexity
-- **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Altera FPGAs (E-Tile transceiver)
+- **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Altera FPGAs (E-Tile and F-Tile transceivers)
 - **Latency**: ~150-200ns latency at 12.5 Gbps line rate
 - **Programmable Line Rate**: Configurable transceiver line rates for different bandwidth requirements
 - **Programmable Clock Sources**: Configurable reference clock sources for flexibility
@@ -39,7 +39,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 
 **To use QECIPHY:**
 - Vivado 2024.1+: tested with 2024.1 (Xilinx targets)
-- Quartus Prime Pro 25.3.1: tested with 25.3.1 (Altera E-Tile targets)
+- Quartus Prime Pro 25.3.1: tested with 25.3.1 (Altera E-Tile and F-Tile targets)
 - Python 3.8+: for build scripts
 - Make: for build automation
 
@@ -66,18 +66,20 @@ make render-design OPT_PROFILE=zcu216     # GTY transceivers
 # make render-design OPT_PROFILE=zcu106   # GTH transceivers   
 # make render-design OPT_PROFILE=kasliSoC # GTX transceivers   
 # make render-design OPT_PROFILE=de10     # E-Tile transceiver 
+# make render-design OPT_PROFILE=agilex7  # F-Tile transceiver 
 
 # Run your first simulation
 make sim OPT_PROFILE=zcu216         # GTY transceivers
 # make sim OPT_PROFILE=zcu106       # GTH transceivers
 # make sim OPT_PROFILE=kasliSoC     # GTX transceivers
-# make sim OPT_PROFILE=de10         # E-Tile 
+# Note: Simulation with Altera FPGAs is currently unsupported
 
 # Run synthesis
 make synth OPT_PROFILE=zcu216       # GTY transceivers (uses Vivado)
 # make synth OPT_PROFILE=zcu106     # GTH transceivers (uses Vivado)
 # make synth OPT_PROFILE=kasliSoC   # GTX transceivers (uses Vivado)
 # make synth OPT_PROFILE=de10       # E-Tile (uses Quartus Prime Pro)
+# make synth OPT_PROFILE=agilex7    # F-Tile (uses Quartus Prime Pro)
 ```
 
 > *And you're done! For detailed integration instructions, please refer to the [Integration Guide](INTEGRATION.md).*
