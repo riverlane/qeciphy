@@ -189,6 +189,8 @@ make sim OPT_PROFILE=<profile> OPT_TOOL=vcs
 
 # Run VCS simulation (GUI mode)
 make sim OPT_PROFILE=<profile> OPT_TOOL=vcs OPT_MODE=gui
+
+#Note: Altera simulation is currently unsupported
 ```
 
 > *If you are interested to learn more about multi-platform simulation support, please refer to the [Multi-Platform Simulation Guide](docs/multi_platform_simulation.md).*
