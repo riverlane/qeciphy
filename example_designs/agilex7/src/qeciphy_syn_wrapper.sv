@@ -27,8 +27,6 @@ module qeciphy_syn_wrapper (
    logic        sys_clk_100;
    logic        sys_clk_200;
    logic        init_done_n;
-   logic        out_systempll_synthlock_0;
-   logic        out_systempll_clk_0;
 
    //Reset logic
    logic [ 4:0] rst_counter;
@@ -160,8 +158,8 @@ module qeciphy_syn_wrapper (
 
 
    refclk refclk_inst (
-       .out_systempll_synthlock_0(out_systempll_synthlock_0),
-       .out_systempll_clk_0      (out_systempll_clk_0),
+       .out_systempll_synthlock_0(),
+       .out_systempll_clk_0      (),
        .out_refclk_fgt_4         (RCLK),
        .in_refclk_fgt_4          (gt_refclk_in_p),
        .disable_refclk_monitor_4 (1'b0)

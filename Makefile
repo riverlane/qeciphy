@@ -411,7 +411,7 @@ quartus_generate_ip:
 	@find $(GENIP_DIR) -name "*.ip" | sort > $(GENIP_FILELIST)
 	@echo "INFO: Created $(GENIP_FILELIST) with $$(wc -l < $(GENIP_FILELIST)) IP files"
 	@echo "INFO: Cleaning up temporary project $(ALTERA_IP_GEN_PROJECT)"
-# 	@rm -rf $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)
+	@rm -rf $(RUN_DIR)/$(ALTERA_IP_GEN_PROJECT)
 
 generate-build-cfg-pkg:
 	@echo "INFO: Generating build configuration package"
