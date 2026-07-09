@@ -116,6 +116,7 @@ If your platform is not listed, create a new profile in `config.json`. Examples 
           "example_designs/<your-platform>/src.f"
         ],
         "constraints": [
+          "example_designs/<your-platform>/syn/project_settings.tcl",
           "example_designs/<your-platform>/syn/clock_constraints.sdc",
           "example_designs/<your-platform>/syn/pin_assignments.tcl"
         ]
@@ -189,6 +190,7 @@ For quick platform validation, create a standalone example design:
    │   └── qeciphy_syn_wrapper.sv    # Top-level wrapper module
    ├── src.f                         # Source file list
    └── syn/
+       ├── project_settings.tcl      # Quartus project/device settings
        ├── clock_constraints.sdc     # SDC timing constraints
        └── pin_assignments.tcl       # Quartus pin assignment script
        └── signal_tap.stp            # Quartus signal tap assignments
@@ -198,6 +200,7 @@ For quick platform validation, create a standalone example design:
    - **`src/qeciphy_syn_wrapper.sv`**: SystemVerilog top-level that instantiates QECIPHY with your platform's clock and pin connections
    - **`src.f`**: File list containing the path to your top-level module
    - **`syn/constraints.xdc`** (Xilinx): XDC file with pin assignments, clock definitions, and I/O standards for your platform
+   - **`syn/project_settings.tcl`** (Altera): Tcl script sourced by Quartus with board-level project settings
    - **`syn/clock_constraints.sdc`** (Altera): SDC file with clock definitions, clock groups, multicycle paths, and false paths
    - **`syn/pin_assignments.tcl`** (Altera): Tcl script sourced by Quartus for pin and I/O standard assignments
 
@@ -218,6 +221,7 @@ For quick platform validation, create a standalone example design:
    For Altera, list `.sdc` and `.tcl` constraint files instead of `.xdc`:
    ```json
    "constraints": [
+     "example_designs/<your-platform>/syn/project_settings.tcl",
      "example_designs/<your-platform>/syn/clock_constraints.sdc",
      "example_designs/<your-platform>/syn/pin_assignments.tcl"
    ]
