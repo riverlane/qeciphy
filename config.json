@@ -103,6 +103,7 @@
           "example_designs/de10/src.f"
         ],
         "constraints": [
+          "example_designs/de10/syn/project_settings.tcl",
           "example_designs/de10/syn/pin_assignments.tcl",
           "example_designs/de10/syn/clock_constraints.sdc",
           "example_designs/de10/syn/signal_tap.stp"
