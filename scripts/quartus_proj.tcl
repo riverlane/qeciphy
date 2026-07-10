@@ -130,7 +130,6 @@ if {$make_assignments} {
     set_global_assignment -name PROJECT_OUTPUT_DIRECTORY     output_files
     set_global_assignment -name FAMILY                       $device_family
     set_global_assignment -name DEVICE                       $proj_device
-    set_global_assignment -name DEVICE_INITIALIZATION_CLOCK  OSC_CLK_1_125MHZ
     set_global_assignment -name TOP_LEVEL_ENTITY             $top_entity
     set_global_assignment -name VERILOG_INPUT_VERSION        SYSTEMVERILOG_2012
     set_global_assignment -name VHDL_INPUT_VERSION           VHDL_2019
@@ -184,30 +183,6 @@ if {$make_assignments} {
             -comment "Order-dependent: must appear after all other QIP_FILE and IP_FILE settings" \
             -tag quartus_tlg
     }
-	set_global_assignment -name VID_OPERATION_MODE "PMBUS MASTER"
-	set_global_assignment -name USE_PWRMGT_SCL SDM_IO0
-	set_global_assignment -name USE_PWRMGT_SDA SDM_IO12
-	set_global_assignment -name USE_CONF_DONE SDM_IO16
-	set_global_assignment -name ACTIVE_SERIAL_CLOCK AS_FREQ_100MHZ
-	set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "AVST X16"
-	set_global_assignment -name EDA_SIMULATION_TOOL "Questa Intel FPGA (Verilog)"
-	set_global_assignment -name PWRMGT_BUS_SPEED_MODE "400 KHZ"
-	set_global_assignment -name PWRMGT_SLAVE_DEVICE_TYPE OTHER
-	set_global_assignment -name PWRMGT_SLAVE_DEVICE0_ADDRESS 4F
-	set_global_assignment -name PWRMGT_PAGE_COMMAND_ENABLE ON
-	set_global_assignment -name NUMBER_OF_SLAVE_DEVICE 1
-	set_global_assignment -name PWRMGT_VOLTAGE_OUTPUT_FORMAT "LINEAR FORMAT"
-	set_global_assignment -name PWRMGT_LINEAR_FORMAT_N "-12"
-	set_global_assignment -name ENABLE_SIGNALTAP ON
-	set_global_assignment -name POWER_APPLY_THERMAL_MARGIN ADDITIONAL
-    set_global_assignment -name PRESERVE_UNUSED_XCVR_CHANNEL ON
-    
-	# set_instance_assignment -name PARTITION_COLOUR 4294964852 -to qeciphy_dual_sim_top -entity qeciphy_syn_wrapper
-	# set_instance_assignment -name PARTITION_COLOUR 4294949993 -to auto_fab_0 -entity qeciphy_syn_wrapper
-	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_tx_p_1 -entity qeciphy_syn_wrapper
-	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_rx_p_1 -entity qeciphy_syn_wrapper
-	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_tx_n_1 -entity qeciphy_syn_wrapper
-	# set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gt_rx_n_1 -entity qeciphy_syn_wrapper
 
     export_assignments
     puts "INFO: Project assignments written for '$proj_name'."

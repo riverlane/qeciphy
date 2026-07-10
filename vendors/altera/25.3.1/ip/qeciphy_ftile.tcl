@@ -11,6 +11,9 @@ if {[llength $argv] >= 2} { set device_family  [lindex $argv 1] }
 if {[llength $argv] >= 3} { set line_rate_mbps [lindex $argv 2] }
 if {[llength $argv] >= 4} { set rclk_freq_mhz  [lindex $argv 3] }
 
+# Quartus does exact string matching against its valid-values list (e.g. "156.250000")
+set rclk_freq_mhz [format "%.6f" $rclk_freq_mhz]
+
 # create the system "qeciphy_ftile"
 proc do_create_qeciphy_ftile {} {
 	global device device_family line_rate_mbps rclk_freq_mhz

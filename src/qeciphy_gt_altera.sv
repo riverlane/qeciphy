@@ -99,7 +99,6 @@ module qeciphy_gt_altera #(
    logic                       rx_reset_sync_n;  // Reset synchronized to RX 2x clock
    logic                       tx_reset_ack;
    logic                       tx_ready;
-   logic                       tx_pll_locked;
    logic                [39:0] tx_encoded;
    tile_parallel_data_t        tx_parallel_data;
 
@@ -114,7 +113,6 @@ module qeciphy_gt_altera #(
    logic                       rx_reset_ack;
    logic                       rx_ready;
    logic                       rx_freqlocked;
-   logic                       rx_is_locked_to_ref;
    tile_parallel_data_t        rx_parallel_data;
 
    // E-Tile-specific signals (unused in FTILE path)
@@ -375,34 +373,34 @@ module qeciphy_gt_altera #(
 
       end else if (GT_TYPE == "FTILE") begin : gen_ftile
          qeciphy_ftile transceiver_inst (
-             .rx_cdr_refclk_link  (gt_ref_clk_i),         // RX CDR reference clock
-             .tx_pll_refclk_link  (gt_ref_clk_i),         // TX PLL reference clock
-             .tx_reset            (~gt_rst_n_i),          // TX reset (active-high)
-             .rx_reset            (~gt_rst_n_i),          // RX reset (active-high)
+             .rx_cdr_refclk_link  (gt_ref_clk_i),      // RX CDR reference clock
+             .tx_pll_refclk_link  (gt_ref_clk_i),      // TX PLL reference clock
+             .tx_reset            (~gt_rst_n_i),       // TX reset (active-high)
+             .rx_reset            (~gt_rst_n_i),       // RX reset (active-high)
              .tx_reset_ack        (tx_reset_ack),
              .rx_reset_ack        (rx_reset_ack),
-             .tx_ready            (tx_ready),             // TX datapath ready
-             .rx_ready            (rx_ready),             // RX datapath ready
-             .tx_coreclkin        (tx_clk_2x_o),          // TX core clock input (2x)
-             .rx_coreclkin        (rx_clk_2x_o),          // RX core clock input (2x)
+             .tx_ready            (tx_ready),          // TX datapath ready
+             .rx_ready            (rx_ready),          // RX datapath ready
+             .tx_coreclkin        (tx_clk_2x_o),       // TX core clock input (2x)
+             .rx_coreclkin        (rx_clk_2x_o),       // RX core clock input (2x)
              .tx_clkout           (),
-             .tx_clkout2          (tx_clkout2),           // TX 2x raw clock output
+             .tx_clkout2          (tx_clkout2),        // TX 2x raw clock output
              .rx_clkout           (),
-             .rx_clkout2          (rx_clkout2),           // RX 2x raw clock output
-             .tx_serial_data      (gt_tx_p_o),            // TX serial positive
-             .tx_serial_data_n    (gt_tx_n_o),            // TX serial negative
-             .rx_serial_data      (gt_rx_p_i),            // RX serial positive
-             .rx_serial_data_n    (gt_rx_n_i),            // RX serial negative
-             .tx_pll_locked       (tx_pll_locked),
+             .rx_clkout2          (rx_clkout2),        // RX 2x raw clock output
+             .tx_serial_data      (gt_tx_p_o),         // TX serial positive
+             .tx_serial_data_n    (gt_tx_n_o),         // TX serial negative
+             .rx_serial_data      (gt_rx_p_i),         // RX serial positive
+             .rx_serial_data_n    (gt_rx_n_i),         // RX serial negative
+             .tx_pll_locked       (),
              .rx_is_lockedtodata  (rx_freqlocked),
-             .rx_is_lockedtoref   (rx_is_locked_to_ref),
+             .rx_is_lockedtoref   (),
              .tx_fifo_full        (),
              .tx_fifo_empty       (),
              .tx_pmaif_fifo_empty (),
              .tx_pmaif_fifo_pempty(),
              .tx_pmaif_fifo_pfull (),
-             .tx_parallel_data    (tx_parallel_data),     // 80-bit TX data to FTile
-             .rx_parallel_data    (rx_parallel_data)      // 80-bit RX data from FTile
+             .tx_parallel_data    (tx_parallel_data),  // 80-bit TX data to FTile
+             .rx_parallel_data    (rx_parallel_data)   // 80-bit RX data from FTile
          );
       end else begin : gen_invalid
          initial begin

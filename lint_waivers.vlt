@@ -74,6 +74,8 @@ lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin co
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pmaif_fifo_empty'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pmaif_fifo_pempty'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pmaif_fifo_pfull'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'tx_pll_locked'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'rx_is_lockedtoref'"
 
 // Altera GT wrapper - signals used only in FTILE generate path (not visible to lint in ETILE-only flow)
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_altera.sv" -match "Signal is not used: 'tx_reset_ack'"
