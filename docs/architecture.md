@@ -344,8 +344,3 @@ The CRC validation engine (`qeciphy_crc_validate.sv`) verifies the computed CRC 
    - **Error latching** until next validation cycle
    - **Concurrent validation** of all four CRC values during CRC boundary cycles
 
-
-
-
-
-
