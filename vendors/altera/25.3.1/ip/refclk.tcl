@@ -1,5 +1,5 @@
 package require -exact qsys 25.3.1
-
+ 
 # --- Parameters: overridden by $argv when called from quartus_ip.tcl ---
 set device         "AGIB027R31B1E1V"
 set device_family  "Agilex 7"
