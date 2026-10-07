@@ -59,6 +59,20 @@ module QECIPHY (
     output logic       LINK_READY,  // Link ready for user data transfer
     output logic       FAULT_FATAL, // Fatal error detected
 
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+    // =========================================================================
+    // GT COMMON (QPLL0) Interface - only present when this build's
+    // transceiver.gt_common config.json field is "external". Wire these to a
+    // single qeciphy_gty_common/qeciphy_gth_common instance shared by every
+    // QECIPHY instance whose GT channel sits in the same physical GT quad.
+    // Unused/absent for GT_TYPE "GTX", "ETILE", or "FTILE" builds.
+    // =========================================================================
+    input  logic GT_QPLL_CLK,     // Shared QPLL0 output clock from GT COMMON
+    input  logic GT_QPLL_REFCLK,  // Shared QPLL0 output refclk from GT COMMON
+    input  logic GT_QPLL_LOCK,    // Shared QPLL0 lock status from GT COMMON
+    output logic GT_QPLL_RESET,   // This lane's request to reset the shared QPLL0 (OR together with sibling lanes)
+
+`endif
     // =========================================================================
     // GT Differential Signals
     // =========================================================================
@@ -300,6 +314,13 @@ module QECIPHY (
        .gt_rx_rst_done_o     (gt_rx_rst_done_rclk),      // RX reset completion to qeciphy_resetcontroller
        .rx_datapath_aligned_o(rx_datapath_aligned_rclk), // RX alignment completion to qeciphy_controller
 
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+       .gt_qpll_clk_i   (GT_QPLL_CLK),
+       .gt_qpll_refclk_i(GT_QPLL_REFCLK),
+       .gt_qpll_lock_i  (GT_QPLL_LOCK),
+       .gt_qpll_reset_o (GT_QPLL_RESET),
+
+`endif
        // GT differential signals
        .gt_rx_p_i(GT_RX_P),  // GT RX differential positive
        .gt_rx_n_i(GT_RX_N),  // GT RX differential negative

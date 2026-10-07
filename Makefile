@@ -49,9 +49,16 @@ GT_LOC           := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROF
 RX_RCLK_SRC      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.rx_rclk_src 2>/dev/null || echo "")
 TX_RCLK_SRC      := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.tx_rclk_src 2>/dev/null || echo "")
 LINE_RATE_GBPS   := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.line_rate_gbps 2>/dev/null || echo "")
+# GT_COMMON: "internal" (default) embeds GT COMMON in the GTWizard core; "external" leaves it out so
+# lanes in one quad can share a qeciphy_gty_common/qeciphy_gth_common instance.
+GT_COMMON        := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.gt_common 2>/dev/null || echo "internal")
+# SHARED_XCVR_CORE: "true" when one GT core is instantiated per lane and relocated by LOC in the
+# profile's XDC. Passed to vivado_synth.tcl as an env var since SYN_FILES is variable-length.
+SHARED_XCVR_CORE := $(shell $(PY) scripts/read_cfg.py $(CFG) profiles.$(OPT_PROFILE).transceiver.shared_channel_core 2>/dev/null || echo "false")
 
 # Static file lists
 SIM_FILELIST := sim.f
+SIM_QUAD_FILELIST := sim_quad.f
 LINT_FILELIST := lint.f
 SRC_FILELIST := src_common.f
 GENIP_FILELIST := generated_ip.f
@@ -70,6 +77,7 @@ VENDOR_SRC_FILELIST := $(shell \
 LINT_FILES := $(shell $(PY) scripts/extract_sources.py $(SRC_XILINX_FILELIST) $(SRC_ALTERA_FILELIST) $(LINT_FILELIST))
 SRC_FILES := $(shell $(PY) scripts/extract_sources.py $(VENDOR_SRC_FILELIST))
 SIM_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_FILELIST) $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
+SIM_QUAD_FILES := $(shell $(PY) scripts/extract_sources.py $(SIM_QUAD_FILELIST) $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
 SYN_FILES := $(shell $(PY) scripts/extract_sources.py $(SYN_FILELIST))
 VCF_FILES := $(shell $(PY) scripts/extract_sources.py $(VENDOR_SRC_FILELIST) $(SVA_FILELIST))
 GENIP_FILES := $(shell if [ -f $(GENIP_FILELIST) ]; then $(PY) scripts/extract_sources.py $(GENIP_FILELIST); fi)
@@ -94,7 +102,7 @@ ALTERA_EXAMPLE_IP_DIR := example_designs/vendors/altera/25.3.1/ip
 # -------------------------------------------------------------
 # Targets
 # -------------------------------------------------------------
-.PHONY: help lint synth sim render-design format clean distclean uvm-sim formal
+.PHONY: help lint synth sim sim-quad render-design format clean distclean uvm-sim formal generate-gt-common-attrs
 
 .DEFAULT_GOAL := help
 
@@ -115,6 +123,11 @@ help:
 	@echo "    - Run simulation using XSim (default) or VCS"
 	@echo "    - Required variables: OPT_PROFILE"
 	@echo "    - Optional variables: OPT_TOOL=(xsim|vcs)"
+	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
+	@echo ""
+	@echo "  sim-quad"
+	@echo "    - Run the QECIPHY_QUAD (quad) testbench using Vivado/XSim"
+	@echo "    - Required variables: OPT_PROFILE (a Xilinx profile with render-design already run)"
 	@echo "    - Optional variables: OPT_MODE=(gui|batch) [default: batch]"
 	@echo ""
 	@echo "  formal"
@@ -156,6 +169,8 @@ help:
 	@echo "  make synth OPT_PROFILE=zcu216"
 	@echo "  make sim OPT_PROFILE=zcu216 OPT_TOOL=vcs"
 	@echo "  make sim OPT_PROFILE=zcu216 OPT_MODE=gui OPT_TOOL=vcs"
+	@echo "  make sim-quad OPT_PROFILE=zcu111_quad"
+	@echo "  make sim-quad OPT_PROFILE=zcu111_quad OPT_MODE=gui"
 	@echo "  make synth OPT_PROFILE=de10"
 	@echo "  make lint"
 	@echo "  make format"
@@ -284,6 +299,14 @@ sim:
 		$(MAKE) vivado_sim; \
 	fi
 
+sim-quad:
+	@$(MAKE) check_profile
+	@if [ "$(VENDOR)" != "xilinx" ]; then \
+		echo "ERROR: sim-quad (QECIPHY_QUAD) is only wired up for Xilinx profiles"; exit 1; \
+	fi
+	@echo "INFO: Running quad testbench simulation for profile $(OPT_PROFILE) using Vivado/XSim"
+	@$(MAKE) vivado_sim_quad
+
 formal:
 	@$(MAKE) check_top
 	@echo "INFO: Running formal verification for $(OPT_TOP)"
@@ -309,7 +332,8 @@ clean:
 distclean: clean
 	@echo "INFO: Performing distclean"
 	@rm -rf tb/compiled_simlib/ tb/generated_sim_files/ generated_sim.f generated_ip/ generated_ip.f
-	@rm -rf src/qeciphy_build_cfg_pkg.sv tb/qeciphy_sim_cfg_pkg.sv 
+	@rm -rf src/qeciphy_build_cfg_pkg.sv tb/qeciphy_sim_cfg_pkg.sv
+	@rm -f src/qeciphy_gty_common_attrs.svh src/qeciphy_gth_common_attrs.svh
 
 
 # -------------------------------------------------------------
@@ -334,7 +358,7 @@ vivado_generate_xci:
 	@mkdir -p $(GENIP_DIR)
 	@mkdir -p $(RUN_DIR)
 	@if [ "$(VARIANT)" = "GTH" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gth) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
+		vivado -mode batch -source $(GEN_XCI_TCL_gth) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)" "$(GT_COMMON)" || exit 1; \
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(GENIP_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(GENIP_DIR)"; \
 	elif [ "$(VARIANT)" = "GTX" ]; then \
@@ -344,13 +368,14 @@ vivado_generate_xci:
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(GENIP_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(GENIP_DIR)"; \
 	elif [ "$(VARIANT)" = "GTY" ]; then \
-		vivado -mode batch -source $(GEN_XCI_TCL_gty) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)"; \
+		vivado -mode batch -source $(GEN_XCI_TCL_gty) -tclargs $(PART) $(RUN_DIR) "$(GT_LOC)" "$(FCLK_FREQ)" "$(RCLK_FREQ)" "$(RX_RCLK_SRC)" "$(TX_RCLK_SRC)" "$(LINE_RATE_GBPS)" "$(GT_COMMON)" || exit 1; \
 		find $(RUN_DIR) -name "*.xci" -exec cp {} $(GENIP_DIR)/ \; ; \
 		echo "INFO: Copied .xci files from $(RUN_DIR) to $(GENIP_DIR)"; \
 	else \
 		echo "ERROR: Unsupported variant $(VARIANT). Must be one of GTH, GTX, GTY."; \
 		exit 1; \
 	fi
+	@$(MAKE) generate-gt-common-attrs
 	@echo "INFO: Generating XCI filelist"
 	@find $(GENIP_DIR) -name "*.xci" | sort > generated_ip.f
 	@echo "INFO: Created generated_ip.f with $$(wc -l < generated_ip.f) XCI files"
@@ -360,6 +385,19 @@ ifeq ($(OPT_SIM_FILES),true)
 endif
 	@echo "INFO: Cleaning up temporary project files in $(RUN_DIR)"
 	@rm -rf $(RUN_DIR)
+
+# Writes the wizard's GT COMMON attributes to src/qeciphy_gt{y,h}_common_attrs.svh for
+# qeciphy_gt{y,h}_common.sv. Both files always exist; the one unused by this build is a placeholder.
+generate-gt-common-attrs:
+	@$(PY) scripts/gen_gt_common_attrs.py GTYE4_COMMON --placeholder src/qeciphy_gty_common_attrs.svh
+	@$(PY) scripts/gen_gt_common_attrs.py GTHE4_COMMON --placeholder src/qeciphy_gth_common_attrs.svh
+	@if [ "$(GT_COMMON)" = "external" ] && [ "$(VARIANT)" = "GTY" ]; then \
+		$(PY) scripts/gen_gt_common_attrs.py GTYE4_COMMON $(RUN_DIR)/qeciphy_gty_transceiver_gtye4_common_wrapper.v \
+			$(RUN_DIR)/gtwizard_ultrascale_v1_7_gtye4_common.v src/qeciphy_gty_common_attrs.svh || exit 1; \
+	elif [ "$(GT_COMMON)" = "external" ] && [ "$(VARIANT)" = "GTH" ]; then \
+		$(PY) scripts/gen_gt_common_attrs.py GTHE4_COMMON $(RUN_DIR)/qeciphy_gth_transceiver_gthe4_common_wrapper.v \
+			$(RUN_DIR)/gtwizard_ultrascale_v1_7_gthe4_common.v src/qeciphy_gth_common_attrs.svh || exit 1; \
+	fi
 
 quartus_generate_ip:
 	@$(MAKE) check_quartus_sh
@@ -422,9 +460,14 @@ generate-build-cfg-pkg:
 	@echo "\`ifndef QECIPHY_BUILD_CFG_PKG" >> src/qeciphy_build_cfg_pkg.sv
 	@echo "\`define QECIPHY_BUILD_CFG_PKG" >> src/qeciphy_build_cfg_pkg.sv
 	@echo "" >> src/qeciphy_build_cfg_pkg.sv
+	@if [ "$(GT_COMMON)" = "external" ]; then \
+		echo "\`define QECIPHY_GT_COMMON_EXTERNAL" >> src/qeciphy_build_cfg_pkg.sv; \
+		echo "" >> src/qeciphy_build_cfg_pkg.sv; \
+	fi
 	@echo "package qeciphy_build_cfg_pkg;" >> src/qeciphy_build_cfg_pkg.sv
 	@echo "" >> src/qeciphy_build_cfg_pkg.sv
 	@echo "   localparam string QECIPHY_GT_TYPE = \"$(VARIANT)\";" >> src/qeciphy_build_cfg_pkg.sv
+	@echo "   localparam string QECIPHY_GT_COMMON_MODE = \"$(GT_COMMON)\";" >> src/qeciphy_build_cfg_pkg.sv
 	@echo "" >> src/qeciphy_build_cfg_pkg.sv
 	@echo "endpackage : qeciphy_build_cfg_pkg" >> src/qeciphy_build_cfg_pkg.sv
 	@echo "\`endif" >> src/qeciphy_build_cfg_pkg.sv
@@ -445,6 +488,7 @@ generate-sim-cfg-pkg:
 	 echo "" >> tb/qeciphy_sim_cfg_pkg.sv; \
 	 echo "   localparam real QECIPHY_RCLK_PERIOD_NS = $$RCLK_PERIOD_NS;" >> tb/qeciphy_sim_cfg_pkg.sv; \
 	 echo "   localparam real QECIPHY_FCLK_PERIOD_NS = $$FCLK_PERIOD_NS;" >> tb/qeciphy_sim_cfg_pkg.sv; \
+	 echo "   localparam real QECIPHY_LINE_RATE_GBPS = $(if $(LINE_RATE_GBPS),$(LINE_RATE_GBPS),0.0);" >> tb/qeciphy_sim_cfg_pkg.sv; \
 	 echo "" >> tb/qeciphy_sim_cfg_pkg.sv; \
 	 echo "endpackage : qeciphy_sim_cfg_pkg" >> tb/qeciphy_sim_cfg_pkg.sv; \
 	 echo "\`endif" >> tb/qeciphy_sim_cfg_pkg.sv
@@ -454,6 +498,11 @@ vivado_sim:
 	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
 	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_FILES) -- $(GENIP_FILES)
+
+vivado_sim_quad:
+	@$(MAKE) check_vivado
+	@mkdir -p $(RUN_DIR)
+	@vivado -mode $(OPT_MODE) -source $(XSIM_TCL) -tclargs qeciphy_quad_tb $(PART) $(VARIANT) $(SRC_FILES) -- $(SIM_QUAD_FILES) -- $(GENIP_FILES)
 
 vcs_sim:
 	@$(MAKE) check_vcs
@@ -543,7 +592,7 @@ endif
 vivado_synth:
 	@$(MAKE) check_vivado
 	@mkdir -p $(RUN_DIR)
-	@vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(CONSTRAINTS) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(GENIP_FILES)
+	@SHARED_XCVR_CORE="$(SHARED_XCVR_CORE)" vivado -mode $(OPT_MODE) -source $(VIVADO_SYNTH_TCL) -tclargs $(SYN_TOP) $(CONSTRAINTS) $(PART) "$(BOARD)" '$(HOOKS)' $(SYN_FILES) -- $(GENIP_FILES)
 
 quartus_synth:
 	@$(MAKE) check_quartus_sh

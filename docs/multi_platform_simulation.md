@@ -23,6 +23,16 @@ make sim OPT_PROFILE=zcu216 OPT_TOOL=xsim # Non-GUI mode
 # make sim OPT_PROFILE=zcu216 OPT_TOOL=xsim OPT_MODE=gui # GUI mode
 ```
 
+### XSim: QECIPHY_QUAD
+```bash
+# Render a profile with transceiver.gt_common set to "external"
+make render-design OPT_PROFILE=zcu111_quad
+
+# Run the quad testbench (XSim only)
+make sim-quad OPT_PROFILE=zcu111_quad # Non-GUI mode
+# make sim-quad OPT_PROFILE=zcu111_quad OPT_MODE=gui # GUI mode
+```
+
 ### VCS
 ```bash
 # Render design for your platform with corresponding simulation files

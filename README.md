@@ -18,6 +18,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 
 - **Simple Interface**: AXI4-Stream interface hides all physical layer complexity
 - **Universal Compatibility**: Supports Xilinx FPGAs (GTX, GTH, GTY transceivers) and Altera FPGAs (E-Tile and F-Tile transceivers)
+- **Multi-Lane Quads**: `QECIPHY_QUAD` places up to 4 lanes in one transceiver quad, sharing a single GT COMMON (QPLL0) on Xilinx GTY
 - **Latency**: ~150-200ns latency at 12.5 Gbps line rate
 - **Programmable Line Rate**: Configurable transceiver line rates for different bandwidth requirements
 - **Programmable Clock Sources**: Configurable reference clock sources for flexibility
@@ -133,7 +134,7 @@ qeciphy/
 ├── docs/                        # Documentation files
 ├── config.json                  # Build configuration (profiles, settings)
 ├── Makefile                     # Build automation
-├── src_common.f, src_xilinx.f, src_altera.f, sim.f, lint.f, uvm.f, sva.f # File lists for different flows
+├── src_common.f, src_xilinx.f, src_altera.f, sim.f, sim_quad.f, lint.f, uvm.f, sva.f # File lists for different flows
 ├── lint_waivers.vlt             # Verilator lint waivers
 ├── CODE_OF_CONDUCT.md           # Code of conduct
 ├── CONTRIBUTING.md              # Development guidelines
@@ -189,6 +190,9 @@ make sim OPT_PROFILE=<profile> OPT_TOOL=vcs
 
 # Run VCS simulation (GUI mode)
 make sim OPT_PROFILE=<profile> OPT_TOOL=vcs OPT_MODE=gui
+
+# Run the QECIPHY_QUAD testbench (Xilinx profiles with transceiver.gt_common set to "external", XSim only)
+make sim-quad OPT_PROFILE=zcu111_quad
 
 #Note: Altera simulation is currently unsupported
 ```

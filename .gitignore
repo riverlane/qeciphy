@@ -7,6 +7,8 @@ tb/compiled_simlib/
 generated_ip.f
 generated_sim.f
 src/qeciphy_build_cfg_pkg.sv
+src/qeciphy_gty_common_attrs.svh
+src/qeciphy_gth_common_attrs.svh
 tb/qeciphy_sim_cfg_pkg.sv
 vivado*.jou
 *.log

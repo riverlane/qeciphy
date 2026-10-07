@@ -17,7 +17,7 @@ This document provides detailed instructions for integrating QECIPHY into your F
 QECIPHY provides a simple AXI4-Stream interface that abstracts away all physical layer complexity. The integration process involves:
 
 1. **Platform Configuration**: Set up your hardware profile and generate IP dependencies
-2. **HDL Instantiation**: Instantiate QECIPHY module directly in your SystemVerilog design
+2. **HDL Instantiation**: Instantiate the QECIPHY module (or QECIPHY_QUAD, for several lanes in one transceiver quad) directly in your SystemVerilog design
 3. **Interface Connection**: Connect AXI4-Stream interfaces to your application logic
 4. **Status Monitoring**: Implement link status monitoring and error handling
 5. **Constraint Application**: Apply provided timing constraints
@@ -55,6 +55,7 @@ git checkout -b integration-<your-platform>
 Check if your hardware platform matches one of the existing profiles in `config.json`:
 
 - **zcu216**: Zynq UltraScale+ with GTY transceivers
+- **zcu111_quad**: Zynq UltraScale+ RFSoC with 4 GTY lanes in one quad via `QECIPHY_QUAD`
 - **zcu106**: Zynq UltraScale with GTH transceivers  
 - **kasliSoC**: 7-series with GTX transceivers
 - **de10**: Agilex 7 with E-Tile transceiver
@@ -137,6 +138,31 @@ If your platform is not listed, create a new profile in `config.json`. Examples 
 - `transceiver.rx_rclk_src`: RX reference clock source (e.g., "X0Y8 clk1+2" means using refclock 1 from the GT quad located 2 quads above X0Y8) (Xilinx only)
 - `transceiver.tx_rclk_src`: TX reference clock source (same format as RX) (Xilinx only)
 - `transceiver.line_rate_gbps`: Transceiver line rate in Gbps (e.g., "10.3125")
+- `transceiver.gt_common`: GT COMMON (QPLL0) placement, `GTY`/`GTH` only (default `"internal"` if omitted):
+  - `"internal"`: GT COMMON is embedded in this lane's GTWizard core (`LOCATE_COMMON=CORE`), so each
+    `QECIPHY` instance is fully self-contained. Two lanes built this way cannot share a physical GT quad
+    (each core reserves the quad's single COMMON hard block for itself).
+  - `"external"`: GT COMMON is excluded from this lane's GTWizard core (`LOCATE_COMMON=EXAMPLE_DESIGN`).
+    `QECIPHY` gains four extra top-level ports - `GT_QPLL_CLK`/`GT_QPLL_REFCLK`/`GT_QPLL_LOCK` (inputs) and
+    `GT_QPLL_RESET` (output) - guarded by the `` `QECIPHY_GT_COMMON_EXTERNAL `` macro (set automatically by
+    `make render-design` via the generated `src/qeciphy_build_cfg_pkg.sv`). Use this when multiple lanes need
+    to share one quad, via `QECIPHY_QUAD` (see [Multiple Lanes in One Quad](#multiple-lanes-in-one-quad-qeciphy_quad)),
+    which instantiates one `qeciphy_gty_common`/`qeciphy_gth_common` and wires every lane to it. If you
+    instantiate `QECIPHY` directly in an `"external"` build, you must drive its `GT_QPLL_*` ports yourself.
+    All lanes sharing a COMMON must be built from the same generated GTWizard core config (same line
+    rate/refclk source), since they share one physical QPLL0.
+    - The COMMON's attributes (QPLL0 PLL settings, `QPLL0CLKOUT_RATE`, bias, PPF, SDM) are extracted by
+      `make render-design` from the wizard's own generated COMMON wrapper for this profile into
+      `src/qeciphy_gty_common_attrs.svh`/`src/qeciphy_gth_common_attrs.svh`. The primitive's defaults are
+      not valid - e.g. its default `QPLL0CLKOUT_RATE` runs the lanes at twice their line rate - and the
+      correct values vary by part/speed grade, so always re-run `render-design` after changing the profile.
+    - The shared QPLL0 is reset at power-up and when every lane's `ARSTn` is asserted together, but never
+      by one lane's reset alone. The wizard's reset helper doesn't recover if its PLL loses lock after its
+      sequence finishes, so if you drive the COMMON yourself, don't simply OR the lanes' `GT_QPLL_RESET`
+      requests - that lets resetting any one lane permanently break the rest.
+    - Set `transceiver.shared_channel_core` to `"true"` when the same channel-only core is instantiated more
+      than once and relocated per lane with `LOC` constraints in your XDC; `make synth` then disables the
+      core's own scoped constraints, which would otherwise pin every instance to the customized `gt_loc`.
 - `synth`: Synthesis configuration (optional, for standalone testing)
 - `pre_setup_hooks` Lists IP (`.tcl`) scripts run at synthesis time to generate board-level IPs (VIO probes, ILAs, etc.). Leave empty if no such IPs are needed.
 
@@ -280,6 +306,60 @@ QECIPHY i_QECIPHY (
     .GT_RXN     (gt_rxn)
 );
 ```
+
+#### Multiple Lanes in One Quad (`QECIPHY_QUAD`)
+
+For a single lane, instantiate `QECIPHY` as above. To put 2-4 lanes in the same physical transceiver quad,
+instantiate `QECIPHY_QUAD` (`src/QECIPHY_QUAD.sv`) instead. It contains `NUM_LANES` `QECIPHY` lanes plus
+any per-quad clocking the vendor needs. Its ports are the same as `QECIPHY`'s, but per lane: single-bit
+signals become `[NUM_LANES-1:0]` vectors, and `TX_TDATA`/`RX_TDATA`/`STATUS`/`ECODE` become unpacked arrays
+indexed by lane. `RCLK` and `FCLK` are shared by all lanes.
+
+```systemverilog
+QECIPHY_QUAD #(
+    .NUM_LANES(4)
+) i_QECIPHY_QUAD (
+    .RCLK       (gt_refclk),            // shared by all lanes
+    .FCLK       (freerun_clk),          // shared by all lanes
+    .ACLK       (axi_clk),              // [NUM_LANES-1:0]
+    .ARSTn      (aresetn),              // [NUM_LANES-1:0]
+    .TX_TDATA   (qeciphy_tx_tdata),     // logic [63:0] qeciphy_tx_tdata [NUM_LANES]
+    .TX_TVALID  (qeciphy_tx_tvalid),
+    .TX_TREADY  (qeciphy_tx_tready),
+    .RX_TDATA   (qeciphy_rx_tdata),     // logic [63:0] qeciphy_rx_tdata [NUM_LANES]
+    .RX_TVALID  (qeciphy_rx_tvalid),
+    .RX_TREADY  (qeciphy_rx_tready),
+    .STATUS     (qeciphy_status),       // logic [3:0] qeciphy_status [NUM_LANES]
+    .ECODE      (qeciphy_ecode),        // logic [3:0] qeciphy_ecode [NUM_LANES]
+    .LINK_READY (qeciphy_link_ready),
+    .FAULT_FATAL(qeciphy_fault_fatal),
+    .GT_TX_P    (gt_tx_p),
+    .GT_TX_N    (gt_tx_n),
+    .GT_RX_P    (gt_rx_p),
+    .GT_RX_N    (gt_rx_n)
+);
+```
+
+Per vendor:
+- **Xilinx GTY**: all lanes share one GT COMMON (QPLL0) inside `QECIPHY_QUAD`. The profile must set
+  `transceiver.gt_common` to `"external"` and `transceiver.shared_channel_core` to `"true"`. Every lane uses
+  the same generated channel core, customized for `transceiver.gt_loc`. Place each lane on its own channel
+  with a `LOC` on `*i_QECIPHY_QUAD/gen_lane[N].i_QECIPHY*...GTYE4_CHANNEL_PRIM_INST` in your
+  XDC, and repeat the per-lane clock constraints for each `gen_lane[N]`. See
+  `example_designs/*_quad/syn/constraints.xdc`. The shared QPLL0 is reset at power-up and when every lane's
+  `ARSTn` is asserted together, never by a single lane's reset.
+- **Xilinx GTH**: currently unsupported. The GTH path (`qeciphy_gth_common`) is implemented but has not been
+  tested in simulation or on hardware.
+- **Xilinx GTX**: not supported (each GTX lane embeds its own COMMON). Elaboration fails with an error.
+- **Altera E-tile/F-tile**: there is no shared PLL block (each lane's PHY has its own TX PLL and RX CDR), so
+  the lanes are instantiated side by side. Keep any per-tile reference clock IP (e.g. the F-tile `refclk`
+  IP) in your top level as for a single `QECIPHY`, and assign each lane's serial pins in your pin
+  assignments. There is no Altera multi-lane example design yet, and this path has not been compiled in
+  Quartus. Expect each lane to need two fabric PLLs (`qeciphy_altera_clk_mmcm`), and per-lane copies of the
+  SDC clock constraints.
+
+Selecting a configuration `QECIPHY_QUAD` can't support (Xilinx with `transceiver.gt_common` not set to
+`"external"`, GTX, or `NUM_LANES` outside 1-4) is an elaboration error that says what to change.
 
 ### Step 6: Apply Timing Constraints and Run Synthesis
 

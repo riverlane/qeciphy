@@ -21,6 +21,8 @@
 // RX: Physical Link -> [GT wrapper] -> 32-bit@2x -> [rx_bytealigner] -> 32-bit@2x -> [rx_32b_to_64b] -> 64-bit@1x 
 //------------------------------------------------------------------------------
 
+`include "qeciphy_build_cfg_pkg.sv"
+
 module qeciphy_serdes #(
     parameter string GT_TYPE = "GTY"  // GT primitive type: "GTX", "GTY", "GTH", or "ETILE"
 ) (
@@ -43,6 +45,15 @@ module qeciphy_serdes #(
     output logic        gt_rx_rst_done_o,      // GT RX reset completion status
     output logic        rx_datapath_aligned_o, // RX datapath alignment completion
 
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+    // GT COMMON (QPLL0) driven externally by a shared qeciphy_gty_common/qeciphy_gth_common
+    // instance. Unused when GT_TYPE is "GTX", "ETILE", or "FTILE".
+    input  logic gt_qpll_clk_i,
+    input  logic gt_qpll_refclk_i,
+    input  logic gt_qpll_lock_i,
+    output logic gt_qpll_reset_o,
+
+`endif
     // GT differential signals
     input  logic gt_rx_p_i,  // GT RX differential positive
     input  logic gt_rx_n_i,  // GT RX differential negative
@@ -118,6 +129,13 @@ module qeciphy_serdes #(
        .gt_rx_rst_done_o (gt_rx_rst_done_o),  // RX reset completion
        .rx_byte_aligned_o(rx_byte_aligned),   // RX byte aligned status to start word alignment
 
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+       .gt_qpll_clk_i   (gt_qpll_clk_i),
+       .gt_qpll_refclk_i(gt_qpll_refclk_i),
+       .gt_qpll_lock_i  (gt_qpll_lock_i),
+       .gt_qpll_reset_o (gt_qpll_reset_o),
+
+`endif
        // GT differential signals
        .gt_rx_p_i(gt_rx_p_i),  // GT RX differential positive
        .gt_rx_n_i(gt_rx_n_i),  // GT RX differential negative

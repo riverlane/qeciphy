@@ -10,7 +10,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 if { !([info exists ::argv] && [llength $::argv] >= 8) } {
   puts "ERROR: Usage:"
   puts "  vivado -mode batch -source vendor/xilinx/qeciphy_gty_transceiver.tcl \\"
-  puts "         -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC> <LINE_RATE_GBPS>"
+  puts "         -tclargs <part_number> <output_dir> <GT_LOC> <FCLK_FREQ> <RCLK_FREQ> <RX_RCLK_SRC> <TX_RCLK_SRC> <LINE_RATE_GBPS> \[GT_COMMON\]"
   puts ""
   return 1
 }
@@ -24,6 +24,12 @@ set RX_RCLK_SRC   [lindex $::argv 5]
 set TX_RCLK_SRC   [lindex $::argv 6]
 set LINE_RATE_GBPS [lindex $::argv 7]
 
+# GT_COMMON: "internal" (default) or "external" - see the Makefile.
+set GT_COMMON "internal"
+if { [llength $::argv] >= 9 } {
+  set GT_COMMON [lindex $::argv 8]
+}
+
 puts "INFO: Using part number: $part_number"
 puts "INFO: Output directory: $output_dir"
 puts "INFO: GT Location: $GT_LOC"
@@ -32,6 +38,7 @@ puts "INFO: Reference clock frequency: $RCLK_FREQ"
 puts "INFO: RX reference clock source: $RX_RCLK_SRC"
 puts "INFO: TX reference clock source: $TX_RCLK_SRC"
 puts "INFO: Line rate: $LINE_RATE_GBPS Gbps"
+puts "INFO: GT COMMON mode: $GT_COMMON"
 
 # Create project in output directory
 if { [file exists $output_dir] } {
@@ -60,11 +67,25 @@ foreach ip_vlnv $required_ips {
 set ip_name qeciphy_gty_transceiver
 set ip_obj [create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name $ip_name]
 
+# GT_COMMON "external" (LOCATE_COMMON=EXAMPLE_DESIGN) drops qpll0lock_out/qpll0outclk_out/
+# qpll0outrefclk_out and exposes qpll0clk_in/qpll0refclk_in/qpll1clk_in/qpll1refclk_in/
+# gtwiz_reset_qpll0lock_in/gtwiz_reset_qpll0reset_out instead (see qeciphy_gt_xilinx.sv).
+# LOCATE_COMMON must be set before ENABLE_OPTIONAL_PORTS below, since qpll0lock_out is not
+# a valid optional port in EXAMPLE_DESIGN mode.
+if { $GT_COMMON eq "external" } {
+  set_property -dict [list \
+    CONFIG.LOCATE_COMMON {EXAMPLE_DESIGN} \
+  ] [get_ips $ip_name]
+  set optional_ports {rxcommadeten_in rxmcommaalignen_in rxpcommaalignen_in rxbyteisaligned_out rxbyterealign_out rxcommadet_out}
+} else {
+  set optional_ports {qpll0lock_out rxcommadeten_in rxmcommaalignen_in rxpcommaalignen_in rxbyteisaligned_out rxbyterealign_out rxcommadet_out}
+}
+
 # Set IP parameters
 set_property -dict [list \
   CONFIG.GT_TYPE {GTY} \
   CONFIG.CHANNEL_ENABLE $GT_LOC \
-  CONFIG.ENABLE_OPTIONAL_PORTS {qpll0lock_out rxcommadeten_in rxmcommaalignen_in rxpcommaalignen_in rxbyteisaligned_out rxbyterealign_out rxcommadet_out} \
+  CONFIG.ENABLE_OPTIONAL_PORTS $optional_ports \
   CONFIG.FREERUN_FREQUENCY $FCLK_FREQ \
   CONFIG.LOCATE_RX_USER_CLOCKING {EXAMPLE_DESIGN} \
   CONFIG.LOCATE_TX_USER_CLOCKING {EXAMPLE_DESIGN} \
@@ -104,6 +125,19 @@ set_property -dict [list \
   CONFIG.TX_REFCLK_SOURCE $TX_RCLK_SRC \
   CONFIG.TX_USER_DATA_WIDTH {32} \
 ] [get_ips $ip_name]
+
+# Capture the wizard's own GTYE4_COMMON wrapper for this customization; the Makefile
+# extracts its attributes into src/qeciphy_gty_common_attrs.svh for qeciphy_gty_common.sv.
+if { $GT_COMMON eq "external" } {
+  set ex_dir [file join $output_dir common_ref]
+  open_example_project -force -dir $ex_dir [get_ips $ip_name]
+  set imports [file join $ex_dir ${ip_name}_ex imports]
+  file copy -force [file join $imports ${ip_name}_gtye4_common_wrapper.v] $output_dir
+  file copy -force [file join $imports gtwizard_ultrascale_v1_7_gtye4_common.v] $output_dir
+  # Remove the example project so the Makefile's .xci search only finds this core's .xci.
+  file delete -force $ex_dir
+  puts "INFO: Captured reference GTYE4_COMMON wrapper for '$ip_name' in $output_dir"
+}
 
 puts "INFO: IP core '$ip_name' generated successfully"
 

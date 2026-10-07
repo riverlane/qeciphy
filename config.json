@@ -13,7 +13,8 @@
         "gt_loc": "X0Y8",
         "rx_rclk_src": "X0Y8 clk1+2",
         "tx_rclk_src": "X0Y8 clk1+2",
-        "line_rate_gbps": "10.3125"
+        "line_rate_gbps": "10.3125",
+        "gt_common": "internal"
       },
       "synth": {
         "top": "qeciphy_syn_wrapper",
@@ -22,6 +23,37 @@
         ],
         "constraints": [
           "example_designs/zcu216/syn/constraints.xdc"
+        ],
+        "pre_setup_hooks": [
+          "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
+          "example_designs/vendors/xilinx/qeciphy_vio.tcl"
+        ]
+      }
+    },
+    "zcu111_quad": {
+      "device": {
+        "part": "xczu28dr-ffvg1517-2-e",
+        "vendor": "xilinx"
+      },
+      "board": "xilinx.com:zcu111:part0:1.4",
+      "variant": "GTY",
+      "fclk_freq": "156.25",
+      "rclk_freq": "156.25",
+      "transceiver": {
+        "gt_loc": "X0Y4",
+        "rx_rclk_src": "X0Y4 clk1+1",
+        "tx_rclk_src": "X0Y4 clk1+1",
+        "line_rate_gbps": "10.3125",
+        "gt_common": "external",
+        "shared_channel_core": "true"
+      },
+      "synth": {
+        "top": "qeciphy_quad_syn_wrapper",
+        "filelists": [
+          "example_designs/zcu111_quad/src.f"
+        ],
+        "constraints": [
+          "example_designs/zcu111_quad/syn/constraints.xdc"
         ],
         "pre_setup_hooks": [
           "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
@@ -42,7 +74,8 @@
         "gt_loc": "X0Y10",
         "rx_rclk_src": "X0Y10 clk1+1",
         "tx_rclk_src": "X0Y10 clk1+1",
-        "line_rate_gbps": "10.3125"
+        "line_rate_gbps": "10.3125",
+        "gt_common": "internal"
       },
       "synth": {
         "top": "qeciphy_syn_wrapper",

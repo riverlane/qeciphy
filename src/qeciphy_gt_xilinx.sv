@@ -2,11 +2,22 @@
 // Copyright (c) 2024-2026 Riverlane Ltd.
 // Original authors: Dogancan Davutoglu, Aniket Datta
 
+`include "qeciphy_build_cfg_pkg.sv"
+
 module qeciphy_gt_xilinx #(
     parameter string GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH"
 ) (
     input logic gt_ref_clk_i,
 
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+    // GT COMMON (QPLL0) driven by a shared qeciphy_gty_common/qeciphy_gth_common instance.
+    // Unused when GT_TYPE is "GTX".
+    input  logic gt_qpll_clk_i,
+    input  logic gt_qpll_refclk_i,
+    input  logic gt_qpll_lock_i,
+    output logic gt_qpll_reset_o,
+
+`endif
     // GT differential signals
     input  logic gt_rx_p_i,
     input  logic gt_rx_n_i,
@@ -147,15 +158,30 @@ module qeciphy_gt_xilinx #(
              .gtwiz_reset_tx_datapath_in        (~gt_rst_n_i),
              .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_rx_datapath_in        (~rx_datapath_resetn),
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+             .gtwiz_reset_qpll0lock_in          (gt_qpll_lock_i),
+`endif
              .gtwiz_reset_rx_cdr_stable_out     (cdr_stable),
              .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
              .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+             .gtwiz_reset_qpll0reset_out        (gt_qpll_reset_o),
+`endif
              .gtwiz_userdata_tx_in              (tx_tdata_i),
              .gtwiz_userdata_rx_out             (rx_tdata_o),
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+             // No gtrefclk00_in in this mode - the refclk feeds the shared qeciphy_gty_common.
+             .qpll0clk_in                       (gt_qpll_clk_i),
+             .qpll0refclk_in                    (gt_qpll_refclk_i),
+             // QPLL1 is unused by QECIPHY
+             .qpll1clk_in                       (1'b0),
+             .qpll1refclk_in                    (1'b0),
+`else
              .gtrefclk00_in                     (gt_ref_clk_i),
              .qpll0lock_out                     (),
              .qpll0outclk_out                   (),
              .qpll0outrefclk_out                (),
+`endif
              .gtyrxn_in                         (gt_rx_n_i),
              .gtyrxp_in                         (gt_rx_p_i),
              .gtytxn_out                        (gt_tx_n_o),
@@ -277,15 +303,30 @@ module qeciphy_gt_xilinx #(
              .gtwiz_reset_tx_datapath_in        (~gt_rst_n_i),
              .gtwiz_reset_rx_pll_and_datapath_in(~gt_rst_n_i),
              .gtwiz_reset_rx_datapath_in        (~rx_datapath_resetn),
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+             .gtwiz_reset_qpll0lock_in          (gt_qpll_lock_i),
+`endif
              .gtwiz_reset_rx_cdr_stable_out     (cdr_stable),
              .gtwiz_reset_tx_done_out           (gt_tx_rst_done),
              .gtwiz_reset_rx_done_out           (gt_rx_rst_done),
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+             .gtwiz_reset_qpll0reset_out        (gt_qpll_reset_o),
+`endif
              .gtwiz_userdata_tx_in              (tx_tdata_i),
              .gtwiz_userdata_rx_out             (rx_tdata_o),
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+             // No gtrefclk00_in in this mode - the refclk feeds the shared qeciphy_gth_common.
+             .qpll0clk_in                       (gt_qpll_clk_i),
+             .qpll0refclk_in                    (gt_qpll_refclk_i),
+             // QPLL1 is unused by QECIPHY
+             .qpll1clk_in                       (1'b0),
+             .qpll1refclk_in                    (1'b0),
+`else
              .gtrefclk00_in                     (gt_ref_clk_i),
              .qpll0lock_out                     (),
              .qpll0outclk_out                   (),
              .qpll0outrefclk_out                (),
+`endif
              .gthrxn_in                         (gt_rx_n_i),
              .gthrxp_in                         (gt_rx_p_i),
              .gthtxn_out                        (gt_tx_n_o),

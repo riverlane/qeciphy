@@ -1,5 +1,7 @@
 lint_stubs/xilinx/BUFG_GT.sv
 lint_stubs/xilinx/GTXE2_COMMON.sv
+lint_stubs/xilinx/GTYE4_COMMON.sv
+lint_stubs/xilinx/GTHE4_COMMON.sv
 lint_stubs/xilinx/qeciphy_clk_mmcm.sv
 lint_stubs/xilinx/qeciphy_gty_transceiver.sv
 lint_stubs/xilinx/qeciphy_gtx_transceiver.sv

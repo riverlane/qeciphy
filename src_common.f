@@ -24,3 +24,4 @@ src/qeciphy_resetcontroller.sv
 src/qeciphy_cdc.sv
 src/qeciphy_error_handler.sv
 src/QECIPHY.sv
+src/QECIPHY_QUAD.sv

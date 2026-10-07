@@ -2,8 +2,10 @@
 // Copyright (c) 2024-2026 Riverlane Ltd.
 // Original authors: Dogancan Davutoglu, Aniket Datta
 
+`include "qeciphy_build_cfg_pkg.sv"
+
 module qeciphy_gt_wrapper #(
-    parameter string GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH", "ETILE", or "FTILE" 
+    parameter string GT_TYPE = "GTY"  // Valid values: "GTX", "GTY", "GTH", "ETILE", or "FTILE"
 ) (
     input logic gt_ref_clk_i,
 
@@ -23,6 +25,15 @@ module qeciphy_gt_wrapper #(
     output logic        gt_rx_rst_done_o,
     output logic        rx_byte_aligned_o,
 
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+    // GT COMMON (QPLL0) driven externally by a shared qeciphy_gty_common/qeciphy_gth_common
+    // instance. Unused when GT_TYPE is "GTX", "ETILE", or "FTILE".
+    input  logic gt_qpll_clk_i,
+    input  logic gt_qpll_refclk_i,
+    input  logic gt_qpll_lock_i,
+    output logic gt_qpll_reset_o,
+
+`endif
     // GT differential signals
     input  logic gt_rx_p_i,
     input  logic gt_rx_n_i,
@@ -57,10 +68,21 @@ module qeciphy_gt_wrapper #(
              .gt_rx_rst_done_o  (gt_rx_rst_done_o),
              .rx_byte_aligned_o (rx_byte_aligned_o)
          );
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+         // Not applicable to Altera tiles - tie off so the port is never left floating.
+         assign gt_qpll_reset_o = 1'b0;
+`endif
       end else if (GT_TYPE == "GTY" || GT_TYPE == "GTH" || GT_TYPE == "GTX") begin : gen_xilinx
          qeciphy_gt_xilinx #(
              .GT_TYPE(GT_TYPE)
          ) i_qeciphy_gt_xilinx (
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+             .gt_qpll_clk_i   (gt_qpll_clk_i),
+             .gt_qpll_refclk_i(gt_qpll_refclk_i),
+             .gt_qpll_lock_i  (gt_qpll_lock_i),
+             .gt_qpll_reset_o (gt_qpll_reset_o),
+
+`endif
              .gt_ref_clk_i      (gt_ref_clk_i),
              .gt_rx_p_i         (gt_rx_p_i),
              .gt_rx_n_i         (gt_rx_n_i),
@@ -86,6 +108,9 @@ module qeciphy_gt_wrapper #(
             $warning("qeciphy_gt_wrapper: unsupported GT_TYPE = \"%s\". Valid values: GTX, GTY, GTH, ETILE, FTILE.", GT_TYPE);
          end
          // synthesis translate_on
+`ifdef QECIPHY_GT_COMMON_EXTERNAL
+         assign gt_qpll_reset_o = 1'b0;
+`endif
       end
    endgenerate
 

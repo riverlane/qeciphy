@@ -19,15 +19,23 @@ module qeciphy_gth_transceiver (
     input logic gtwiz_reset_tx_datapath_in,
     input logic gtwiz_reset_rx_pll_and_datapath_in,
     input logic gtwiz_reset_rx_datapath_in,
+    // Ports for both GT_COMMON modes are declared unconditionally; qeciphy_gt_xilinx.sv
+    // connects one set depending on QECIPHY_GT_COMMON_EXTERNAL.
+    input logic gtwiz_reset_qpll0lock_in,
     output logic gtwiz_reset_rx_cdr_stable_out,
     output logic gtwiz_reset_tx_done_out,
     output logic gtwiz_reset_rx_done_out,
+    output logic gtwiz_reset_qpll0reset_out,
     input logic [31:0] gtwiz_userdata_tx_in,
     output logic [31:0] gtwiz_userdata_rx_out,
     input logic gtrefclk00_in,
     output logic qpll0outclk_out,
     output logic qpll0lock_out,
     output logic qpll0outrefclk_out,
+    input logic qpll0clk_in,
+    input logic qpll0refclk_in,
+    input logic qpll1clk_in,
+    input logic qpll1refclk_in,
     input logic gthrxn_in,
     input logic gthrxp_in,
     input logic rx8b10ben_in,
@@ -61,6 +69,7 @@ module qeciphy_gth_transceiver (
    assign gtwiz_reset_rx_cdr_stable_out = '0;
    assign gtwiz_reset_tx_done_out = '0;
    assign gtwiz_reset_rx_done_out = '0;
+   assign gtwiz_reset_qpll0reset_out = '0;
    assign gtwiz_userdata_rx_out = '0;
    assign qpll0outclk_out = '0;
    assign qpll0lock_out = '0;

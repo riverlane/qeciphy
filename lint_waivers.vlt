@@ -14,6 +14,10 @@ lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_xilinx.sv"  -match "Signal is 
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_xilinx.sv"  -match "Signal is not used: 'rxcommadet'"
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_xilinx.sv"  -match "Signal is not used: 'cdr_stable'"
 
+// Unused when GT_COMMON is external - the refclk only feeds the shared GT COMMON instance.
+lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_gt_xilinx.sv"  -match "Signal is not used: 'gt_ref_clk_i'"
+lint_off -rule UNUSEDSIGNAL    -file "*QECIPHY_QUAD.sv"       -match "Signal is not used: 'qpll0refclklost'"
+
 // Currently unused as crc45_valid and crcvw_valid coincides, only one of them is used
 lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_crc_compute.sv" -match "Signal is not used: 'crc45_valid'"
 
@@ -32,6 +36,21 @@ lint_off -rule PINCONNECTEMPTY -file "*QECIPHY.sv" -match "Cell pin connected by
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin connected by name with empty reference: 'qpll0lock_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin connected by name with empty reference: 'qpll0outclk_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin connected by name with empty reference: 'qpll0outrefclk_out'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Instance pin connected by name with empty reference: 'qpll0lock_out'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Instance pin connected by name with empty reference: 'qpll0outclk_out'"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Instance pin connected by name with empty reference: 'qpll0outrefclk_out'"
+// The lint stub declares the ports of both GT_COMMON modes; whichever set this build's mode
+// doesn't connect is reported missing.
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'qpll0clk_in'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'qpll0refclk_in'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'qpll1clk_in'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'qpll1refclk_in'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'gtwiz_reset_qpll0lock_in'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'gtwiz_reset_qpll0reset_out'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'qpll0outclk_out'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'qpll0outrefclk_out'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'qpll0lock_out'"
+lint_off -rule PINMISSING     -file "*qeciphy_gt_xilinx.sv" -match "*has missing pin: 'gtrefclk00_in'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin connected by name with empty reference: 'rxctrl0_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin connected by name with empty reference: 'rxctrl1_out'"
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin connected by name with empty reference: 'rxctrl2_out'"
@@ -52,6 +71,8 @@ lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin co
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_xilinx.sv" -match "Cell pin connected by name with empty reference: 'gt0_txresetdone_out'"
 
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gtx_common.sv" -match "Cell pin connected by name with empty reference: *"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gty_common.sv" -match "*pin connected by name with empty reference: *"
+lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gth_common.sv" -match "*pin connected by name with empty reference: *"
 
 // Altera GT wrapper - 8b10b decoder unconnected outputs
 lint_off -rule PINCONNECTEMPTY -file "*qeciphy_gt_altera.sv" -match "Cell pin connected by name with empty reference: 'dout_k'"
@@ -94,8 +115,12 @@ lint_off -rule UNUSEDSIGNAL    -file "*qeciphy_word_align.sv" -match "Bits of si
 
 //Xilinx Lint Stubs
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/BUFG_GT.sv"           
-lint_off -rule UNUSEDPARAM     -file "*lint_stubs/xilinx/GTXE2_COMMON.sv"  
-lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/GTXE2_COMMON.sv"  
+lint_off -rule UNUSEDPARAM     -file "*lint_stubs/xilinx/GTXE2_COMMON.sv"
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/GTXE2_COMMON.sv"
+lint_off -rule UNUSEDPARAM     -file "*lint_stubs/xilinx/GTYE4_COMMON.sv"
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/GTYE4_COMMON.sv"
+lint_off -rule UNUSEDPARAM     -file "*lint_stubs/xilinx/GTHE4_COMMON.sv"
+lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/GTHE4_COMMON.sv"
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/qeciphy_gtx_transceiver.sv"   
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/qeciphy_gth_transceiver.sv"    
 lint_off -rule UNUSEDSIGNAL    -file "*lint_stubs/xilinx/qeciphy_gty_transceiver.sv"
