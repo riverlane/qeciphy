@@ -6,7 +6,8 @@
 // like tb/qeciphy_tb.sv. Each lane runs in its own generate block to avoid
 // fork/join_none loop-variable capture.
 
-`timescale 1ns / 1ps `default_nettype none
+`timescale 1ns / 1ps
+`default_nettype none
 
 `include "../src/qeciphy_pkg.sv"
 `include "../src/qeciphy_build_cfg_pkg.sv"

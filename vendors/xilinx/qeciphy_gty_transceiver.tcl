@@ -67,11 +67,9 @@ foreach ip_vlnv $required_ips {
 set ip_name qeciphy_gty_transceiver
 set ip_obj [create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name $ip_name]
 
-# GT_COMMON "external" (LOCATE_COMMON=EXAMPLE_DESIGN) drops qpll0lock_out/qpll0outclk_out/
-# qpll0outrefclk_out and exposes qpll0clk_in/qpll0refclk_in/qpll1clk_in/qpll1refclk_in/
-# gtwiz_reset_qpll0lock_in/gtwiz_reset_qpll0reset_out instead (see qeciphy_gt_xilinx.sv).
-# LOCATE_COMMON must be set before ENABLE_OPTIONAL_PORTS below, since qpll0lock_out is not
-# a valid optional port in EXAMPLE_DESIGN mode.
+# GT_COMMON "external" (LOCATE_COMMON=EXAMPLE_DESIGN) replaces the QPLL outputs with QPLL inputs
+# (see qeciphy_gt_xilinx.sv). Must be set before ENABLE_OPTIONAL_PORTS, which rejects
+# qpll0lock_out in this mode.
 if { $GT_COMMON eq "external" } {
   set_property -dict [list \
     CONFIG.LOCATE_COMMON {EXAMPLE_DESIGN} \
