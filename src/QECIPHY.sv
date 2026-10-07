@@ -61,16 +61,13 @@ module QECIPHY (
 
 `ifdef QECIPHY_GT_COMMON_EXTERNAL
     // =========================================================================
-    // GT COMMON (QPLL0) Interface - only present when this build's
-    // transceiver.gt_common config.json field is "external". Wire these to a
-    // single qeciphy_gty_common/qeciphy_gth_common instance shared by every
-    // QECIPHY instance whose GT channel sits in the same physical GT quad.
-    // Unused/absent for GT_TYPE "GTX", "ETILE", or "FTILE" builds.
+    // GT COMMON (QPLL0) Interface - only when transceiver.gt_common is "external".
+    // Connect to the qeciphy_gt{y,h}_common shared by this quad (see QECIPHY_QUAD).
     // =========================================================================
     input  logic GT_QPLL_CLK,     // Shared QPLL0 output clock from GT COMMON
     input  logic GT_QPLL_REFCLK,  // Shared QPLL0 output refclk from GT COMMON
     input  logic GT_QPLL_LOCK,    // Shared QPLL0 lock status from GT COMMON
-    output logic GT_QPLL_RESET,   // This lane's request to reset the shared QPLL0 (OR together with sibling lanes)
+    output logic GT_QPLL_RESET,   // Request to reset the shared QPLL0
 
 `endif
     // =========================================================================

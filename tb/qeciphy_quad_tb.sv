@@ -2,17 +2,9 @@
 // Copyright (c) 2026 Riverlane Ltd.
 // Original authors: Evan Sun
 //
-// Back-to-back simulation of two QECIPHY_QUAD ("quad") DUTs, each
-// instantiating NUM_LANES QECIPHY lanes sharing one GT COMMON (QPLL0). Lane i
-// of DUT0 is cross-connected to lane i of DUT1 (whole GT_TX_P/N <-> GT_RX_P/N
-// vectors are wired directly, so all NUM_LANES lanes are connected in one
-// assign), mirroring the two-DUT loopback used by tb/qeciphy_tb.sv for the
-// single-lane QECIPHY.
-//
-// Each lane trains, exchanges data and is checked independently (via
-// generate), rather than through a single fork/join_none loop, to avoid the
-// classic SystemVerilog loop-variable capture race that pattern requires
-// working around.
+// Back-to-back test of two QECIPHY_QUAD DUTs (lane i of DUT0 <-> lane i of DUT1),
+// like tb/qeciphy_tb.sv. Each lane runs in its own generate block to avoid
+// fork/join_none loop-variable capture.
 
 `timescale 1ns / 1ps `default_nettype none
 
@@ -53,10 +45,7 @@ module qeciphy_quad_tb;
    // Signals
    //----------------------------------------
 
-   // RCLK/FCLK are shared across all lanes of a quad (one physical refclk).
-   // ACLK/ARSTn are per-lane, packed into the NUM_LANES-wide vectors the
-   // QECIPHY_QUAD ports expect. All bits of a given DUT's ACLK
-   // vector toggle in lockstep here (one AXI-Stream clock domain per quad).
+   // RCLK/FCLK shared by all lanes; ACLK/ARSTn are per lane but toggle together here.
    logic                   rclk            [0:1];
    logic                   fclk            [0:1];
    logic [  NUM_LANES-1:0] aclk            [0:1];
@@ -83,9 +72,7 @@ module qeciphy_quad_tb;
 
    logic [           31:0] cycle_cnt;
 
-   // Per-DUT, per-lane completion flags: bit (d*NUM_LANES+l) is set once that
-   // lane's data has been checked. Each generate-block writes only its own
-   // bit, so there's no shared-variable write race between lanes.
+   // Bit (d*NUM_LANES+l) set once that lane's data is checked; one writer per bit.
    logic [2*NUM_LANES-1:0] done_flags;
 
    //----------------------------------------
@@ -147,8 +134,7 @@ module qeciphy_quad_tb;
    //----------------------------------------
    // High-speed serial connectivity
    //----------------------------------------
-   // Whole-vector cross-connect: lane i of DUT0 <-> lane i of DUT1 for every
-   // i in [0, NUM_LANES), in one assign per direction/polarity.
+   // Lane i of DUT0 <-> lane i of DUT1.
 
    assign gt_rx_p[0] = gt_tx_p[1];
    assign gt_rx_n[0] = gt_tx_n[1];
@@ -233,10 +219,8 @@ module qeciphy_quad_tb;
 
             // ---- Compare this lane's captured RX data against the peer DUT's TX data ----
             initial begin
-               // wait(), not while(!x) @(posedge ...): rx_capture_done starts
-               // as X until the RX-capture always_ff's first clock edge, and
-               // !X is X (not "true"), which a while() treats as false and
-               // skips outright. wait() blocks on X exactly like it blocks on 0.
+               // wait(), not while(!x): rx_capture_done is X until its first clock edge, and
+               // while(!X) exits immediately.
                wait (rx_capture_done[d][l]);
                `msg_info($sformatf("Validating data: DUT%0d lane%0d TX -> DUT%0d lane%0d RX", OtherDut, l, d, l));
 
@@ -311,10 +295,8 @@ module qeciphy_quad_tb;
    // Main test flow
    //----------------------------------------
 
-   // Line-rate check: two DUTs built from the same (possibly mis-configured) GT COMMON can still
-   // link to each other at the wrong rate, so link-up alone doesn't prove the QPLL0 setup. While
-   // data is flowing, record the shortest interval between transitions on every lane's GT_TX_P -
-   // with 8b10b-coded data that is one unit interval - and check it against 1/line rate.
+   // Two identically mis-configured DUTs can still link at the wrong rate, so also check
+   // the shortest GT_TX_P interval (one UI with 8b10b data) against 1/line rate.
    localparam real EXPECTED_UI_PS = 1000.0 / QECIPHY_LINE_RATE_GBPS;
    localparam real UI_TOLERANCE = 0.05;
 
@@ -351,11 +333,8 @@ module qeciphy_quad_tb;
       end
    endtask
 
-   // Phase 2 - single-lane reset: once every lane has passed its data check, reset one lane of
-   // DUT0 on its own and check that the other lanes of both DUTs, and both DUTs' shared QPLL0,
-   // are undisturbed. QECIPHY_QUAD must not let one lane's reset reset the QPLL
-   // shared by the whole quad: neither the GT wizard's reset helper nor QECIPHY's reset
-   // controller recovers from a later loss of PLL lock, so the other lanes would stay broken.
+   // Phase 2: reset one DUT0 lane alone and check the other lanes and both shared QPLL0s
+   // stay up (nothing recovers from a QPLL lock loss - see QECIPHY_QUAD).
    localparam int SINGLE_RESET_LANE = 1;  // not lane 0 - the watchdog counter runs off DUT0 lane 0
    localparam int SINGLE_RESET_HOLD_CYCLES = 16;
    localparam int SINGLE_RESET_OBSERVE_CYCLES = 32'h0000_8000;
@@ -397,9 +376,8 @@ module qeciphy_quad_tb;
       repeat (SINGLE_RESET_HOLD_CYCLES) @(posedge aclk[0][SINGLE_RESET_LANE]);
       arstn[0][SINGLE_RESET_LANE] = 1'b1;
 
-      // Long enough for the reset lane to run its whole GT reset sequence against the
-      // (already locked) shared QPLL. Whether it re-trains depends on the QECIPHY protocol's
-      // handling of a one-sided reset, so that part is reported, not checked.
+      // Long enough for the lane's GT reset sequence. Re-training depends on the protocol's
+      // one-sided reset handling, so it's reported, not checked.
       fork
          begin
             wait (link_ready[0][SINGLE_RESET_LANE] === 1'b1);

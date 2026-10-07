@@ -2,14 +2,12 @@
 // Copyright (c) 2026 Riverlane Ltd.
 // Original authors: Evan Sun
 //
-// GT COMMON (QPLL0) wrapper for GTY quads, instantiated once per physical GT quad so
-// that multiple QECIPHY lanes in the quad can share one QPLL0. Used by QECIPHY_QUAD
-// when transceiver.gt_common is "external". QPLL1 is unused and held powered down.
+// Shared GT COMMON (QPLL0) for one GTY quad, used by QECIPHY_QUAD when
+// transceiver.gt_common is "external". QPLL1 is powered down.
 //
-// The GTYE4_COMMON attributes come from src/qeciphy_gty_common_attrs.svh, which
-// render-design extracts from the wizard's generated COMMON wrapper for this profile
-// (see scripts/gen_gt_common_attrs.py). The primitive's defaults are not valid here -
-// e.g. the default QPLL0CLKOUT_RATE of FULL runs the channels at twice their line rate.
+// Attributes come from the generated qeciphy_gty_common_attrs.svh (see
+// scripts/gen_gt_common_attrs.py); primitive defaults are wrong here, e.g.
+// QPLL0CLKOUT_RATE=FULL doubles the line rate.
 
 `include "qeciphy_build_cfg_pkg.sv"
 

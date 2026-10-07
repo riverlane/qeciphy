@@ -92,13 +92,9 @@ foreach f $xci_files {
 # Add XDC files
 add_files -fileset constrs_1 -norecurse $xdc_file
 
-# SHARED_XCVR_CORE=true (transceiver.shared_channel_core in config.json): one GT core is
-# instantiated per lane and each instance is relocated by LOC in $xdc_file. The core's own
-# scoped XDC pins every instance to its customized channel, so disable it before synth_1
-# runs the IP's out-of-context synthesis. Only the QECIPHY GT cores are touched - any
-# other IP in the project keeps its XDC. $xdc_file is also restricted to implementation,
-# since its LOCs and generated clocks target cells inside the GT core, which is still a
-# black box during synth_1.
+# SHARED_XCVR_CORE=true: one GT core per lane, relocated by LOC in $xdc_file. Disable the QECIPHY
+# GT cores' scoped XDC (it pins every instance to one channel), and limit $xdc_file to
+# implementation since it targets cells inside the GT core, a black box during synth_1.
 if {[info exists ::env(SHARED_XCVR_CORE)] && $::env(SHARED_XCVR_CORE) eq "true"} {
     set gt_ips [get_ips -quiet {qeciphy_gty_transceiver qeciphy_gth_transceiver}]
     generate_target {synthesis} $gt_ips

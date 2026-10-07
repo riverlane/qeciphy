@@ -5,33 +5,17 @@
 //------------------------------------------------------------------------------
 // QECIPHY_QUAD Top-Level Module
 //------------------------------------------------------------------------------
-// Multi-lane alternative to QECIPHY: instantiates NUM_LANES (1-4) QECIPHY
-// lanes whose transceiver channels share one physical transceiver quad, plus
-// whatever per-quad clocking that vendor needs. Instantiate this instead of
-// QECIPHY when you want more than one lane in the same quad; for a single
-// lane, instantiate QECIPHY directly.
+// Instantiates NUM_LANES (1-4) QECIPHY lanes sharing one transceiver quad.
+// For a single lane, instantiate QECIPHY directly.
 //
-// Vendor behaviour (selected by the build's config.json "variant", read via
-// qeciphy_build_cfg_pkg::QECIPHY_GT_TYPE):
-// - Xilinx GTY/GTH: all lanes share ONE GT COMMON (QPLL0), instantiated here.
-//   Requires transceiver.gt_common = "external" (so each lane's GTWizard core
-//   excludes its own COMMON) and transceiver.shared_channel_core = "true" (so
-//   each lane's channel can be relocated with LOC constraints in your XDC).
-//   GTH is currently unsupported: only GTY has been tested.
-// - Xilinx GTX: not supported - each GTX lane embeds its own COMMON.
-// - Altera E-tile/F-tile: no shared PLL block exists - each lane's PHY has its
-//   own TX PLL and RX CDR - so the lanes are simply instantiated side by side,
-//   sharing RCLK. Any per-tile reference clock IP (e.g. the F-tile refclk IP)
-//   stays in your top level, as it does for a single QECIPHY.
+// - Xilinx GTY: lanes share one GT COMMON (QPLL0), instantiated here. Requires
+//   transceiver.gt_common = "external" and transceiver.shared_channel_core = "true".
+//   GTH is untested; GTX is unsupported.
+// - Altera E-/F-tile: no shared PLL, so lanes sit side by side sharing RCLK.
+//   Any per-tile refclk IP stays in your top level.
 //
-// RCLK/FCLK are shared across all lanes; ACLK/ARSTn are independent per lane.
-// Per-lane transceiver pin placement is left to your constraints (Xilinx LOC
-// overrides in XDC, Altera pin assignments).
-//
-// Xilinx GTY/GTH shared-QPLL reset: QPLL0 is reset at power-up and whenever
-// every lane's ARSTn is asserted together, but never by a single lane's reset
-// (see the qpll0reset comment below), so resetting one lane doesn't disturb
-// the others.
+// RCLK/FCLK are shared; ACLK/ARSTn are per lane. Lane pin placement is left to your
+// constraints. A single lane's reset never resets the shared QPLL0 (see qpll0reset).
 //------------------------------------------------------------------------------
 
 `include "qeciphy_build_cfg_pkg.sv"
@@ -111,18 +95,11 @@ module QECIPHY_QUAD #(
    logic [NUM_LANES-1:0] gt_qpll_reset;
    logic                 qpll0reset;
 
-   // Each lane's gt_qpll_reset request (the wizard's gtwiz_reset_qpll0reset_out) is high from
-   // configuration until that lane's reset helper reaches its wait-for-PLL-lock state, and
-   // afterwards only pulses briefly each time that lane is reset. The helper does not recover if
-   // the PLL loses lock after its sequence has finished, and neither does QECIPHY's reset
-   // controller, so an OR of the requests would let resetting any single lane permanently break
-   // every other lane in the quad. Instead:
-   //  - &gt_qpll_reset: at power-up, hold the QPLL in reset until every lane is ready for it -
-   //    the first lane to reach wait-for-lock releases it, and the others then see it locked.
-   //  - &(~ARSTn): a deliberate reset of all lanes together always resets the QPLL too (e.g. to
-   //    recover after a refclk interruption).
-   // A single lane's reset therefore never touches the shared QPLL; that lane just re-runs its
-   // own sequence against the already-locked PLL.
+   // Neither the wizard's reset helper nor QECIPHY's reset controller recovers from a QPLL
+   // lock loss after its sequence ends, so ORing the per-lane requests would let one lane's
+   // reset break the rest. Reset the shared QPLL only:
+   //  - &gt_qpll_reset: at power-up, released when the first lane reaches wait-for-lock.
+   //  - &(~ARSTn):      when all lanes are reset together (e.g. after a refclk interruption).
    assign qpll0reset = (&gt_qpll_reset) | (&(~ARSTn));
 
    generate

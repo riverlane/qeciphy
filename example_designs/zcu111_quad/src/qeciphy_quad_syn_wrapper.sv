@@ -82,9 +82,7 @@ module qeciphy_quad_syn_wrapper #(
          logic [63:0] RX_TDATA_ref_nxt;
          logic        RXDATA_error;
          logic        RXDATA_error_nxt;
-         // VIO/ILA scratch register - bit 0 drives this lane's own SFP
-         // TX_DISABLE_B (SFP_tx_enable[i]); bits 3:1 have no board-level
-         // function.
+         // VIO/ILA scratch register (bit 0: SFP_tx_enable[i])
          logic [ 3:0] dbg_ctrl;
 
          // Connect free-running clock to this lane's AXI clock for simplicity
