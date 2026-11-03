@@ -7,7 +7,9 @@
 `include "../src/qeciphy_pkg.sv"
 `include "../tb/qeciphy_sim_cfg_pkg.sv"
 
-module qeciphy_tb;
+module qeciphy_tb #(
+    parameter bit AUTO_RENEG_EN = 1'b0  // Run the auto-renegotiation link-drop test
+);
 
    import qeciphy_pkg::*;
    import qeciphy_sim_cfg_pkg::*;
@@ -30,7 +32,11 @@ module qeciphy_tb;
 
    localparam real ACLK_PERIOD_NS = 4.0;  // >= 156.25 MHz
 
-   localparam int MAX_CYCLES = 32'h0002_0000;
+   // Auto-renegotiation adds a second link-up and transfer
+   localparam int MAX_CYCLES = AUTO_RENEG_EN ? 32'h0006_0000 : 32'h0002_0000;
+
+   localparam int LINK_CUT_DETECT_CYCLES = 16384;  // Max cycles to detect a link cut
+   localparam int LINK_CUT_HOLD_CYCLES = 12500;  // Link cut duration after detection (50us)
 
    localparam int TEST_SEQUENCE_LEN = 2048;
    localparam string TEST_DATASET = "random";  // "counter" or "random"
@@ -60,7 +66,13 @@ module qeciphy_tb;
    axis_t                  axis_tx          [                  0:1];
    axis_t                  axis_rx          [                  0:1];
 
+   logic            [ 7:0] reneg_count      [                  0:1];
+   qeciphy_error_t         reneg_ecode      [                  0:1];
+
    logic            [31:0] cycle_cnt;
+
+   logic                   link_cut;  // Cut the serial link in both directions
+   logic                   capture_restart;  // Clear RX capture for a second transfer
 
    //----------------------------------------
    // TB storage
@@ -161,10 +173,15 @@ module qeciphy_tb;
    // High-speed serial connectivity
    //----------------------------------------
 
-   assign gt_rx_p[0] = gt_tx_p[1];
-   assign gt_rx_n[0] = gt_tx_n[1];
-   assign gt_rx_p[1] = gt_tx_p[0];
-   assign gt_rx_n[1] = gt_tx_n[0];
+   initial begin
+      link_cut        = 1'b0;
+      capture_restart = 1'b0;
+   end
+
+   assign gt_rx_p[0] = link_cut ? 1'b0 : gt_tx_p[1];
+   assign gt_rx_n[0] = link_cut ? 1'b1 : gt_tx_n[1];
+   assign gt_rx_p[1] = link_cut ? 1'b0 : gt_tx_p[0];
+   assign gt_rx_n[1] = link_cut ? 1'b1 : gt_tx_n[0];
 
    //----------------------------------------
    // Capture RX data
@@ -175,6 +192,9 @@ module qeciphy_tb;
          rx0_captured_data <= '{default: '0};
          rx0_idx           <= 0;
          rx0_capture_done  <= 1'b0;
+      end else if (capture_restart) begin
+         rx0_idx          <= 0;
+         rx0_capture_done <= 1'b0;
       end else begin
          if (axis_rx[0].tvalid && axis_rx[0].tready) begin
             rx0_captured_data[rx0_idx] <= axis_rx[0].tdata;
@@ -195,6 +215,9 @@ module qeciphy_tb;
          rx1_captured_data <= '{default: '0};
          rx1_idx           <= 0;
          rx1_capture_done  <= 1'b0;
+      end else if (capture_restart) begin
+         rx1_idx          <= 0;
+         rx1_capture_done <= 1'b0;
       end else begin
          if (axis_rx[1].tvalid && axis_rx[1].tready) begin
             rx1_captured_data[rx1_idx] <= axis_rx[1].tdata;
@@ -314,6 +337,60 @@ module qeciphy_tb;
       end
    endtask
 
+   // Cut the link, check both DUTs renegotiate without ARSTn, then restore it
+   task automatic check_link_drop_reneg;
+      int wait_cycles = 0;
+
+      `msg_info("Cutting serial link");
+      link_cut = 1'b1;
+
+      while (!(reneg_count[0] != 8'd0 && reneg_count[1] != 8'd0)) begin
+         @(posedge aclk[0]);
+         wait_cycles++;
+         if (wait_cycles == LINK_CUT_DETECT_CYCLES) begin
+            `msg_fatal("Link cut was not detected by both DUTs");
+            $fatal();
+         end
+      end
+      `msg_info("Link drop detected, auto-renegotiation started on both DUTs");
+
+      for (int i = 0; i < 2; i++) begin
+         assert (reneg_ecode[i] == FAW_ERROR || reneg_ecode[i] == CRC_ERROR)
+         else begin
+            $display("DUT%0d RENEG_ECODE: %s", i, reneg_ecode[i].name());
+            `msg_fatal("Unexpected auto-renegotiation cause");
+            $fatal();
+         end
+      end
+
+      // Hold the link down past the internal reset
+      repeat (LINK_CUT_HOLD_CYCLES) @(posedge aclk[0]);
+
+      for (int i = 0; i < 2; i++) begin
+         assert (status[i] != LINK_READY && status[i] != FAULT_FATAL && reneg_count[i] == 8'd1)
+         else begin
+            $display("DUT%0d STATUS: %s RENEG_COUNT: %0d", i, status[i].name(), reneg_count[i]);
+            `msg_fatal("DUT not retraining while link is cut");
+            $fatal();
+         end
+      end
+      `msg_info($sformatf("DUT0 STATUS: %s, DUT1 STATUS: %s while link is cut", status[0].name(), status[1].name()));
+
+      `msg_info("Restoring serial link");
+      link_cut = 1'b0;
+
+      check_link_ready();
+
+      for (int i = 0; i < 2; i++) begin
+         assert (ecode[i] == NO_ERROR && reneg_count[i] == 8'd1)
+         else begin
+            $display("DUT%0d ECODE: %s RENEG_COUNT: %0d", i, ecode[i].name(), reneg_count[i]);
+            `msg_fatal("Unexpected state after auto-renegotiation");
+            $fatal();
+         end
+      end
+   endtask
+
    //----------------------------------------
    // DUTs
    //----------------------------------------
@@ -323,6 +400,7 @@ module qeciphy_tb;
        .FCLK     (fclk[0]),
        .ACLK     (aclk[0]),
        .ARSTn    (arstn[0]),
+       .AUTO_RENEG_EN(AUTO_RENEG_EN),
        .TX_TDATA (axis_tx[0].tdata),
        .TX_TVALID(axis_tx[0].tvalid),
        .TX_TREADY(axis_tx[0].tready),
@@ -331,6 +409,8 @@ module qeciphy_tb;
        .RX_TREADY(axis_rx[0].tready),
        .STATUS   (status[0]),
        .ECODE    (ecode[0]),
+       .RENEG_COUNT(reneg_count[0]),
+       .RENEG_ECODE(reneg_ecode[0]),
        .GT_RX_P  (gt_rx_p[0]),
        .GT_RX_N  (gt_rx_n[0]),
        .GT_TX_P  (gt_tx_p[0]),
@@ -342,6 +422,7 @@ module qeciphy_tb;
        .FCLK     (fclk[1]),
        .ACLK     (aclk[1]),
        .ARSTn    (arstn[1]),
+       .AUTO_RENEG_EN(AUTO_RENEG_EN),
        .TX_TDATA (axis_tx[1].tdata),
        .TX_TVALID(axis_tx[1].tvalid),
        .TX_TREADY(axis_tx[1].tready),
@@ -350,6 +431,8 @@ module qeciphy_tb;
        .RX_TREADY(axis_rx[1].tready),
        .STATUS   (status[1]),
        .ECODE    (ecode[1]),
+       .RENEG_COUNT(reneg_count[1]),
+       .RENEG_ECODE(reneg_ecode[1]),
        .GT_RX_P  (gt_rx_p[1]),
        .GT_RX_N  (gt_rx_n[1]),
        .GT_TX_P  (gt_tx_p[1]),
@@ -378,6 +461,25 @@ module qeciphy_tb;
 
       compare_rx0_tx1();
       compare_rx1_tx0();
+
+      if (AUTO_RENEG_EN) begin
+         check_link_drop_reneg();
+
+         // Clear RX capture in both ACLK domains
+         capture_restart = 1'b1;
+         repeat (4) @(posedge aclk[0]);
+         capture_restart = 1'b0;
+
+         `msg_info("Restarting data transmission after auto-renegotiation");
+
+         fork
+            drive_tx0_data();
+            drive_tx1_data();
+         join_none
+
+         compare_rx0_tx1();
+         compare_rx1_tx0();
+      end
 
       `msg_info("Test passed okay");
       $finish;

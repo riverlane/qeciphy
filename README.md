@@ -44,7 +44,7 @@ QECIPHY is a physical layer implementation according to the [QECi (Quantum Error
 - Make: for build automation
 
 **Additional tools needed for development:**
-- Verilator v5.020: for linting
+- Verilator v5.046+: for linting
 - Verible v0.0-3430: for formatting
 - Git: for version control
 - VCS: for simulation (optional)
@@ -93,6 +93,7 @@ module QECIPHY (
     input  logic        FCLK,       // Free running clock
     input  logic        ACLK,       // AXI4-Stream clock
     input  logic        ARSTn,      // Active-low reset
+    input  logic        AUTO_RENEG_EN = 1'b0, // Auto-renegotiation enable
     
     // TX AXI4-Stream Interface
     input  logic [63:0] TX_TDATA,   // TX data
@@ -108,7 +109,9 @@ module QECIPHY (
     output logic [3:0]  STATUS,     // Link status
     output logic [3:0]  ECODE,      // Error codes
     output logic        LINK_READY, // Link ready indicator
-    output logic        FAULT_FATAL // Fatal fault indicator
+    output logic        FAULT_FATAL,// Fatal fault indicator
+    output logic [7:0]  RENEG_COUNT,// Auto-renegotiation count
+    output logic [3:0]  RENEG_ECODE // Cause of last auto-renegotiation
 );
 ```
 

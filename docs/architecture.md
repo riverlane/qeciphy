@@ -150,7 +150,14 @@ The link controller (`qeciphy_controller.sv`) manages the link establishment and
 
 **Error Handling:**
 - Fatal faults cause immediate transition to `FAULT_FATAL` state
-- Fault state persists until system reset
+- Fault state persists until system reset, or until auto-renegotiation restarts the link (see below)
+
+**Auto-Renegotiation (optional):**
+
+`qeciphy_reneg_ctrl.sv` is enabled by the `AUTO_RENEG_EN` input (ACLK domain, defaults to 0). It restarts link establishment without ARSTn by driving an internal reset. At the top level this is combined with ARSTn synchronized to ACLK (either one asserts reset) and passed through a second 2-flop ACLK synchronizer, asynchronous assert and synchronous release, before it reaches the reset controller. This re-runs the full reset sequence: GT reset, datapath reset, alignment and training. The module itself is reset only by ARSTn.
+- Triggers: a `FAULT_FATAL` with a FAW or CRC error code (a link drop), or the link not reaching `READY` within 2^24 ACLK cycles. FIFO overflow faults remain fatal.
+- Sequence: 1024-cycle hold-off (lets the remote side detect the drop, since local TX is off in `FAULT_FATAL`), then a 64-cycle internal reset.
+- Reports `RENEG_COUNT` and `RENEG_ECODE`, which persist until ARSTn.
 
 ### 4. TX Data Path
 
@@ -309,7 +316,7 @@ The RX monitor (`qeciphy_rx_monitor.sv`) validates and filters incoming data:
 ### 6. Error Handler
 The error handler (`qeciphy_error_handler.sv`) implements a comprehensive error management system:
 - **Centralized Collection**: Aggregates errors from all subsystems
-- **Fault Latching**: Errors persist until system reset
+- **Fault Latching**: Errors persist until system reset (including an auto-renegotiation reset)
 
 **Error Types:**
 - FAW Error: Frame alignment issues

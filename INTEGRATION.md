@@ -256,6 +256,7 @@ QECIPHY i_QECIPHY (
     .FCLK       (freerun_clk), 
     .ACLK       (axi_clk),
     .ARSTn      (aresetn),
+    .AUTO_RENEG_EN(1'b0),       // Optional, defaults to 1'b0
     
     // TX Interface (from your design)
     .TX_TDATA   (qeciphy_tx_tdata),
@@ -272,6 +273,8 @@ QECIPHY i_QECIPHY (
     .ECODE      (qeciphy_ecode),
     .LINK_READY (qeciphy_link_ready),
     .FAULT_FATAL(qeciphy_fault_fatal),
+    .RENEG_COUNT(qeciphy_reneg_count),
+    .RENEG_ECODE(qeciphy_reneg_ecode),
     
     // GT Interface (connect to transceivers)
     .GT_TXP     (gt_txp),
@@ -614,7 +617,21 @@ always_ff @(posedge axi_clk) begin
 end
 ```
 
-Note: If the QECIPHY enters FAULT-FATAL state, please reset the IP to get out of the fault condition.
+Note: If the QECIPHY enters FAULT-FATAL state, please reset the IP to get out of the fault condition, unless auto-renegotiation is enabled (see below).
+
+### Auto-Renegotiation
+
+When the `AUTO_RENEG_EN` input is high, QECIPHY restarts link establishment by itself, using an internal reset that re-runs the full reset sequence. This happens when:
+- **The link drops**: a FAW or CRC error puts the link into FAULT-FATAL. QECIPHY waits 1024 ACLK cycles so the remote side also detects the drop, then renegotiates.
+- **Training times out**: the link has not reached LINK-READY within 2^24 ACLK cycles, for example because the remote side is absent or reset mid-training.
+
+TX-FIFO-OVERFLOW and RX-FIFO-OVERFLOW faults are not link drops and still require ARSTn.
+
+Things to be aware of:
+- **Enable it on both ends of the link.** In FAULT-FATAL the transmitter is turned off, so a side without auto-renegotiation stays silent and the other side can never re-train.
+- **Data in flight is lost.** The TX and RX FIFOs are flushed by the internal reset.
+- STATUS, ECODE and FAULT_FATAL behave as after ARSTn. FAULT-FATAL is visible only briefly before the link starts training again.
+- `RENEG_COUNT` (saturating at 255) and `RENEG_ECODE` (cause of the most recent renegotiation) are cleared only by ARSTn.
 
 ## Interface Details
 
@@ -623,6 +640,7 @@ Note: If the QECIPHY enters FAULT-FATAL state, please reset the IP to get out of
 - **FCLK**: Free-running clock
 - **ACLK**: AXI4-Stream clock for TX/RX interfaces
 - **ARSTn**: Active LOW reset, asynchronously asserted, synchronously de-asserted to ACLK domain
+- **AUTO_RENEG_EN**: Auto-renegotiation enable, ACLK domain (optional, defaults to 0). See [Auto-Renegotiation](#auto-renegotiation).
 
 **Note:** RCLK, FCLK and ACLK can all be asynchronous to each other. QECIPHY handles clock domain crossing internally.
 
@@ -658,6 +676,10 @@ QECIPHY uses standard AXI4-Stream protocol with 64-bit data width:
 - `4'h2`: CRC-ERROR - CRC error detected
 - `4'h3`: TX-FIFO-OVERFLOW - Transmit FIFO overflow
 - `4'h4`: RX-FIFO-OVERFLOW - Receive FIFO overflow
+
+#### RENEG_COUNT[7:0] / RENEG_ECODE[3:0]
+- `RENEG_COUNT`: Number of auto-renegotiations since ARSTn, saturating at 255
+- `RENEG_ECODE`: ECODE value that caused the most recent auto-renegotiation: FAW-ERROR or CRC-ERROR for a link drop, NO-ERROR for a training timeout. Only valid when `RENEG_COUNT` is non-zero.
 
 ## Support
 
