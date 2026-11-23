@@ -36,6 +36,7 @@ module QECIPHY (
     input logic FCLK,  // Free-running fabric clock
     input logic ACLK,  // AXI4-Stream interface clock
     input logic ARSTn, // Master reset (active-low) synchronous to ACLK
+    input logic AUTO_RENEG_EN = 1'b0,  // Auto-renegotiation enable
 
     // =========================================================================
     // AXI4-Stream TX Interface (User -> QECIPHY)
@@ -58,6 +59,8 @@ module QECIPHY (
     output logic [3:0] ECODE,       // Error code
     output logic       LINK_READY,  // Link ready for user data transfer
     output logic       FAULT_FATAL, // Fatal error detected
+    output logic [7:0] RENEG_COUNT, // Auto-renegotiation count (saturating)
+    output logic [3:0] RENEG_ECODE, // Cause of most recent auto-renegotiation
 
     // =========================================================================
     // GT Differential Signals
@@ -99,6 +102,9 @@ module QECIPHY (
    logic        rx_ch_dec_tvalid;  // RX channel decoder AXIS tvalid
    logic [63:0] rx_ch_dec_tdata;  // RX data from channel decoder
    logic [63:0] gt_rx_tdata;  // RX data to channel decoder
+   logic        reneg_rst_n;  // Auto-renegotiation reset request
+   logic        arst_n_aclk;  // ARSTn synchronized to ACLK
+   logic        sys_rst_n_aclk;  // ARSTn or reneg_rst_n synchronized to ACLK
 
    // CDC signals
    // Naming convention: <signal_name>_<clk_domain>
@@ -178,6 +184,42 @@ module QECIPHY (
        .rx_fifo_overflow_i(rx_fifo_overflow_aclk),  // RX FIFO overflow
        .fault_fatal_o     (fault_fatal),            // Aggregated fault to qeciphy_controller
        .ecode_o           (ECODE)                   // Error code output
+   );
+
+   // =========================================================================
+   // Auto-Renegotiation Controller
+   // =========================================================================
+
+   // Reset by ARSTn only, not by its own internal reset
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_arst_n_aclk_cdc (
+       .src_in   (1'b1),
+       .dst_clk  (ACLK),
+       .dst_rst_n(ARSTn),
+       .dst_out  (arst_n_aclk)
+   );
+
+   qeciphy_reneg_ctrl i_qeciphy_reneg_ctrl (
+       .clk_i        (ACLK),           // AXI clock
+       .rst_n_i      (arst_n_aclk),    // ARSTn synchronized to ACLK
+       .enable_i     (AUTO_RENEG_EN),  // Auto-renegotiation enable
+       .status_i     (STATUS),         // Link status from qeciphy_controller
+       .fault_fatal_i(FAULT_FATAL),    // Fatal fault from qeciphy_controller
+       .ecode_i      (ECODE),          // Error code from qeciphy_error_handler
+       .reneg_rst_n_o(reneg_rst_n),    // Internal reset request
+       .reneg_count_o(RENEG_COUNT),    // Renegotiation count
+       .reneg_ecode_o(RENEG_ECODE)     // Cause of most recent renegotiation
+   );
+
+   // System reset: ARSTn or auto-renegotiation reset
+   riv_synchronizer_2ff #(
+       .RESET_TYPE("ASYNC")
+   ) i_sys_rst_n_aclk_cdc (
+       .src_in   (1'b1),
+       .dst_clk  (ACLK),
+       .dst_rst_n(arst_n_aclk && reneg_rst_n),
+       .dst_out  (sys_rst_n_aclk)
    );
 
    // =========================================================================
@@ -361,7 +403,7 @@ module QECIPHY (
    qeciphy_resetcontroller i_qeciphy_resetcontroller (
        // Primary Control Interface (AXI Clock Domain)
        .axis_clk_i           (ACLK),                   // AXI clock
-       .async_rst_n_i        (ARSTn),                  // Master reset
+       .async_rst_n_i        (sys_rst_n_aclk),         // System reset
        .gt_power_good_i      (gt_power_good_aclk),     // GT power good status from qeciphy_serdes
        .gt_tx_rst_done_i     (gt_tx_reset_done_aclk),  // GT TX reset completion from qeciphy_serdes
        .gt_rx_rst_done_i     (gt_rx_reset_done_aclk),  // GT RX reset completion from qeciphy_serdes
