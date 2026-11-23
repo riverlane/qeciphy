@@ -11,17 +11,17 @@
 // Triggers (when enable_i is high):
 // - Link drop: FAULT_FATAL with a FAW or CRC error code
 // - Training timeout: link not ready for TRAINING_TIMEOUT cycles
-// - FIFO overflows are not triggers and remain fatal until ARSTn
+// 
+// Note: FIFO overflows are NOT triggers and remain fatal until ARSTn
 //
 // Sequence: IDLE -> HOLDOFF -> ASSERT_RST -> IDLE
 // - HOLDOFF lets the remote side detect the drop (local TX is off)
 // - ASSERT_RST drives reneg_rst_n_o low (RST_CYCLES must span several FCLK cycles)
 //
-// Observability:
+// Status Outputs:
 // - reneg_ecode_o latches ecode_i (NO_ERROR for a training timeout)
 // - reneg_count_o and reneg_ecode_o are only cleared by ARSTn
 //
-// Must be reset by ARSTn only, never by reneg_rst_n_o.
 //------------------------------------------------------------------------------
 
 `include "qeciphy_pkg.sv"

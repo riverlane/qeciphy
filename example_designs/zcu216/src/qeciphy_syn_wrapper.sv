@@ -27,6 +27,9 @@ module qeciphy_syn_wrapper (
    logic        RX_TREADY;
    logic [ 3:0] STATUS;
    logic [ 3:0] ECODE;
+   logic        AUTO_RENEG_EN;
+   logic [ 7:0] RENEG_COUNT;
+   logic [ 3:0] RENEG_ECODE;
    logic [ 4:0] rst_counter;
    logic [ 4:0] rst_counter_nxt;
    logic        rst_n_async;
@@ -78,6 +81,13 @@ module qeciphy_syn_wrapper (
        .clk       (ACLK),
        .probe_out0(rst_n_async),
        .probe_out1(sfp_enable)
+   );
+
+   qeciphy_reneg_vio i_reneg_vio (
+       .clk       (ACLK),
+       .probe_in0 (RENEG_COUNT),
+       .probe_in1 (RENEG_ECODE),
+       .probe_out0(AUTO_RENEG_EN)
    );
 
    // Generate 16 cycle reset that de-asserts synchronously
@@ -135,22 +145,25 @@ module qeciphy_syn_wrapper (
    end
 
    QECIPHY i_QECIPHY (
-       .RCLK     (RCLK),
-       .FCLK     (FCLK),
-       .ACLK     (ACLK),
-       .ARSTn    (ARSTn),
-       .TX_TDATA (TX_TDATA),
-       .TX_TVALID(TX_TVALID),
-       .TX_TREADY(TX_TREADY),
-       .RX_TDATA (RX_TDATA),
-       .RX_TVALID(RX_TVALID),
-       .RX_TREADY(RX_TREADY),
-       .STATUS   (STATUS),
-       .ECODE    (ECODE),
-       .GT_RX_P  (gt_rx_p),
-       .GT_RX_N  (gt_rx_n),
-       .GT_TX_P  (gt_tx_p),
-       .GT_TX_N  (gt_tx_n)
+       .RCLK         (RCLK),
+       .FCLK         (FCLK),
+       .ACLK         (ACLK),
+       .ARSTn        (ARSTn),
+       .AUTO_RENEG_EN(AUTO_RENEG_EN),
+       .TX_TDATA     (TX_TDATA),
+       .TX_TVALID    (TX_TVALID),
+       .TX_TREADY    (TX_TREADY),
+       .RX_TDATA     (RX_TDATA),
+       .RX_TVALID    (RX_TVALID),
+       .RX_TREADY    (RX_TREADY),
+       .STATUS       (STATUS),
+       .ECODE        (ECODE),
+       .RENEG_COUNT  (RENEG_COUNT),
+       .RENEG_ECODE  (RENEG_ECODE),
+       .GT_RX_P      (gt_rx_p),
+       .GT_RX_N      (gt_rx_n),
+       .GT_TX_P      (gt_tx_p),
+       .GT_TX_N      (gt_tx_n)
    );
 
 endmodule

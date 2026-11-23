@@ -627,10 +627,9 @@ When the `AUTO_RENEG_EN` input is high, QECIPHY restarts link establishment by i
 
 TX-FIFO-OVERFLOW and RX-FIFO-OVERFLOW faults are not link drops and still require ARSTn.
 
-Things to be aware of:
-- **Enable it on both ends of the link.** In FAULT-FATAL the transmitter is turned off, so a side without auto-renegotiation stays silent and the other side can never re-train.
-- **Data in flight is lost.** The TX and RX FIFOs are flushed by the internal reset.
-- STATUS, ECODE and FAULT_FATAL behave as after ARSTn. FAULT-FATAL is visible only briefly before the link starts training again.
+Design Notes:
+- TX and RX FIFOs are flushed by the internal reset.
+- STATUS, ECODE and FAULT_FATAL are reset as well. FAULT-FATAL is visible only briefly before the link starts training again.
 - `RENEG_COUNT` (saturating at 255) and `RENEG_ECODE` (cause of the most recent renegotiation) are cleared only by ARSTn.
 
 ## Interface Details
