@@ -54,10 +54,11 @@ module QECIPHY (
     // =========================================================================
     // Status and Control Interface
     // =========================================================================
-    output logic [3:0] STATUS,      // Link status code
-    output logic [3:0] ECODE,       // Error code
-    output logic       LINK_READY,  // Link ready for user data transfer
-    output logic       FAULT_FATAL, // Fatal error detected
+    output logic [3:0]  STATUS,      // Link status code
+    output logic [3:0]  ECODE,       // Error code
+    output logic        LINK_READY,  // Link ready for user data transfer
+    output logic        FAULT_FATAL, // Fatal error detected
+    output logic [13:0] FSM_STATUS,
 
     // =========================================================================
     // GT Differential Signals
@@ -160,6 +161,7 @@ module QECIPHY (
        .link_ready_o         (LINK_READY),                // Link operational
        .fault_fatal_o        (FAULT_FATAL),               // Fatal fault output
        .status_o             (STATUS),                    // Link status
+       .fsm_state_o          (FSM_STATUS),                // For DEBUG
        .tx_link_enable_o     (tx_link_enable_aclk),       // TX link enable to qeciphy_tx_channelencoder
        .tx_data_enable_o     (tx_data_enable_aclk),       // TX data enable to qeciphy_tx_channelencoder
        .rx_enable_o          (rx_enable_aclk)             // RX enable to qeciphy_rx_channeldecoder

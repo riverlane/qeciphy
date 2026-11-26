@@ -39,12 +39,13 @@ module qeciphy_controller (
     input logic fault_fatal_i,          // Fatal error detected
 
     // Control Outputs
-    output logic       link_ready_o,      // Link ready for user data transfer
-    output logic       fault_fatal_o,     // Fatal error state indicator
-    output logic [3:0] status_o,          // Link status code
-    output logic       tx_link_enable_o,  // Enable TX training pattern
-    output logic       tx_data_enable_o,  // Enable TX user data transmission
-    output logic       rx_enable_o        // Enable RX data processing
+    output logic        link_ready_o,      // Link ready for user data transfer
+    output logic        fault_fatal_o,     // Fatal error state indicator
+    output logic [3:0]  status_o,          // Link status code
+    output logic [13:0] fsm_state_o,       // For DEBUG
+    output logic        tx_link_enable_o,  // Enable TX training pattern
+    output logic        tx_data_enable_o,  // Enable TX user data transmission
+    output logic        rx_enable_o        // Enable RX data processing
 );
 
    // =========================================================================
@@ -89,6 +90,7 @@ module qeciphy_controller (
    // Maps internal detailed states to external simplified status codes
 
    assign status_o         = status;
+   assign fsm_state_o      = status;
 
    always_comb begin
       case (state)
