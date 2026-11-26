@@ -32,12 +32,14 @@ set ip_obj [create_ip -name ila -vendor xilinx.com -library ip -version 6.2 -mod
 
 # Set IP parameters (customize as needed)
 set_property -dict [list \
-  CONFIG.C_NUM_OF_PROBES {6} \
+  CONFIG.C_NUM_OF_PROBES {7} \
   CONFIG.C_PROBE0_WIDTH {64} \
+  CONFIG.C_PROBE1_WIDTH {1} \
   CONFIG.C_PROBE2_WIDTH {4} \
   CONFIG.C_PROBE3_WIDTH {4} \
   CONFIG.C_PROBE4_WIDTH {4} \
   CONFIG.C_PROBE5_WIDTH {1} \
+  CONFIG.C_PROBE6_WIDTH {14} \
 ] [get_ips $ip_name]
 
 puts "INFO: IP core '$ip_name' created successfully"

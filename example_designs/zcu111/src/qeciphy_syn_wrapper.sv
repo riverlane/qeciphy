@@ -26,6 +26,8 @@ module qeciphy_syn_wrapper (
    logic        RX_TVALID;
    logic        RX_TREADY;
    logic [ 3:0] STATUS;
+   (* mark_debug = "true" *)
+   logic [13:0] FSM_STATUS;
    logic [ 3:0] ECODE;
    logic [ 4:0] rst_counter;
    logic [ 4:0] rst_counter_nxt;
@@ -71,7 +73,8 @@ module qeciphy_syn_wrapper (
        .probe2(STATUS),
        .probe3(ECODE),
        .probe4(sfp_enable),
-       .probe5(RXDATA_error)
+       .probe5(RXDATA_error),
+       .probe6(FSM_STATUS)
    );
 
    qeciphy_vio i_vio (
@@ -135,22 +138,23 @@ module qeciphy_syn_wrapper (
    end
 
    QECIPHY i_QECIPHY (
-       .RCLK     (RCLK),
-       .FCLK     (FCLK),
-       .ACLK     (ACLK),
-       .ARSTn    (ARSTn),
-       .TX_TDATA (TX_TDATA),
-       .TX_TVALID(TX_TVALID),
-       .TX_TREADY(TX_TREADY),
-       .RX_TDATA (RX_TDATA),
-       .RX_TVALID(RX_TVALID),
-       .RX_TREADY(RX_TREADY),
-       .STATUS   (STATUS),
-       .ECODE    (ECODE),
-       .GT_RX_P  (gt_rx_p),
-       .GT_RX_N  (gt_rx_n),
-       .GT_TX_P  (gt_tx_p),
-       .GT_TX_N  (gt_tx_n)
+       .RCLK      (RCLK),
+       .FCLK      (FCLK),
+       .ACLK      (ACLK),
+       .ARSTn     (ARSTn),
+       .TX_TDATA  (TX_TDATA),
+       .TX_TVALID (TX_TVALID),
+       .TX_TREADY (TX_TREADY),
+       .RX_TDATA  (RX_TDATA),
+       .RX_TVALID (RX_TVALID),
+       .RX_TREADY (RX_TREADY),
+       .STATUS    (STATUS),
+       .FSM_STATUS(FSM_STATUS),
+       .ECODE     (ECODE),
+       .GT_RX_P   (gt_rx_p),
+       .GT_RX_N   (gt_rx_n),
+       .GT_TX_P   (gt_tx_p),
+       .GT_TX_N   (gt_tx_n)
    );
 
 endmodule
