@@ -9,7 +9,7 @@ module qeciphy_syn_wrapper (
     input  logic       gt_rx_n,
     output logic       gt_tx_p,
     output logic       gt_tx_n,
-    output logic [3:0] SFP_tx_enable,
+    output logic [3:0] SFP_tx_disable, // Set low to enable
     output logic [2:0] led
 );
 
@@ -41,7 +41,8 @@ module qeciphy_syn_wrapper (
    logic        RXDATA_error;
    logic        RXDATA_error_nxt;
 
-   assign SFP_tx_enable = sfp_enable;
+   assign SFP_tx_disable = 4'b1100; // Enable only SFP0 and SFP1
+
 
    // Refer: https://docs.amd.com/r/en-US/ug974-vivado-ultrascale-libraries/IBUFDS_GTE4
    IBUFDS_GTE4 #(
