@@ -54,7 +54,8 @@
         ],
         "pre_setup_hooks": [
           "example_designs/vendors/xilinx/qeciphy_rx_ila.tcl",
-          "example_designs/vendors/xilinx/qeciphy_vio.tcl"
+          "example_designs/vendors/xilinx/qeciphy_vio.tcl",
+          "example_designs/vendors/xilinx/zcu111_debug_bridge.tcl"
         ]
       }
     },

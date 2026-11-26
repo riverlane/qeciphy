@@ -157,4 +157,8 @@ module qeciphy_syn_wrapper (
        .GT_TX_N   (gt_tx_n)
    );
 
+    // Debug Bridge to allow XVC from ZYNQ PS into PL for ILA/VIO
+    // Use scripts/deploy_zcu111.sh to push and connect via Hardware Manager/XVC
+    zcu111_debug_bridge zcu111_debug_bridge_i ();
+
 endmodule
